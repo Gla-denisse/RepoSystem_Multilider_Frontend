@@ -1,0 +1,119 @@
+/* src/assets/main.css */
+
+/* =========================================
+   1. VARIABLES GLOBALES Y TEMA CLARO
+   ========================================= */
+:root {
+  /* Fondos Generales */
+  --bg-body: #f8f9fa;
+  --bg-card: #ffffff;
+  
+  /* Textos Generales */
+  --text-main: #343a40;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+
+  /* PALETA DE COLORES PRINCIPAL */
+  --primary-color: #a28bfa;   /* Lila Suave */
+  --primary-hover: #8b5cf6;   /* Lila más intenso para hovers */
+  --secondary-color: #9ca3af; /* Gris neutro/azulado */
+  --success-color: #34d399;   /* Verde esmeralda suave */
+  --danger-color: #fb7185;    /* Rosa/Rojo suave */
+  --warning-color: #fbbf24;   /* Amarillo ámbar */
+  --info-color: #38bdf8;      /* Celeste claro */
+
+  /* Tamaños y Layout */
+  --sidebar-width: 260px;
+  --sidebar-compact-width: 80px;
+  --topbar-height: 70px;
+
+  /* Variables por defecto del Sidebar (Modo Claro) */
+  --bg-sidebar: #ffffff;
+  --text-sidebar-main: #343a40;
+  --text-sidebar-muted: #6c757d;
+  --border-sidebar: #dee2e6;
+}
+
+/* =========================================
+   2. TEMA OSCURO GLOBAL
+   ========================================= */
+[data-theme="dark"] {
+  --bg-body: #121212;
+  --bg-card: #1e1e1e;
+
+  --text-main: #e0e0e0;
+  --text-muted: #a0aab2;
+  --border-color: #333333;
+
+  /* Ajuste de paleta para fondos oscuros */
+  --primary-color: #b39ddb; /* Lila un poco más claro para mejor lectura */
+  --primary-hover: #cba6f7;
+  --secondary-color: #6b7280;
+
+  /* Variables por defecto del Sidebar (Modo Oscuro) */
+  --bg-sidebar: #1a1a1a;
+  --text-sidebar-main: #e0e0e0;
+  --text-sidebar-muted: #a0aab2;
+  --border-sidebar: #333333;
+}
+
+/* =========================================
+   3. CLASES DE TEMAS PARA EL SIDEBAR
+   ========================================= */
+/* Obliga al Sidebar a ser CLARO sin importar el tema global */
+.sidebar-theme-light {
+  --bg-sidebar: #ffffff;
+  --text-sidebar-main: #343a40;
+  --text-sidebar-muted: #6c757d;
+  --border-sidebar: #dee2e6;
+}
+
+/* Obliga al Sidebar a ser OSCURO sin importar el tema global */
+.sidebar-theme-dark {
+  --bg-sidebar: #111827; /* Azul noche / Pizarra muy oscuro */
+  --text-sidebar-main: #f3f4f6;
+  --text-sidebar-muted: #9ca3af;
+  --border-sidebar: #1f2937;
+}
+
+/* Obliga al Sidebar a usar el COLOR LILA PRIMARIO */
+.sidebar-theme-primary {
+  --bg-sidebar: var(--primary-color);
+  --text-sidebar-main: #ffffff;
+  --text-sidebar-muted: #f3e8ff; /* Lila súper claro para textos secundarios */
+  --border-sidebar: var(--primary-hover);
+}
+
+/* =========================================
+   4. ESTILOS BASE Y UTILIDADES
+   ========================================= */
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  transition: background-color 0.3s ease, color 0.3s ease; 
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+.card-custom {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Utilidades para los Dropdowns */
+.dropdown-menu-custom {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+.dropdown-item-custom {
+  color: var(--text-main);
+}
+.dropdown-item-custom:hover {
+  background-color: var(--border-color);
+  color: var(--primary-color);
+}
