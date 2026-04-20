@@ -1,21 +1,23 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import api from '../api/axios'
+import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 
 // Variables Generales
 const roles = ref([])
-const permisosBase = ref([]) // Lista maestra de permisos
+const permisosBase = ref([])
 const cargando = ref(true)
 
-// Variables Modal Roles (Mantenemos el modal SOLO para crear/editar el nombre del rol)
+// Variables Modal Roles
 const isEditing = ref(false)
 const rolForm = ref({ id: null, nombre: '', descripcion: '', estado: true })
 const btnCerrarModal = ref(null)
+const erroresValidacion = ref({}) // <-- NUEVA VARIABLE PARA ERRORES EN EL INPUT
 
-// Variables para el Panel de Asignación (Ya no es un modal)
+// Variables para el Panel de Asignación
 const rolSeleccionado = ref(null)
 const cargandoAsignaciones = ref(false)
-const asignacionPanel = ref(null) // Referencia para hacer scroll automático
+const asignacionPanel = ref(null)
 
 // ==========================================
 // 1. CARGA BASE
@@ -28,8 +30,6 @@ const cargarDatosBase = async () => {
       api.get('/permisos')
     ])
     roles.value = resRoles.data
-    
-    // Transformamos los permisos para agregarles una propiedad booleana 'asignado'
     permisosBase.value = resPermisos.data.map(p => ({ ...p, asignado: false }))
   } catch (error) {
     console.error("Error al cargar datos:", error)
@@ -44,34 +44,88 @@ const cargarDatosBase = async () => {
 const nuevoRol = () => {
   isEditing.value = false
   rolForm.value = { id: null, nombre: '', descripcion: '', estado: true }
+  erroresValidacion.value = {} // Limpiamos errores
 }
 
 const editarRol = (rol) => {
   isEditing.value = true
   rolForm.value = { ...rol, estado: rol.estado == 1 || rol.estado === true }
+  erroresValidacion.value = {} // Limpiamos errores
 }
 
 const guardarRol = async () => {
+  erroresValidacion.value = {} // Reiniciamos errores al intentar guardar
+
   try {
     if (isEditing.value) {
       await api.put(`/roles/${rolForm.value.id}`, rolForm.value)
     } else {
       await api.post('/roles', rolForm.value)
     }
+    
     await cargarDatosBase()
     btnCerrarModal.value.click()
-  } catch (error) { console.error(error) }
+
+    // Alerta Toast de éxito
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: isEditing.value ? 'Rol actualizado' : 'Rol creado',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    })
+
+  } catch (error) {
+    console.error(error)
+    
+    // Captura de errores de validación (Status 422)
+    if (error.response && error.response.status === 422) {
+      erroresValidacion.value = error.response.data.errors; 
+      
+      let mensajeHtml = "<ul style='text-align: left; font-size: 0.9rem;'>";
+      for (const campo in erroresValidacion.value) {
+        mensajeHtml += `<li>${erroresValidacion.value[campo].join('</li><li>')}</li>`;
+      }
+      mensajeHtml += "</ul>";
+
+      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#a28bfa' });
+    } 
+    else if (error.response && error.response.data && error.response.data.message) {
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#a28bfa' });
+    } 
+    else {
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el rol.', confirmButtonColor: '#a28bfa' });
+    }
+  }
 }
 
 const eliminarRol = async (id) => {
-  if (confirm("¿Desactivar este rol?")) {
-    try {
-      await api.delete(`/roles/${id}`)
-      await cargarDatosBase()
-      // Si eliminamos el rol que estábamos editando, cerramos el panel
-      if(rolSeleccionado.value && rolSeleccionado.value.id === id) cerrarPanelAsignacion()
-    } catch (error) { console.error(error) }
-  }
+  // Reemplazamos confirm() por Swal.fire
+  Swal.fire({
+    title: '¿Desactivar rol?',
+    text: "Los usuarios con este rol podrían perder accesos.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#a28bfa',
+    cancelButtonColor: '#fb7185',
+    confirmButtonText: 'Sí, desactivar',
+    cancelButtonText: 'Cancelar'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/roles/${id}`)
+        await cargarDatosBase()
+        if(rolSeleccionado.value && rolSeleccionado.value.id === id) cerrarPanelAsignacion()
+        
+        Swal.fire({ title: '¡Desactivado!', text: 'El rol ha sido desactivado con éxito.', icon: 'success', confirmButtonColor: '#a28bfa' })
+      } catch (error) { 
+        console.error(error)
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo desactivar el rol.', confirmButtonColor: '#a28bfa' })
+      }
+    }
+  })
 }
 
 // ==========================================
@@ -81,28 +135,18 @@ const abrirPanelAsignacion = async (rol) => {
   rolSeleccionado.value = rol
   cargandoAsignaciones.value = true
   
-  // Hacemos scroll suave hacia el panel de abajo
-  nextTick(() => {
-    asignacionPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
+  nextTick(() => { asignacionPanel.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }) })
 
   try {
-    // Reseteamos todos los toggles a false por defecto
     permisosBase.value.forEach(p => p.asignado = false)
-
-    // Consultamos al nuevo endpoint de Laravel los IDs que tiene este rol
     const res = await api.get(`/roles/${rol.id}/permisos`)
-    const permisosAsignadosIds = res.data // ej: [1, 3, 5]
+    const permisosAsignadosIds = res.data
 
-    // Marcamos como 'true' los toggles correspondientes
     permisosBase.value.forEach(p => {
-      // Usamos Number() por si Laravel envió strings
-      if (permisosAsignadosIds.includes(Number(p.id))) {
-        p.asignado = true
-      }
+      if (permisosAsignadosIds.includes(Number(p.id))) { p.asignado = true }
     })
   } catch (error) {
-    console.error("Error cargando permisos del rol:", error)
+    console.error("Error cargando permisos:", error)
   } finally {
     cargandoAsignaciones.value = false
   }
@@ -110,27 +154,38 @@ const abrirPanelAsignacion = async (rol) => {
 
 const cerrarPanelAsignacion = () => {
   rolSeleccionado.value = null
-  // Hacemos scroll hacia arriba
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const guardarPermisosPanel = async () => {
   try {
-    // Filtramos solo los permisos que tienen el toggle activado y extraemos su ID
-    const permisosSeleccionados = permisosBase.value
-      .filter(p => p.asignado === true)
-      .map(p => p.id)
+    const permisosSeleccionados = permisosBase.value.filter(p => p.asignado === true).map(p => p.id)
 
-    // Enviamos el array al nuevo endpoint de sincronización
     await api.post(`/roles/${rolSeleccionado.value.id}/permisos/sync`, {
       permisos: permisosSeleccionados
     })
 
-    alert(`¡Permisos sincronizados con éxito para el rol: ${rolSeleccionado.value.nombre}!`)
+    // CORRECCIÓN VITAL: Guardamos el nombre antes de limpiar la variable
+    const nombreRol = rolSeleccionado.value.nombre;
+    
     cerrarPanelAsignacion()
+    
+    // Alerta de éxito con SweetAlert
+    Swal.fire({
+      icon: 'success',
+      title: '¡Permisos sincronizados!',
+      text: `Se han configurado los accesos para el rol: ${nombreRol}.`,
+      confirmButtonColor: '#a28bfa'
+    })
+
   } catch (error) {
     console.error("Error al sincronizar:", error)
-    alert("Ocurrió un error al guardar los permisos.")
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al guardar',
+      text: 'Ocurrió un error al sincronizar los permisos.',
+      confirmButtonColor: '#a28bfa'
+    })
   }
 }
 
@@ -263,18 +318,33 @@ onMounted(() => {
           </div>
           <div class="modal-body">
             <form @submit.prevent="guardarRol">
+              
               <div class="mb-3">
                 <label class="form-label text-muted fw-medium fs-6">Nombre *</label>
-                <input type="text" class="form-control shadow-none bg-light border-0" v-model="rolForm.nombre" required>
+                <input type="text" 
+                       class="form-control shadow-none bg-light border-0" 
+                       :class="{ 'is-invalid border-danger': erroresValidacion.nombre }"
+                       v-model="rolForm.nombre" required>
+                <div v-if="erroresValidacion.nombre" class="invalid-feedback d-block fw-medium">
+                  {{ erroresValidacion.nombre[0] }}
+                </div>
               </div>
+              
               <div class="mb-3">
                 <label class="form-label text-muted fw-medium fs-6">Descripción</label>
-                <textarea class="form-control shadow-none bg-light border-0" v-model="rolForm.descripcion" rows="2"></textarea>
+                <textarea class="form-control shadow-none bg-light border-0" 
+                          :class="{ 'is-invalid border-danger': erroresValidacion.descripcion }"
+                          v-model="rolForm.descripcion" rows="2"></textarea>
+                <div v-if="erroresValidacion.descripcion" class="invalid-feedback d-block fw-medium">
+                  {{ erroresValidacion.descripcion[0] }}
+                </div>
               </div>
+              
               <div v-if="isEditing" class="mb-4 form-check form-switch d-flex align-items-center">
                 <input class="form-check-input shadow-none fs-5 me-2 custom-switch" type="checkbox" v-model="rolForm.estado">
                 <label class="form-check-label text-muted fw-medium mt-1">{{ rolForm.estado ? 'Activo' : 'Inactivo' }}</label>
               </div>
+              
               <div class="d-flex justify-content-end gap-2 mt-4">
                 <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal">Cancelar</button>
                 <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);">Guardar</button>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-// Importamos la configuración de Axios que creamos en el Paso 1
 import api from '../api/axios'
+import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 
 // Variables reactivas
 const permisos = ref([])
@@ -15,8 +15,8 @@ const permisoForm = ref({
   descripcion: ''
 })
 
-// Referencia al botón de cerrar del modal para cerrarlo por código
 const btnCerrarModal = ref(null)
+const erroresValidacion = ref({}) // <-- NUEVA VARIABLE PARA ERRORES EN EL INPUT
 
 // 1. OBTENER PERMISOS (GET)
 const cargarPermisos = async () => {
@@ -35,48 +35,105 @@ const cargarPermisos = async () => {
 const nuevoPermiso = () => {
   isEditing.value = false
   permisoForm.value = { id: null, nombre: '', descripcion: '' }
+  erroresValidacion.value = {} // Limpiamos errores previos
 }
 
 // 3. PREPARAR FORMULARIO PARA EDITAR
 const editarPermiso = (permiso) => {
   isEditing.value = true
-  permisoForm.value = { ...permiso } // Copiamos los datos al formulario
+  permisoForm.value = { ...permiso }
+  erroresValidacion.value = {} // Limpiamos errores previos
 }
 
 // 4. GUARDAR O ACTUALIZAR (POST / PUT)
 const guardarPermiso = async () => {
+  erroresValidacion.value = {} // Reiniciamos los errores al intentar guardar
+
   try {
     if (isEditing.value) {
-      // Actualizar
       await api.put(`/permisos/${permisoForm.value.id}`, permisoForm.value)
     } else {
-      // Crear
       await api.post('/permisos', permisoForm.value)
     }
     
-    // Recargar la tabla y cerrar modal
     await cargarPermisos()
-    btnCerrarModal.value.click() // Simula el clic para cerrar el modal de Bootstrap
+    btnCerrarModal.value.click()
+    
+    // Alerta Toast de éxito
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: isEditing.value ? 'Permiso actualizado' : 'Permiso creado',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    })
     
   } catch (error) {
     console.error("Error al guardar:", error)
-    alert("Ocurrió un error al guardar el permiso. Revisa la consola.")
+    
+    if (error.response && error.response.status === 422) {
+      // Guardamos los errores para que los inputs se pongan rojos
+      erroresValidacion.value = error.response.data.errors; 
+      
+      let mensajeHtml = "<ul style='text-align: left; font-size: 0.9rem;'>";
+      for (const campo in erroresValidacion.value) {
+        mensajeHtml += `<li>${erroresValidacion.value[campo].join('</li><li>')}</li>`;
+      }
+      mensajeHtml += "</ul>";
+
+      Swal.fire({
+        icon: 'warning',
+        title: 'Verifica los datos',
+        html: mensajeHtml,
+        confirmButtonColor: '#a28bfa'
+      });
+    } else if (error.response && error.response.data && error.response.data.message) {
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#a28bfa' });
+    } else {
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el permiso.', confirmButtonColor: '#a28bfa' });
+    }
   }
 }
 
 // 5. ELIMINAR (DELETE)
 const eliminarPermiso = async (id) => {
-  if (confirm("¿Estás seguro de que deseas eliminar este permiso?")) {
-    try {
-      await api.delete(`/permisos/${id}`)
-      await cargarPermisos()
-    } catch (error) {
-      console.error("Error al eliminar:", error)
+  // Reemplazamos el confirm() nativo
+  Swal.fire({
+    title: '¿Eliminar permiso?',
+    text: "Si este permiso está asignado a un Rol, también se le quitará. Esta acción no se puede deshacer.",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#a28bfa',
+    cancelButtonColor: '#fb7185',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await api.delete(`/permisos/${id}`)
+        await cargarPermisos()
+        
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: 'El permiso ha sido eliminado.',
+          icon: 'success',
+          confirmButtonColor: '#a28bfa'
+        })
+      } catch (error) {
+        console.error("Error al eliminar:", error)
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudo eliminar el permiso.',
+          confirmButtonColor: '#a28bfa'
+        })
+      }
     }
-  }
+  })
 }
 
-// Al montar el componente, cargamos los datos automáticamente
 onMounted(() => {
   cargarPermisos()
 })
@@ -156,19 +213,31 @@ onMounted(() => {
           
           <div class="modal-body">
             <form @submit.prevent="guardarPermiso">
+              
               <div class="mb-3">
                 <label for="nombre" class="form-label text-muted fw-medium fs-6">Nombre del Permiso *</label>
-                <input type="text" class="form-control shadow-none bg-light border-0" id="nombre" v-model="permisoForm.nombre" placeholder="Ej. crear_usuarios" required>
+                <input type="text" 
+                       class="form-control shadow-none bg-light border-0" 
+                       :class="{ 'is-invalid border-danger': erroresValidacion.nombre }"
+                       id="nombre" v-model="permisoForm.nombre" placeholder="Ej. crear_usuarios" required>
+                <div v-if="erroresValidacion.nombre" class="invalid-feedback d-block fw-medium">
+                  {{ erroresValidacion.nombre[0] }}
+                </div>
               </div>
               
               <div class="mb-4">
                 <label for="descripcion" class="form-label text-muted fw-medium fs-6">Descripción</label>
-                <textarea class="form-control shadow-none bg-light border-0" id="descripcion" v-model="permisoForm.descripcion" rows="3" placeholder="Detalla qué hace este permiso..."></textarea>
+                <textarea class="form-control shadow-none bg-light border-0" 
+                          :class="{ 'is-invalid border-danger': erroresValidacion.descripcion }"
+                          id="descripcion" v-model="permisoForm.descripcion" rows="3" placeholder="Detalla qué hace este permiso..."></textarea>
+                <div v-if="erroresValidacion.descripcion" class="invalid-feedback d-block fw-medium">
+                  {{ erroresValidacion.descripcion[0] }}
+                </div>
               </div>
               
               <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary border-0" style="background-color: var(--primary-color);">
+                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);">
                   <i class="bi bi-save me-1"></i> Guardar
                 </button>
               </div>
