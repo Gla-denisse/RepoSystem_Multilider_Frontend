@@ -36,35 +36,70 @@ const toggleSubmenu = (menuName) => {
         </RouterLink>
       </li>
 
-      <li class="nav-item mt-2" v-if="authStore.hasPermission('ver_usuarios') || authStore.hasPermission('ver_roles') || authStore.hasPermission('ver_permisos')">
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_usuarios') || authStore.hasPermission('acceso_roles') || authStore.hasPermission('acceso_permisos')">
         
         <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
            @click.prevent="toggleSubmenu('seguridad')" 
            :title="isCompact ? 'Seguridad' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-shield-lock fs-5"></i>
-            <span v-if="!isCompact" class="ms-3 fw-medium">Seguridad</span>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Adm. Usuarios</span>
           </div>
           <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'seguridad' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
         </a>
         
         <ul v-show="!isCompact && openSubmenu === 'seguridad'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
           
-          <li class="nav-item" v-if="authStore.hasPermission('ver_usuarios')">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_usuarios')">
             <RouterLink to="/usuarios" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
               <i class="bi bi-people me-2 fs-6"></i> Usuarios
             </RouterLink>
           </li>
           
-          <li class="nav-item" v-if="authStore.hasPermission('ver_roles')">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_roles')">
             <RouterLink to="/roles" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
               <i class="bi bi-person-badge me-2 fs-6"></i> Roles
             </RouterLink>
           </li>
           
-          <li class="nav-item" v-if="authStore.hasPermission('ver_permisos')">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_permisos')">
             <RouterLink to="/permisos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
               <i class="bi bi-key me-2 fs-6"></i> Permisos
+            </RouterLink>
+          </li>
+
+        </ul>
+      </li>
+
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_propietarios') || authStore.hasPermission('acceso_manzanos') || authStore.hasPermission('acceso_propiedades')">
+        
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
+           @click.prevent="toggleSubmenu('operativa')" 
+           :title="isCompact ? 'Gestión Operativa' : ''">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-building fs-5"></i>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Gestión Operativa</span>
+          </div>
+          <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'operativa' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </a>
+        
+        <ul v-show="!isCompact && openSubmenu === 'operativa'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
+          
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_propietarios')">
+            <RouterLink to="/propietarios" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-person-lines-fill me-2 fs-6"></i> Propietarios
+            </RouterLink>
+          </li>
+          
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_manzanos')">
+            <RouterLink to="/manzanos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-grid-3x3-gap-fill me-2 fs-6"></i> Manzanos
+            </RouterLink>
+          </li>
+          
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_propiedades')">
+            <RouterLink to="/propiedades" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-houses-fill me-2 fs-6"></i> Propiedades
             </RouterLink>
           </li>
 
@@ -130,5 +165,14 @@ const toggleSubmenu = (menuName) => {
 .sidebar-backdrop {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
   background-color: rgba(0, 0, 0, 0.5); z-index: 1030;
+}
+
+
+a.nav-link:hover {
+  color: var(--primary-color) !important;
+}
+
+a.nav-link:focus {
+  color: var(--primary-color) !important;
 }
 </style>

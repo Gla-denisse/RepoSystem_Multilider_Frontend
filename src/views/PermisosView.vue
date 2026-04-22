@@ -17,6 +17,7 @@ const permisoForm = ref({
 
 const btnCerrarModal = ref(null)
 const erroresValidacion = ref({}) // <-- NUEVA VARIABLE PARA ERRORES EN EL INPUT
+const guardando = ref(false)
 
 // 1. OBTENER PERMISOS (GET)
 const cargarPermisos = async () => {
@@ -48,7 +49,7 @@ const editarPermiso = (permiso) => {
 // 4. GUARDAR O ACTUALIZAR (POST / PUT)
 const guardarPermiso = async () => {
   erroresValidacion.value = {} // Reiniciamos los errores al intentar guardar
-
+  guardando.value = true
   try {
     if (isEditing.value) {
       await api.put(`/permisos/${permisoForm.value.id}`, permisoForm.value)
@@ -94,6 +95,9 @@ const guardarPermiso = async () => {
     } else {
       Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el permiso.', confirmButtonColor: '#a28bfa' });
     }
+  }
+  finally {
+    guardando.value = false
   }
 }
 
@@ -219,7 +223,7 @@ onMounted(() => {
                 <input type="text" 
                        class="form-control shadow-none bg-light border-0" 
                        :class="{ 'is-invalid border-danger': erroresValidacion.nombre }"
-                       id="nombre" v-model="permisoForm.nombre" placeholder="Ej. crear_usuarios" required>
+                       id="nombre" v-model="permisoForm.nombre" placeholder="Ej. acceso_modulo" required>
                 <div v-if="erroresValidacion.nombre" class="invalid-feedback d-block fw-medium">
                   {{ erroresValidacion.nombre[0] }}
                 </div>
@@ -236,9 +240,15 @@ onMounted(() => {
               </div>
               
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);">
-                  <i class="bi bi-save me-1"></i> Guardar
+                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal" :disabled="guardando">
+                  Cancelar
+                </button>
+                
+                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);" :disabled="guardando">
+                  <span v-if="guardando" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <i v-else class="bi bi-save me-1"></i>
+                  
+                  {{ guardando ? 'Guardando...' : 'Guardar' }}
                 </button>
               </div>
             </form>

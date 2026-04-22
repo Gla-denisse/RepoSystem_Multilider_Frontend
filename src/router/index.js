@@ -20,20 +20,37 @@ const router = createRouter({
       path: '/usuarios',
       name: 'Usuarios',
       component: () => import('../views/UsuariosView.vue'),
-      // Agregamos qué permiso requiere esta ruta:
-      meta: { requiresAuth: true, permission: 'ver_usuarios' } 
+      meta: { requiresAuth: true, permission: 'acceso_usuarios' } // <-- Actualizado
     },
     {
       path: '/roles',
       name: 'Roles',
       component: () => import('../views/RolesView.vue'),
-      meta: { requiresAuth: true, permission: 'ver_roles' }
+      meta: { requiresAuth: true, permission: 'acceso_roles' } // <-- Actualizado
     },
     {
       path: '/permisos',
       name: 'Permisos',
       component: () => import('../views/PermisosView.vue'),
-      meta: { requiresAuth: true, permission: 'ver_permisos' }
+      meta: { requiresAuth: true, permission: 'acceso_permisos' } // <-- Actualizado
+    },
+    {
+      path: '/propietarios',
+      name: 'Propietarios',
+      component: () => import('../views/PropietariosView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_propietarios' } // <-- Actualizado
+    },
+    {
+      path: '/manzanos',
+      name: 'Manzanos',
+      component: () => import('../views/ManzanosView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_manzanos' } // <-- Actualizado
+    },
+    {
+      path: '/propiedades',
+      name: 'Propiedades',
+      component: () => import('../views/PropiedadesView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_propiedades' } // <-- Actualizado
     },
   ]
 })

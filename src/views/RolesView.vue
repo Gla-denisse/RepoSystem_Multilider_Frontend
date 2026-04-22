@@ -7,6 +7,7 @@ import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 const roles = ref([])
 const permisosBase = ref([])
 const cargando = ref(true)
+const guardando = ref(false)
 
 // Variables Modal Roles
 const isEditing = ref(false)
@@ -55,6 +56,7 @@ const editarRol = (rol) => {
 
 const guardarRol = async () => {
   erroresValidacion.value = {} // Reiniciamos errores al intentar guardar
+  guardando.value = true
 
   try {
     if (isEditing.value) {
@@ -99,30 +101,59 @@ const guardarRol = async () => {
       Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el rol.', confirmButtonColor: '#a28bfa' });
     }
   }
+  finally {
+    guardando.value = false // <-- APAGAMOS EL PRELOADER
+  }
 }
 
-const eliminarRol = async (id) => {
-  // Reemplazamos confirm() por Swal.fire
+// ==========================================
+// MÉTODO PARA ACTIVAR / DESACTIVAR (TOGGLE)
+// ==========================================
+const toggleEstadoRol = async (rol) => {
+  // Verificamos el estado actual del rol
+  const isActivo = rol.estado == 1 || rol.estado === true;
+  
+  // Textos dinámicos según la acción
+  const accionTxt = isActivo ? 'Desactivar' : 'Activar';
+  const tituloTxt = isActivo ? '¿Desactivar rol?' : '¿Activar rol?';
+  const msjTxt = isActivo 
+    ? "Los usuarios con este rol perderán sus accesos configurados." 
+    : "Los usuarios con este rol recuperarán sus accesos al sistema.";
+  
+  // Colores dinámicos: Rojo para desactivar, Lila para activar
+  const btnColor = isActivo ? '#fb7185' : '#a28bfa';
+
   Swal.fire({
-    title: '¿Desactivar rol?',
-    text: "Los usuarios con este rol podrían perder accesos.",
-    icon: 'warning',
+    title: tituloTxt,
+    text: msjTxt,
+    icon: isActivo ? 'warning' : 'info',
     showCancelButton: true,
-    confirmButtonColor: '#a28bfa',
-    cancelButtonColor: '#fb7185',
-    confirmButtonText: 'Sí, desactivar',
+    confirmButtonColor: btnColor,
+    cancelButtonColor: '#9ca3af', // Gris para cancelar
+    confirmButtonText: `Sí, ${accionTxt.toLowerCase()}`,
     cancelButtonText: 'Cancelar'
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await api.delete(`/roles/${id}`)
+        // Llamamos a la misma ruta DELETE, pero ahora el backend hará un "toggle"
+        await api.delete(`/roles/${rol.id}`)
         await cargarDatosBase()
-        if(rolSeleccionado.value && rolSeleccionado.value.id === id) cerrarPanelAsignacion()
         
-        Swal.fire({ title: '¡Desactivado!', text: 'El rol ha sido desactivado con éxito.', icon: 'success', confirmButtonColor: '#a28bfa' })
+        // Si desactivamos el rol que estábamos configurando en el panel inferior, cerramos el panel
+        if(isActivo && rolSeleccionado.value && rolSeleccionado.value.id === rol.id) {
+          cerrarPanelAsignacion()
+        }
+        
+        // Alerta de éxito dinámica
+        Swal.fire({ 
+          title: `¡${isActivo ? 'Desactivado' : 'Activado'}!`, 
+          text: `El rol ha sido ${isActivo ? 'desactivado' : 'activado'} con éxito.`, 
+          icon: 'success', 
+          confirmButtonColor: '#a28bfa' 
+        })
       } catch (error) { 
         console.error(error)
-        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo desactivar el rol.', confirmButtonColor: '#a28bfa' })
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo ${accionTxt.toLowerCase()} el rol.`, confirmButtonColor: '#a28bfa' })
       }
     }
   })
@@ -244,8 +275,10 @@ onMounted(() => {
                   <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal" data-bs-target="#modalRol" @click="editarRol(rol)" title="Editar">
                     <i class="bi bi-pencil-square" style="color: var(--primary-color);"></i>
                   </button>
-                  <button class="btn btn-sm btn-light custom-action-btn" @click="eliminarRol(rol.id)" title="Desactivar">
-                    <i class="bi bi-trash text-danger"></i>
+                  <button class="btn btn-sm btn-light custom-action-btn" 
+                          @click="toggleEstadoRol(rol)" 
+                          :title="rol.estado == 1 || rol.estado === true ? 'Desactivar Rol' : 'Activar Rol'">
+                    <i class="bi" :class="rol.estado == 1 || rol.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
                   </button>
                 </td>
               </tr>
@@ -346,8 +379,15 @@ onMounted(() => {
               </div>
               
               <div class="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);">Guardar</button>
+                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal" :disabled="guardando">
+                  Cancelar
+                </button>
+                
+                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);" :disabled="guardando">
+                  <span v-if="guardando" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  
+                  {{ guardando ? 'Guardando...' : 'Guardar' }}
+                </button>
               </div>
             </form>
           </div>

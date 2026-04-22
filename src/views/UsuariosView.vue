@@ -9,6 +9,7 @@ import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 const usuarios = ref([])
 const rolesPermisosAgrupados = ref({})
 const cargando = ref(true)
+const guardando = ref(false)
 
 // Modal CRUD Usuarios
 const isEditing = ref(false)
@@ -91,6 +92,7 @@ const editarUsuario = (user) => {
 
 const guardarUsuario = async () => {
   erroresValidacion.value = {}
+  guardando.value = true
   try {
     const payload = { ...usuarioForm.value }
     if (isEditing.value && payload.password === '') {
@@ -153,30 +155,52 @@ const guardarUsuario = async () => {
         confirmButtonColor: '#a28bfa'
       });
     }
+  } finally {
+    guardando.value = false
   }
 }
 
-const eliminarUsuario = async (id) => {
-  // Reemplazamos el confirm() nativo por Swal
+// ==========================================
+// MÉTODO PARA ACTIVAR / DESACTIVAR USUARIOS
+// ==========================================
+const toggleEstadoUsuario = async (user) => {
+  // Evaluamos el estado actual
+  const isActivo = user.estado == 1 || user.estado === true;
+  
+  // Textos dinámicos
+  const accionTxt = isActivo ? 'Desactivar' : 'Activar';
+  const tituloTxt = isActivo ? '¿Desactivar usuario?' : '¿Activar usuario?';
+  const msjTxt = isActivo 
+    ? "El usuario ya no podrá ingresar al sistema." 
+    : "El usuario recuperará el acceso al sistema.";
+  
+  // Colores: Rojo/Rosado para desactivar, Lila para activar
+  const btnColor = isActivo ? '#fb7185' : '#a28bfa';
+
   Swal.fire({
-    title: '¿Desactivar usuario?',
-    text: "El usuario ya no podrá ingresar al sistema.",
-    icon: 'warning',
+    title: tituloTxt,
+    text: msjTxt,
+    icon: isActivo ? 'warning' : 'info',
     showCancelButton: true,
-    confirmButtonColor: '#a28bfa',
-    cancelButtonColor: '#fb7185', // Tu color danger
-    confirmButtonText: 'Sí, desactivar',
+    confirmButtonColor: btnColor,
+    cancelButtonColor: '#9ca3af', // Gris neutral para cancelar
+    confirmButtonText: `Sí, ${accionTxt.toLowerCase()}`,
     cancelButtonText: 'Cancelar'
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await api.delete(`/usuarios/${id}`)
+        await api.delete(`/usuarios/${user.id}`)
         await cargarDatosBase()
-        if (usuarioSeleccionado.value?.id === id) cerrarPanelAsignacion()
         
+        // Si el usuario desactivado es el que teníamos abierto en el panel inferior, lo cerramos
+        if (isActivo && usuarioSeleccionado.value && usuarioSeleccionado.value.id === user.id) {
+          cerrarPanelAsignacion()
+        }
+        
+        // Alerta de éxito dinámica
         Swal.fire({
-          title: '¡Desactivado!',
-          text: 'El usuario ha sido desactivado con éxito.',
+          title: `¡${isActivo ? 'Desactivado' : 'Activado'}!`,
+          text: `El usuario ha sido ${isActivo ? 'desactivado' : 'activado'} con éxito.`,
           icon: 'success',
           confirmButtonColor: '#a28bfa'
         })
@@ -185,7 +209,7 @@ const eliminarUsuario = async (id) => {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: 'No se pudo desactivar al usuario.',
+          text: `No se pudo ${accionTxt.toLowerCase()} al usuario.`,
           confirmButtonColor: '#a28bfa'
         })
       }
@@ -335,8 +359,10 @@ onMounted(() => {
                     data-bs-target="#modalUsuario" @click="editarUsuario(user)">
                     <i class="bi bi-pencil-square" style="color: var(--primary-color);"></i>
                   </button>
-                  <button class="btn btn-sm btn-light custom-action-btn" @click="eliminarUsuario(user.id)">
-                    <i class="bi bi-trash text-danger"></i>
+                  <button class="btn btn-sm btn-light custom-action-btn" 
+                          @click="toggleEstadoUsuario(user)"
+                          :title="user.estado == 1 || user.estado === true ? 'Desactivar Usuario' : 'Activar Usuario'">
+                    <i class="bi" :class="user.estado == 1 || user.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
                   </button>
                 </td>
               </tr>
@@ -509,8 +535,15 @@ onMounted(() => {
               </div>
 
               <div class="d-flex justify-content-end gap-2 mt-4">
-                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);">Guardar</button>
+                <button type="button" class="btn btn-light shadow-none" data-bs-dismiss="modal" :disabled="guardando">
+                  Cancelar
+                </button>
+                
+                <button type="submit" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);" :disabled="guardando">
+                  <span v-if="guardando" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  
+                  {{ guardando ? 'Guardando...' : 'Guardar' }}
+                </button>
               </div>
             </form>
           </div>

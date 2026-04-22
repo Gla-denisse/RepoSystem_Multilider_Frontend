@@ -10,6 +10,7 @@ const authStore = useAuthStore()
 const formulario = ref({ correo: '', password: '' })
 const cargando = ref(false)
 const errorMensaje = ref('')
+const mostrarPassword = ref(false)
 
 // === NUEVAS VARIABLES PARA EL TEMPORIZADOR ===
 const segundosBloqueo = ref(0)
@@ -114,20 +115,34 @@ const iniciarSesion = async () => {
               <label for="correo" class="text-muted">Correo electrónico</label>
             </div>
 
-            <div class="form-floating mb-4">
-              <input type="password" class="form-control custom-input" id="password" placeholder="Contraseña"
-                v-model="formulario.password" required>
+            <div class="form-floating mb-4 position-relative">
+              <input 
+                :type="mostrarPassword ? 'text' : 'password'" 
+                class="form-control custom-input" 
+                id="password" 
+                placeholder="Contraseña"
+                v-model="formulario.password" 
+                required>
               <label for="password" class="text-muted">Contraseña</label>
+              
+              <!-- Botón para mostrar/ocultar -->
+              <button 
+                type="button" 
+                class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted border-0 p-2"
+                @click="mostrarPassword = !mostrarPassword"
+                tabindex="-1">
+                <i :class="mostrarPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              </button>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <!-- <div class="d-flex justify-content-between align-items-center mb-4">
               <div class="form-check">
                 <input class="form-check-input custom-checkbox shadow-none" type="checkbox" id="recordarme">
                 <label class="form-check-label text-muted small" for="recordarme">Recordarme</label>
               </div>
               <a href="#" class="small text-decoration-none fw-medium" style="color: var(--primary-color);">¿Olvidaste
                 tu contraseña?</a>
-            </div>
+            </div> -->
 
             <button type="submit" class="btn btn-primary w-100 py-3 fw-bold border-0 shadow-sm transition-all"
               :style="segundosBloqueo > 0 ? 'background-color: var(--secondary-color);' : 'background-color: var(--primary-color);'"
@@ -154,6 +169,18 @@ const iniciarSesion = async () => {
 </template>
 
 <style scoped>
+/* Botón de mostrar/ocultar contraseña */
+.btn-link:hover {
+  color: var(--primary-color) !important;
+}
+
+.form-floating {
+  position: relative;
+}
+
+.form-floating .btn-link {
+  z-index: 10;
+}
 /* Fondo de pantalla completa */
 .login-wrapper {
   background-color: var(--bg-body);
