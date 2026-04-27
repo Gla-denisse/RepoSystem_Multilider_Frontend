@@ -106,6 +106,45 @@ const toggleSubmenu = (menuName) => {
         </ul>
       </li>
 
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_asesores')">
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
+           @click.prevent="toggleSubmenu('comercial')" 
+           :title="isCompact ? 'Gestión Comercial' : ''">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-briefcase fs-5"></i>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Gestión Comercial</span>
+          </div>
+          <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'comercial' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </a>
+        
+        <ul v-show="!isCompact && openSubmenu === 'comercial'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_ventas')">
+            <RouterLink to="/ventas/nueva" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-cart-check-fill me-2 fs-6"></i> Nueva Venta
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_historial_ventas')">
+            <RouterLink to="/ventas/historial" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-clock-history me-2 fs-6"></i> Historial de Ventas
+            </RouterLink>
+          </li>
+          
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_asesores')">
+            <RouterLink to="/asesores" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-person-badge me-2 fs-6"></i> Asesores
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_clientes')">
+            <RouterLink to="/clientes" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-people-fill me-2 fs-6"></i> Clientes
+            </RouterLink>
+          </li>
+
+        </ul>
+      </li>
+
     </ul>
   </aside>
 
@@ -168,11 +207,20 @@ const toggleSubmenu = (menuName) => {
 }
 
 
-a.nav-link:hover {
+/* a.nav-link:hover {
   color: var(--primary-color) !important;
-}
+} */
+li.nav-link:focus {
+  color: var(--bg-sidebar) !important;
+} 
 
 a.nav-link:focus {
   color: var(--primary-color) !important;
-}
+} 
+
+a.nav-link.active {
+  color: #ffffff !important;
+} 
+
+
 </style>

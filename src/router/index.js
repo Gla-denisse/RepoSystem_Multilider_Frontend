@@ -20,37 +20,61 @@ const router = createRouter({
       path: '/usuarios',
       name: 'Usuarios',
       component: () => import('../views/UsuariosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_usuarios' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_usuarios' }
     },
     {
       path: '/roles',
       name: 'Roles',
       component: () => import('../views/RolesView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_roles' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_roles' }
     },
     {
       path: '/permisos',
       name: 'Permisos',
       component: () => import('../views/PermisosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_permisos' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_permisos' }
     },
     {
       path: '/propietarios',
       name: 'Propietarios',
       component: () => import('../views/PropietariosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_propietarios' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_propietarios' }
     },
     {
       path: '/manzanos',
       name: 'Manzanos',
       component: () => import('../views/ManzanosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_manzanos' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_manzanos' }
     },
     {
       path: '/propiedades',
       name: 'Propiedades',
       component: () => import('../views/PropiedadesView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_propiedades' } // <-- Actualizado
+      meta: { requiresAuth: true, permission: 'acceso_propiedades' }
+    },
+    {
+      path: '/asesores',
+      name: 'Asesores',
+      component: () => import('../views/AsesoresView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_asesores' }
+    },
+    {
+      path: '/clientes',
+      name: 'Clientes',
+      component: () => import('../views/ClientesView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_clientes' }
+    },
+    {
+      path: '/ventas/nueva',
+      name: 'NuevaVenta',
+      component: () => import('../views/NuevaVentaView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_ventas' }
+    },
+    {
+      path: '/ventas/historial',
+      name: 'HistorialVentas',
+      component: () => import('../views/HistorialVentasView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_historial_ventas' }
     },
   ]
 })

@@ -117,3 +117,43 @@ body {
   background-color: var(--border-color);
   color: var(--primary-color);
 }
+
+
+/* =========================================
+   5. SOBREESCRITURA DE BOOTSTRAP (BOTONES)
+   ========================================= */
+
+/* Botón Primario Normal */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important; /* El texto blanco resalta bien con tu Lila */
+  transition: all 0.3s ease;
+}
+
+/* Hover, Focus y Click del Botón Primario */
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(162, 139, 250, 0.3) !important; /* Sombra lila suave */
+}
+
+/* Botón Primario con Contorno (Outline) */
+.btn-outline-primary {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  background-color: transparent !important;
+  transition: all 0.3s ease;
+}
+
+/* Hover, Focus y Click del Botón Outline */
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}

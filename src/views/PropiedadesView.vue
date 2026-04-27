@@ -3,6 +3,7 @@ import { ref, onMounted, nextTick, computed } from 'vue'
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import api from '../api/axios'
 import Swal from 'sweetalert2'
+import LiveSearchSelect from '../components/LiveSearchSelect.vue'
 
 // --- ESTADO GENERAL Y DATOS ---
 const propiedades = ref([])
@@ -20,7 +21,7 @@ const totalPages = ref(1)
 const isEditing = ref(false)
 const btnCerrarModal = ref(null)
 const erroresValidacion = ref({})
-const propiedadSeleccionada = ref(null) // Para el Modal VER
+const propiedadSeleccionada = ref(null)
 
 // --- FORMULARIOS ---
 const propiedadForm = ref({
@@ -76,23 +77,21 @@ const initMap = async (lat = -17.3411, lng = -63.2514) => {
 }
 
 const updateCoordsInputs = (lat, lng) => {
-  // Aseguramos que las coordenadas tengan un formato decimal limpio
   const latitude = Number(lat).toFixed(14);
   const longitude = Number(lng).toFixed(14);
   
   ubicacionForm.value.latitud = latitude;
   ubicacionForm.value.longitud = longitude;
-  ubicacionForm.value.url_maps = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+  ubicacionForm.value.url_maps = `https://www.google.com/maps/search/?api=1&query=$${latitude},${longitude}`;
 }
 
 // ==========================================
-// 1. CARGA BASE (PAGINACIÓN Y BÚSQUEDA)
+// 1. CARGA BASE
 // ==========================================
 const cargarDatosBase = async (page = 1) => {
   try {
     cargando.value = true;
     
-    // Le decimos a Laravel que nos mande 1000 registros para que no falte nadie en los <select>
     const [resProp, resOwn, resManz] = await Promise.all([
       api.get(`/propiedades?page=${page}&search=${searchQuery.value}`),
       api.get('/propietarios?per_page=1000'), 
@@ -103,12 +102,10 @@ const cargarDatosBase = async (page = 1) => {
     currentPage.value = resProp.data.current_page;
     totalPages.value = resProp.data.last_page;
 
-    // 🌟 LA CORRECCIÓN CLAVE: Agregamos .data.data porque ahora los datos vienen paginados
     propietarios.value = resOwn.data.data.filter(p => p.estado == 1 || p.estado === true);
     manzanos.value = resManz.data.data.filter(m => m.estado == 1 || m.estado === true);
     
   } catch (error) {
-    // Imprimimos el error real en la consola por si acaso
     console.error("Detalle del error en JS:", error); 
     Swal.fire('Error', 'No se pudieron procesar los datos', 'error');
   } finally {
@@ -117,11 +114,7 @@ const cargarDatosBase = async (page = 1) => {
 }
 
 const buscar = () => cargarDatosBase(1)
-
-const limpiarBusqueda = () => {
-  searchQuery.value = ''
-  buscar()
-}
+const limpiarBusqueda = () => { searchQuery.value = ''; buscar() }
 
 const paginasVisibles = computed(() => {
   let pages = []
@@ -133,7 +126,6 @@ const paginasVisibles = computed(() => {
     end = totalPages.value
     start = Math.max(1, end - maxVisible + 1)
   }
-
   for (let i = start; i <= end; i++) pages.push(i)
   return pages
 })
@@ -164,19 +156,31 @@ const abrirModalGuardar = (prop = null) => {
   });
 }
 
-const abrirModalVer = (prop) => {
-  propiedadSeleccionada.value = prop;
-}
+const abrirModalVer = (prop) => propiedadSeleccionada.value = prop;
 
 const resetPropiedadForm = () => {
   propiedadForm.value = {
     id: null, propietario_id: '', manzano_id: '', tipo: 'Lote', codigo: '', 
-    precio_venta: '', superficie_m2: '', estado: 'Disponible', activo: true
+    precio_venta: '', superficie_m2: '', direccion: '', colinda_norte: '', 
+    colinda_sur: '', colinda_este: '', colinda_oeste: '', nro_lote: '', 
+    estado: 'Disponible', activo: true
   };
 }
 
 const resetUbicacionForm = () => {
-  ubicacionForm.value = { id: null, referencia: '', url_maps: '', latitud: -17.3411, longitud: -63.2514 };
+  const defLat = -17.3411;
+  const defLong = -63.2514;
+  
+  // 🌟 CORRECCIÓN: URL oficial de Google Maps con el símbolo "$" en AMBAS variables
+  const defUrl = `https://www.google.com/maps/search/?api=1&query=${defLat},${defLong}`;
+  
+  ubicacionForm.value = { 
+    id: null, 
+    referencia: '', 
+    url_maps: defUrl, 
+    latitud: defLat, 
+    longitud: defLong 
+  };
 }
 
 // ==========================================
@@ -213,13 +217,10 @@ const guardar = async () => {
 const toggleActivo = async (prop) => {
   const isActivo = prop.activo == 1 || prop.activo === true;
   const accionTxt = isActivo ? 'Ocultar' : 'Publicar';
-  const btnColor = isActivo ? '#fb7185' : '#a28bfa';
-
+  
   Swal.fire({
-    title: `¿${accionTxt} del Catálogo?`,
-    text: "Cambiará la visibilidad de la propiedad.",
-    icon: isActivo ? 'warning' : 'info',
-    showCancelButton: true, confirmButtonColor: btnColor, cancelButtonColor: '#9ca3af',
+    title: `¿${accionTxt} del Catálogo?`, text: "Cambiará la visibilidad de la propiedad.", icon: isActivo ? 'warning' : 'info',
+    showCancelButton: true, confirmButtonColor: isActivo ? '#fb7185' : '#a28bfa', cancelButtonColor: '#9ca3af',
     confirmButtonText: `Sí, ${accionTxt.toLowerCase()}`, cancelButtonText: 'Cancelar'
   }).then(async (result) => {
     if (result.isConfirmed) {
@@ -251,13 +252,10 @@ onMounted(() => cargarDatosBase(1));
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
                  v-model="searchQuery" @keyup.enter="buscar" placeholder="Buscar por Código o Dueño...">
-          
-          <span class="input-group-text bg-white border-start-0 cursor-pointer" 
-                v-if="searchQuery" @click="limpiarBusqueda" title="Limpiar">
+          <span class="input-group-text bg-white border-start-0 cursor-pointer" v-if="searchQuery" @click="limpiarBusqueda" title="Limpiar">
             <i class="bi bi-x-circle-fill text-muted hover-danger transition-all"></i>
           </span>
           <span class="input-group-text bg-white border-start-0" v-else></span>
-
           <button class="btn btn-secondary shadow-none px-3" @click="buscar" type="button">Buscar</button>
         </div>
         
@@ -288,13 +286,11 @@ onMounted(() => cargarDatosBase(1));
                 <div class="mt-2 text-muted small">Cargando propiedades...</div>
               </td>
             </tr>
-            
             <tr v-else-if="propiedades.length === 0">
               <td colspan="5" class="text-center py-5 text-muted">
                 <i class="bi bi-inbox fs-2 d-block mb-2"></i> No se encontraron propiedades.
               </td>
             </tr>
-            
             <template v-else>
               <tr v-for="prop in propiedades" :key="prop.id">
                 <td class="ps-4">
@@ -312,26 +308,15 @@ onMounted(() => cargarDatosBase(1));
                   <div class="smaller text-muted">{{ prop.superficie_m2 }} m²</div>
                 </td>
                 <td class="text-center">
-                  <span class="badge rounded-pill px-3" 
-                        :class="prop.estado === 'Disponible' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
+                  <span class="badge rounded-pill px-3" :class="prop.estado === 'Disponible' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'">
                     {{ prop.estado }}
                   </span>
-                  <!-- <div class="smaller mt-1" :class="prop.activo ? 'text-primary' : 'text-danger'">
-                    <i class="bi" :class="prop.activo ? 'bi-globe' : 'bi-eye-slash'"></i> 
-                    {{ prop.activo ? 'Público' : 'Oculto' }}
-                  </div> -->
                 </td>
                 <td class="text-end pe-4">
                   <div class="btn-group shadow-sm rounded">
-                    <button class="btn btn-sm btn-white text-primary border" @click="abrirModalVer(prop)" data-bs-toggle="modal" data-bs-target="#modalVerProp" title="Ver Detalles">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-white text-info border" @click="abrirModalGuardar(prop)" data-bs-toggle="modal" data-bs-target="#modalProp" title="Editar">
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button class="btn btn-sm btn-white border" :class="prop.activo ? 'text-danger' : 'text-success'" @click="toggleActivo(prop)" :title="prop.activo ? 'Ocultar' : 'Publicar'">
-                      <i class="bi" :class="prop.activo ? 'bi-trash' : 'bi-check-circle'"></i>
-                    </button>
+                    <button class="btn btn-sm btn-white text-primary border" @click="abrirModalVer(prop)" data-bs-toggle="modal" data-bs-target="#modalVerProp" title="Ver Detalles"><i class="bi bi-eye"></i></button>
+                    <button class="btn btn-sm btn-white text-info border" @click="abrirModalGuardar(prop)" data-bs-toggle="modal" data-bs-target="#modalProp" title="Editar"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-white border" :class="prop.activo ? 'text-danger' : 'text-success'" @click="toggleActivo(prop)" :title="prop.activo ? 'Ocultar' : 'Publicar'"><i class="bi" :class="prop.activo ? 'bi-trash' : 'bi-check-circle'"></i></button>
                   </div>
                 </td>
               </tr>
@@ -344,15 +329,9 @@ onMounted(() => cargarDatosBase(1));
     <nav v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
       <small class="text-muted">Mostrando página {{ currentPage }} de {{ totalPages }}</small>
       <ul class="pagination pagination-sm mb-0 shadow-sm">
-        <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <button class="page-link shadow-none text-secondary" @click="cargarDatosBase(currentPage - 1)"><i class="bi bi-chevron-left"></i></button>
-        </li>
-        <li class="page-item" v-for="page in paginasVisibles" :key="page" :class="{ active: currentPage === page }">
-          <button class="page-link shadow-none custom-page-btn" @click="cargarDatosBase(page)">{{ page }}</button>
-        </li>
-        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-          <button class="page-link shadow-none text-secondary" @click="cargarDatosBase(currentPage + 1)"><i class="bi bi-chevron-right"></i></button>
-        </li>
+        <li class="page-item" :class="{ disabled: currentPage === 1 }"><button class="page-link shadow-none text-secondary" @click="cargarDatosBase(currentPage - 1)"><i class="bi bi-chevron-left"></i></button></li>
+        <li class="page-item" v-for="page in paginasVisibles" :key="page" :class="{ active: currentPage === page }"><button class="page-link shadow-none custom-page-btn" @click="cargarDatosBase(page)">{{ page }}</button></li>
+        <li class="page-item" :class="{ disabled: currentPage === totalPages }"><button class="page-link shadow-none text-secondary" @click="cargarDatosBase(currentPage + 1)"><i class="bi bi-chevron-right"></i></button></li>
       </ul>
     </nav>
 
@@ -371,7 +350,7 @@ onMounted(() => cargarDatosBase(1));
           <div class="modal-body p-0">
             <form @submit.prevent="guardar">
               <div class="row g-0">
-                <div class="col-lg-6 p-4 border-end">
+                <div class="col-lg-6 p-4 border-end" style="max-height: 70vh; overflow-y: auto;">
                   <h6 class="fw-bold mb-3 text-muted">Información General</h6>
                   <div class="row g-3">
                     <div class="col-md-6">
@@ -383,25 +362,42 @@ onMounted(() => cargarDatosBase(1));
                       <select class="form-select bg-light border-0" v-model="propiedadForm.tipo">
                         <option value="Lote">Lote</option>
                         <option value="Casa">Casa</option>
-                        <!-- <option value="Terreno">Terreno</option> -->
                       </select>
                     </div>
+
                     <div class="col-md-6">
                       <label class="form-label small fw-bold">Manzano *</label>
-                      <select class="form-select bg-light border-0" v-model="propiedadForm.manzano_id" required>
-                        <option v-for="m in manzanos" :key="m.id" :value="m.id">{{ m.codigo }}</option>
-                      </select>
+                      <LiveSearchSelect 
+                        v-model="propiedadForm.manzano_id"
+                        :options="manzanos"
+                        displayKey="codigo"
+                        subKey="descripcion"
+                        valueKey="id"
+                        placeholder="Buscar manzano..."
+                        :hasError="!!erroresValidacion.manzano_id"
+                      />
+                      <div v-if="erroresValidacion.manzano_id" class="text-danger small mt-1 fw-medium">Este campo es requerido.</div>
                     </div>
+
                     <div class="col-md-6">
                       <label class="form-label small fw-bold">Nro Lote</label>
                       <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.nro_lote">
                     </div>
+
                     <div class="col-12">
                       <label class="form-label small fw-bold">Propietario *</label>
-                      <select class="form-select bg-light border-0" v-model="propiedadForm.propietario_id" required>
-                        <option v-for="p in propietarios" :key="p.id" :value="p.id">{{ p.nombre_completo }} (CI: {{ p.ci }})</option>
-                      </select>
+                      <LiveSearchSelect 
+                        v-model="propiedadForm.propietario_id"
+                        :options="propietarios"
+                        displayKey="nombre_completo"
+                        subKey="ci"
+                        valueKey="id"
+                        placeholder="Buscar por Nombre o Cédula..."
+                        :hasError="!!erroresValidacion.propietario_id"
+                      />
+                      <div v-if="erroresValidacion.propietario_id" class="text-danger small mt-1 fw-medium">Debe seleccionar un propietario.</div>
                     </div>
+
                     <div class="col-md-4">
                       <label class="form-label small fw-bold">Superficie (m²) *</label>
                       <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.superficie_m2" required>
@@ -418,8 +414,33 @@ onMounted(() => cargarDatosBase(1));
                         <option value="Vendido">Vendido</option>
                       </select>
                     </div>
+                    
+                    <div class="col-12 mt-4 pt-3 border-top">
+                      <h6 class="fw-bold mb-3 text-muted">Dirección y Colindancias</h6>
+                    </div>
                     <div class="col-12">
-                      <label class="form-label small fw-bold">Referencia Ubicación</label>
+                      <label class="form-label small fw-bold">Dirección de la Propiedad</label>
+                      <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.direccion" placeholder="Ej: Av. Principal, Zona Norte">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Colinda al Norte</label>
+                      <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.colinda_norte" placeholder="Ej: Lote 4">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Colinda al Sur</label>
+                      <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.colinda_sur" placeholder="Ej: Calle 3">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Colinda al Este</label>
+                      <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.colinda_este" placeholder="Ej: Lote 12">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-bold">Colinda al Oeste</label>
+                      <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.colinda_oeste" placeholder="Ej: Área Verde">
+                    </div>
+
+                    <div class="col-12 mt-4 pt-3 border-top">
+                      <label class="form-label small fw-bold">Referencia Ubicación (Mapa)</label>
                       <textarea class="form-control bg-light border-0" rows="2" v-model="ubicacionForm.referencia"></textarea>
                     </div>
                   </div>
@@ -445,8 +466,7 @@ onMounted(() => cargarDatosBase(1));
 
               <div class="p-4 bg-light d-flex justify-content-end gap-2 border-top">
                 <button type="button" class="btn btn-white border px-4" data-bs-dismiss="modal" :disabled="guardando">Cancelar</button>
-                <button type="submit" class="btn btn-primary px-5 shadow-sm border-0" 
-                        style="background-color: var(--primary-color);" :disabled="guardando">
+                <button type="submit" class="btn btn-primary px-5 shadow-sm border-0" style="background-color: var(--primary-color);" :disabled="guardando">
                   <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
                   {{ guardando ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Guardar') }}
                 </button>
@@ -486,7 +506,6 @@ onMounted(() => cargarDatosBase(1));
                   <li class="list-group-item px-0 bg-transparent"><strong>CI:</strong> {{ propiedadSeleccionada.propietario?.ci }}</li>
                   <li class="list-group-item px-0 bg-transparent"><strong>Teléfono:</strong> {{ propiedadSeleccionada.propietario?.telefono || '-' }}</li>
                 </ul>
-                
                 <div class="mt-3 p-2 bg-light rounded text-center border">
                   <strong>Estado Comercial:</strong> 
                   <span class="ms-2 badge" :class="propiedadSeleccionada.estado === 'Disponible' ? 'bg-success' : 'bg-warning text-dark'">
@@ -496,7 +515,20 @@ onMounted(() => cargarDatosBase(1));
               </div>
             </div>
 
-            <div v-if="propiedadSeleccionada.ubicacion?.url_maps" class="mt-3 text-center">
+            <div class="row mt-2 border-top pt-3">
+              <div class="col-12">
+                <h6 class="fw-bold pb-2 text-muted">Dirección y Colindancias</h6>
+                <p class="small mb-3"><strong>Dirección:</strong> {{ propiedadSeleccionada.direccion || 'No especificada' }}</p>
+                <div class="d-flex flex-wrap gap-2 small">
+                  <div class="bg-light p-2 rounded border flex-fill text-center"><strong>Norte:</strong><br>{{ propiedadSeleccionada.colinda_norte || '-' }}</div>
+                  <div class="bg-light p-2 rounded border flex-fill text-center"><strong>Sur:</strong><br>{{ propiedadSeleccionada.colinda_sur || '-' }}</div>
+                  <div class="bg-light p-2 rounded border flex-fill text-center"><strong>Este:</strong><br>{{ propiedadSeleccionada.colinda_este || '-' }}</div>
+                  <div class="bg-light p-2 rounded border flex-fill text-center"><strong>Oeste:</strong><br>{{ propiedadSeleccionada.colinda_oeste || '-' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="propiedadSeleccionada.ubicacion?.url_maps" class="mt-4 text-center">
               <a :href="propiedadSeleccionada.ubicacion.url_maps" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill px-4">
                 <i class="bi bi-geo-alt-fill me-1"></i> Abrir en Google Maps
               </a>
