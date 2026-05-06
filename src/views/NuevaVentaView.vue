@@ -14,6 +14,7 @@ const guardando = ref(false)
 const clientes = ref([])
 const propiedades = ref([])
 const asesores = ref([])
+const metodosPago = ref([])
 
 // Selecciones
 const clienteSeleccionadoId = ref(null)
@@ -22,13 +23,14 @@ const propiedadSeleccionadaId = ref(null)
 // Formulario de Venta
 const formVenta = ref({
   asesor_id: '',
+  metodo_pago_id: '',
   fecha: new Date().toISOString().substr(0, 10),
   tipo_venta: 'CONTADO',
   monto_comision: 0,
-  
+
   // Contado
   descuento: 0,
-  
+
   // Crédito
   cuota_inicial: 0,
   numero_cuotas: 12,
@@ -46,19 +48,23 @@ const propiedadObj = computed(() => propiedades.value.find(p => p.id === propied
 onMounted(async () => {
   try {
     // Para simplificar, cargamos catálogos (En prod usar paginación/búsqueda remota)
-    const [resCli, resProp, resAse] = await Promise.all([
+    const [resCli, resProp, resAse, resMetodos] = await Promise.all([
       api.get('/clientes?per_page=1000'),
       api.get('/propiedades?per_page=1000'),
-      api.get('/asesores?per_page=100')
+      api.get('/asesores?per_page=100'),
+      api.get('/metodos-pago?per_page=100')
     ])
     clientes.value = resCli.data.data.filter(c => c.estado == 1)
-    
+
     // 🌟 SOLO PROPIEDADES DISPONIBLES
     propiedades.value = resProp.data.data.filter(p => p.estado === 'Disponible' && p.activo)
-    
+
     asesores.value = resAse.data.data
-    // Autoseleccionar un asesor por defecto si existe
+    metodosPago.value = resMetodos.data.data
+
+    // Autoseleccionar un asesor y método de pago por defecto si existe
     if(asesores.value.length > 0) formVenta.value.asesor_id = asesores.value[0].id
+    if(metodosPago.value.length > 0) formVenta.value.metodo_pago_id = metodosPago.value[0].id
 
   } catch (error) {
     Swal.fire('Error', 'No se pudieron cargar los catálogos.', 'error')
@@ -132,7 +138,7 @@ const siguientePaso = () => {
 
 const registrarVenta = async () => {
   guardando.value = true
-  
+
   const payload = {
     asesor_id: formVenta.value.asesor_id,
     cliente_id: clienteSeleccionadoId.value,
@@ -141,6 +147,7 @@ const registrarVenta = async () => {
     monto_total: montoTotal.value,
     monto_comision: formVenta.value.monto_comision,
     tipo_venta: formVenta.value.tipo_venta,
+    metodo_pago_id: formVenta.value.metodo_pago_id,
   }
 
   if (payload.tipo_venta === 'CONTADO') {
@@ -172,10 +179,11 @@ const resetAsistente = () => {
   step.value = 1
   clienteSeleccionadoId.value = null
   propiedadSeleccionadaId.value = null
-  
+
   // Reiniciamos el formulario a sus valores por defecto
   formVenta.value = {
     asesor_id: asesores.value.length > 0 ? asesores.value[0].id : '',
+    metodo_pago_id: metodosPago.value.length > 0 ? metodosPago.value[0].id : '',
     fecha: new Date().toISOString().substr(0, 10),
     tipo_venta: 'CONTADO',
     monto_comision: 0,
@@ -185,7 +193,7 @@ const resetAsistente = () => {
     tasa_interes: 10,
     fecha_inicio_pago: ''
   }
-  
+
 }
 </script>
 
@@ -282,6 +290,13 @@ const resetAsistente = () => {
               <label class="small fw-bold text-muted">Asesor Responsable</label>
               <select class="form-select border-0" v-model="formVenta.asesor_id">
                 <option v-for="a in asesores" :key="a.id" :value="a.id">{{ a.nombre_completo }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="small fw-bold text-muted">Método de Pago</label>
+              <select class="form-select border-0" v-model="formVenta.metodo_pago_id">
+                <option value="">Seleccione un método de pago</option>
+                <option v-for="m in metodosPago" :key="m.id" :value="m.id">{{ m.nombre_metodo }}</option>
               </select>
             </div>
           </div>

@@ -210,14 +210,15 @@ const paginasVisibles = computed(() => {
                 <th>Propiedad</th>
                 <th>Comprador & Asesor</th>
                 <th>Modalidad</th>
+                <th>Método de Pago</th>
                 <th class="text-end">Total Venta</th>
                 <th class="text-center">Estado</th>
                 <th class="text-end pe-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="cargando"><td colspan="7" class="text-center py-5"><div class="spinner-border" style="color: #2c3e50;" role="status"></div></td></tr>
-              <tr v-else-if="ventas.length === 0"><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No hay registros.</td></tr>
+              <tr v-if="cargando"><td colspan="8" class="text-center py-5"><div class="spinner-border" style="color: #2c3e50;" role="status"></div></td></tr>
+              <tr v-else-if="ventas.length === 0"><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No hay registros.</td></tr>
               <template v-else>
                 <tr v-for="venta in ventas" :key="venta.id">
                   <td class="ps-4">
@@ -236,6 +237,12 @@ const paginasVisibles = computed(() => {
                     <span class="badge rounded-pill border" :class="venta.tipo_venta === 'CONTADO' ? 'border-success text-success bg-success bg-opacity-10' : 'border-primary text-primary bg-primary bg-opacity-10'">
                       {{ venta.tipo_venta }}
                     </span>
+                  </td>
+                  <td>
+                    <div class="small fw-medium" v-if="venta.pagos && venta.pagos.length > 0">
+                      {{ venta.pagos[0]?.metodo_pago?.nombre_metodo || '-' }}
+                    </div>
+                    <div class="small text-muted" v-else>-</div>
                   </td>
                   <td class="text-end fw-bold" style="color: #2c3e50;">Bs. {{ venta.monto_total }}</td>
                   <td class="text-center"><span class="badge" :class="venta.estado === 'Completada' ? 'bg-success' : 'bg-danger'">{{ venta.estado }}</span></td>
@@ -430,13 +437,52 @@ const paginasVisibles = computed(() => {
                   <td style="color: #e74c3c;">{{ cuota.monto_interes }}</td>
                   <td class="fw-medium text-dark">{{ cuota.saldo_capital }}</td>
                   <td>
-                    <span class="badge rounded-pill border fw-normal" 
+                    <span class="badge rounded-pill border fw-normal"
                       :class="{
                         'bg-warning bg-opacity-10 text-dark border-warning': cuota.estado === 'Pendiente',
                         'bg-success bg-opacity-10 text-success border-success': cuota.estado === 'Pagada',
                         'bg-danger bg-opacity-10 text-danger border-danger': cuota.estado === 'Vencida'
                       }">
                       {{ cuota.estado }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="ventaSeleccionada.pagos && ventaSeleccionada.pagos.length > 0" class="card border-0 shadow-sm rounded-3 overflow-hidden mb-5">
+        <div class="card-header border-bottom py-3 px-4" style="background-color: #ecf0f1;">
+          <h6 class="mb-0 fw-bold text-uppercase" style="color: #2c3e50; letter-spacing: 1px;"><i class="bi bi-cash-coin me-2"></i>Pagos Registrados</h6>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0 align-middle" style="font-size: 0.9rem;">
+              <thead style="background-color: #34495e; color: white;">
+                <tr>
+                  <th class="py-3 fw-medium border-0">Fecha</th>
+                  <th class="py-3 fw-medium border-0">Concepto</th>
+                  <th class="py-3 fw-medium border-0">Método de Pago</th>
+                  <th class="py-3 fw-medium border-0 text-end">Monto (Bs)</th>
+                  <th class="py-3 fw-medium border-0">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="pago in ventaSeleccionada.pagos" :key="pago.id">
+                  <td class="fw-medium">{{ pago.fecha_pago }}</td>
+                  <td><span class="badge bg-secondary">{{ pago.concepto_pago }}</span></td>
+                  <td>{{ pago.metodo_pago?.nombre_metodo || '-' }}</td>
+                  <td class="text-end fw-bold" style="color: #27ae60;">Bs. {{ pago.monto }}</td>
+                  <td>
+                    <span class="badge rounded-pill fw-normal"
+                      :class="{
+                        'bg-success bg-opacity-10 text-success border border-success': pago.estado === 'Registrado',
+                        'bg-danger bg-opacity-10 text-danger border border-danger': pago.estado === 'Cancelado',
+                        'bg-warning bg-opacity-10 text-dark border border-warning': pago.estado === 'Rechazado'
+                      }">
+                      {{ pago.estado }}
                     </span>
                   </td>
                 </tr>
