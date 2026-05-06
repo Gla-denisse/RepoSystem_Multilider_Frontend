@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import { useAuthStore } from './stores/auth'
@@ -13,7 +13,7 @@ const toggleCompact = () => { isCompact.value = !isCompact.value }
 const toggleMobile = () => { isOpenMobile.value = !isOpenMobile.value }
 const closeMobile = () => { isOpenMobile.value = false }
 
-// Lógica del Tema (Claro/Oscuro) en App.vue para afectarlo globalmente
+// Lógica del Tema (Dashboard)
 const isDark = ref(false)
 
 const toggleTheme = () => {
@@ -23,18 +23,31 @@ const toggleTheme = () => {
   localStorage.setItem('app-theme', theme)
 }
 
+const layout = computed(() => route.meta.layout || 'public')
+
 onMounted(() => {
   const savedTheme = localStorage.getItem('app-theme') || 'light'
   isDark.value = savedTheme === 'dark'
-  document.documentElement.setAttribute('data-theme', savedTheme)
+  if (layout.value === 'admin') {
+    document.documentElement.setAttribute('data-theme', savedTheme)
+  } else {
+    document.documentElement.removeAttribute('data-theme')
+  }
 })
 </script>
 
 <template>
-  <div v-if="route.name === 'login'">
+  <!-- Layout Público (Landing) -->
+  <div v-if="layout === 'public'" class="public-layout">
     <RouterView />
   </div>
 
+  <!-- Layout Auth (Login) -->
+  <div v-else-if="layout === 'auth'" class="auth-layout">
+    <RouterView />
+  </div>
+
+  <!-- Layout Admin (Dashboard) -->
   <div v-else class="app-wrapper">
     <Sidebar :isCompact="isCompact" :isOpenMobile="isOpenMobile" @toggle-compact="toggleCompact" @close-mobile="closeMobile" />
 
@@ -109,7 +122,7 @@ onMounted(() => {
 
 .topbar {
   height: var(--topbar-height);
-  background-color: var(--bg-sidebar); /* La barra superior usa el mismo color que el sidebar */
+  background-color: var(--bg-sidebar);
   position: sticky;
   top: 0;
   z-index: 1020;

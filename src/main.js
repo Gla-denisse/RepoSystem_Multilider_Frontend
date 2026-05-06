@@ -7,8 +7,10 @@ import router from './router'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import 'animate.css'
 
 import './assets/main.css'
+import './assets/landing.css'
 
 const app = createApp(App)
 

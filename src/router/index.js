@@ -3,83 +3,114 @@ import { useAuthStore } from '../stores/auth';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, from, savedPosition) {
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' }
+    }
+    return { top: 0 }
+  },
   routes: [
+    {
+      path: '/',
+      name: 'Landing',
+      component: () => import('../views/LandingView.vue'),
+      meta: { layout: 'public' }
+    },
     {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
-      meta: { requiresGuest: true }
+      meta: { requiresGuest: true, layout: 'auth' }
     },
     {
-      path: '/',
+      path: '/admin',
       name: 'Dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true } // El Dashboard es general, no requiere un permiso específico
+      meta: { requiresAuth: true, layout: 'admin' }
     },
+    {
+      path: '/empresa',
+      name: 'Empresa',
+      component: () => import('../views/EmpresaView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_empresa', layout: 'admin' }
+    },
+
     {
       path: '/usuarios',
       name: 'Usuarios',
       component: () => import('../views/UsuariosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_usuarios' }
+      meta: { requiresAuth: true, permission: 'acceso_usuarios', layout: 'admin' }
+    },
+    {
+      path: '/ciudades',
+      name: 'Ciudades',
+      component: () => import('../views/CiudadesView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_ciudades', layout: 'admin' }
+    },
+    {
+      path: '/zonas',
+      name: 'Zonas',
+      component: () => import('../views/ZonasView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_zonas', layout: 'admin' }
+    },
+    {
+      path: '/caracteristicas',
+      name: 'Caracteristicas',
+      component: () => import('../views/CaracteristicasView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_caracteristicas', layout: 'admin' }
     },
     {
       path: '/roles',
       name: 'Roles',
       component: () => import('../views/RolesView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_roles' }
+      meta: { requiresAuth: true, permission: 'acceso_roles', layout: 'admin' }
     },
     {
       path: '/permisos',
       name: 'Permisos',
       component: () => import('../views/PermisosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_permisos' }
+      meta: { requiresAuth: true, permission: 'acceso_permisos', layout: 'admin' }
     },
     {
       path: '/propietarios',
       name: 'Propietarios',
       component: () => import('../views/PropietariosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_propietarios' }
-    },
-    {
-      path: '/manzanos',
-      name: 'Manzanos',
-      component: () => import('../views/ManzanosView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_manzanos' }
+      meta: { requiresAuth: true, permission: 'acceso_propietarios', layout: 'admin' }
     },
     {
       path: '/propiedades',
       name: 'Propiedades',
       component: () => import('../views/PropiedadesView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_propiedades' }
+      meta: { requiresAuth: true, permission: 'acceso_propiedades', layout: 'admin' }
     },
     {
       path: '/asesores',
       name: 'Asesores',
       component: () => import('../views/AsesoresView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_asesores' }
+      meta: { requiresAuth: true, permission: 'acceso_asesores', layout: 'admin' }
     },
     {
       path: '/clientes',
       name: 'Clientes',
       component: () => import('../views/ClientesView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_clientes' }
+      meta: { requiresAuth: true, permission: 'acceso_clientes', layout: 'admin' }
     },
     {
       path: '/ventas/nueva',
       name: 'NuevaVenta',
       component: () => import('../views/NuevaVentaView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_ventas' }
+      meta: { requiresAuth: true, permission: 'acceso_ventas', layout: 'admin' }
     },
     {
       path: '/ventas/historial',
       name: 'HistorialVentas',
       component: () => import('../views/HistorialVentasView.vue'),
-      meta: { requiresAuth: true, permission: 'acceso_historial_ventas' }
+      meta: { requiresAuth: true, permission: 'acceso_historial_ventas', layout: 'admin' }
     },
   ]
 })
 
-// GUARDIA DE NAVEGACIÓN (El "Cadenero" de tu app)
+// GUARDIA DE NAVEGACIÓN
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
   const isAuthenticated = !!authStore.token
@@ -94,14 +125,12 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'Dashboard' })
   } 
 
-  // 3. SEGURIDAD DE PERMISOS: Verificamos si la ruta exige un permiso específico
+  // 3. SEGURIDAD DE PERMISOS
   if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     alert("Acceso denegado: No tienes los permisos necesarios para ver este módulo.");
-    // Lo regresamos a la página de donde venía o al Dashboard
     return next({ name: 'Dashboard' }) 
   }
 
-  // Si pasa todas las validaciones, lo dejamos pasar
   next()
 })
 

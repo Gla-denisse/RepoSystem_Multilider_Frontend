@@ -51,7 +51,7 @@ const iniciarSesion = async () => {
     const respuesta = await api.post('/login', formulario.value)
 
     authStore.setAuth(respuesta.data.access_token, respuesta.data.user)
-    router.push('/')
+    router.push('/admin')
 
   } catch (error) {
     if (error.response) {

@@ -68,10 +68,19 @@ const toggleSubmenu = (menuName) => {
             </RouterLink>
           </li>
 
-        </ul>
-      </li>
+          </ul>
+          </li>
 
-      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_propietarios') || authStore.hasPermission('acceso_manzanos') || authStore.hasPermission('acceso_propiedades')">
+          <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_empresa')">
+            <RouterLink to="/empresa" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Configuración' : ''">
+
+          <i class="bi bi-gear fs-5"></i>
+          <span v-if="!isCompact" class="ms-3 fw-medium">Configuración</span>
+          </RouterLink>
+          </li>
+
+
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_propietarios') || authStore.hasPermission('acceso_propiedades') || authStore.hasPermission('acceso_ciudades') || authStore.hasPermission('acceso_zonas') || authStore.hasPermission('acceso_caracteristicas')">
         
         <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
            @click.prevent="toggleSubmenu('operativa')" 
@@ -91,15 +100,27 @@ const toggleSubmenu = (menuName) => {
             </RouterLink>
           </li>
           
-          <li class="nav-item" v-if="authStore.hasPermission('acceso_manzanos')">
-            <RouterLink to="/manzanos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
-              <i class="bi bi-grid-3x3-gap-fill me-2 fs-6"></i> Manzanos
-            </RouterLink>
-          </li>
-          
           <li class="nav-item" v-if="authStore.hasPermission('acceso_propiedades')">
             <RouterLink to="/propiedades" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
               <i class="bi bi-houses-fill me-2 fs-6"></i> Propiedades
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_ciudades')">
+            <RouterLink to="/ciudades" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-geo-alt-fill me-2 fs-6"></i> Ciudades
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_zonas')">
+            <RouterLink to="/zonas" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-pin-map-fill me-2 fs-6"></i> Zonas
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_caracteristicas')">
+            <RouterLink to="/caracteristicas" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-tags-fill me-2 fs-6"></i> Características
             </RouterLink>
           </li>
 
