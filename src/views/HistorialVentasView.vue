@@ -226,7 +226,7 @@ const paginasVisibles = computed(() => {
                   </td>
                   <td>
                     <div class="fw-bold" style="color: #34495e;">{{ venta.propiedad?.codigo }}</div>
-                    <div class="smaller text-muted">{{ venta.propiedad?.tipo }} | M:{{ venta.propiedad?.manzano?.codigo }}</div>
+                    <div class="smaller text-muted">{{ venta.propiedad?.tipo }}</div>
                   </td>
                   <td>
                     <div class="fw-medium text-truncate" style="max-width: 180px;"><i class="bi bi-person-fill text-muted me-1"></i>{{ venta.cliente?.nombre_completo }}</div>
@@ -334,7 +334,7 @@ const paginasVisibles = computed(() => {
               <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
                 <div>
                   <div class="fw-bold fs-5" style="color: #2c3e50;">{{ ventaSeleccionada.propiedad?.codigo }} <span class="badge bg-secondary ms-2 fw-normal">{{ ventaSeleccionada.propiedad?.tipo }}</span></div>
-                  <div class="small text-muted mt-1">Manzano {{ ventaSeleccionada.propiedad?.manzano?.codigo }} | Lote Nro. {{ ventaSeleccionada.propiedad?.nro_lote || '-' }}</div>
+                  <div class="small text-muted mt-1">Lote Nro. {{ ventaSeleccionada.propiedad?.nro_lote || '-' }}</div>
                   <div class="small text-muted">Superficie Legal: {{ ventaSeleccionada.propiedad?.superficie_m2 }} m²</div>
                 </div>
               </div>

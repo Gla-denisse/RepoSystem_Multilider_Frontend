@@ -32,7 +32,6 @@ const validacionPassword = computed(() => {
 // Panel de Asignación de Accesos
 const usuarioSeleccionado = ref(null)
 const cargandoAsignaciones = ref(false)
-const panelAsignacion = ref(null)
 
 // ==========================================
 // 2. CARGA BASE DE DATOS
@@ -224,8 +223,6 @@ const abrirPanelAsignacion = async (user) => {
   usuarioSeleccionado.value = user
   cargandoAsignaciones.value = true
 
-  nextTick(() => { panelAsignacion.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }) })
-
   try {
     Object.values(rolesPermisosAgrupados.value).forEach(grupo => {
       grupo.forEach(item => item.asignado = false)
@@ -250,7 +247,6 @@ const abrirPanelAsignacion = async (user) => {
 
 const cerrarPanelAsignacion = () => {
   usuarioSeleccionado.value = null
-  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const guardarAccesosPanel = async () => {
@@ -292,6 +288,24 @@ const guardarAccesosPanel = async () => {
   }
 }
 
+const abrirPermisos = (usuario) => {
+  usuarioSeleccionado.value = usuario
+}
+
+const cerrarPermisos = () => {
+  usuarioSeleccionado.value = null
+}
+
+const isRolCompleto = (nombreRol) => {
+  const grupo = rolesPermisosAgrupados.value[nombreRol]
+  if (!grupo || grupo.length === 0) return false
+  return grupo.every(item => item.asignado)
+}
+
+const toggleGrupoRol = (nombreRol, valor) => {
+  rolesPermisosAgrupados.value[nombreRol].forEach(item => item.asignado = valor)
+}
+
 onMounted(() => {
   cargarDatosBase()
 })
@@ -300,148 +314,158 @@ onMounted(() => {
 <template>
   <div class="usuarios-container pb-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Usuarios</h2>
-        <p class="text-muted mb-0 fs-6">Administra el personal y sus credenciales de acceso.</p>
-      </div>
-      <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm"
-        style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalUsuario"
-        @click="nuevoUsuario">
-        <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
-      </button>
-    </div>
-
-    <div class="card card-custom border-0 mb-4">
-      <div class="card-body p-0">
-        <div v-if="cargando" class="text-center p-5">
-          <div class="spinner-border" style="color: var(--primary-color);" role="status"></div>
+    <div v-if="!usuarioSeleccionado">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Usuarios</h2>
+          <p class="text-muted mb-0 fs-6">Administra el personal y sus credenciales de acceso.</p>
         </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm"
+          style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalUsuario"
+          @click="nuevoUsuario">
+          <i class="bi bi-person-plus-fill"></i> Nuevo Usuario
+        </button>
+      </div>
 
-        <div v-else class="table-responsive">
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
-              <tr>
-                <th class="ps-4 border-0 rounded-start">Usuario</th>
-                <th class="border-0">Correo Electrónico</th>
-                <th class="border-0">Estado</th>
-                <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody style="border-top: none;">
-              <tr v-for="user in usuarios" :key="user.id"
-                :class="{ 'table-active-row': usuarioSeleccionado?.id === user.id }">
-                <td class="ps-4">
-                  <div class="d-flex align-items-center">
-                    <img :src="`https://ui-avatars.com/api/?name=${user.nombre}&background=a28bfa&color=fff`"
-                      class="rounded-circle me-3" width="40" height="40" alt="Avatar">
-                    <div>
-                      <div class="fw-bold" style="color: var(--text-main);">{{ user.nombre }}</div>
-                      <small class="text-muted">ID: #{{ user.id }}</small>
+      <div class="card card-custom border-0 mb-4">
+        <div class="card-body p-0">
+          <div v-if="cargando" class="text-center p-5">
+            <div class="spinner-border" style="color: var(--primary-color);" role="status"></div>
+          </div>
+
+          <div v-else class="table-responsive table-users">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
+                <tr>
+                  <th class="ps-4 border-0 rounded-start">Usuario</th>
+                  <th class="border-0">Correo Electrónico</th>
+                  <th class="border-0">Estado</th>
+                  <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody style="border-top: none;">
+                <tr v-for="user in usuarios" :key="user.id"
+                  :class="{ 'table-active-row': usuarioSeleccionado?.id === user.id }">
+                  <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                      <img :src="`https://ui-avatars.com/api/?name=${user.nombre}&background=a28bfa&color=fff`"
+                        class="rounded-circle me-3" width="40" height="40" alt="Avatar">
+                      <div>
+                        <div class="fw-bold" style="color: var(--text-main);">{{ user.nombre }}</div>
+                        <small class="text-muted">ID: #{{ user.id }}</small>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td class="text-muted">{{ user.correo }}</td>
-                <td>
-                  <span v-if="user.estado == 1 || user.estado === true"
-                    class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">Activo</span>
-                  <span v-else
-                    class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill">Inactivo</span>
-                </td>
-                <td class="text-end pe-4">
-                  <button class="btn btn-sm me-2 custom-action-btn"
-                    :class="usuarioSeleccionado?.id === user.id ? 'btn-primary text-white' : 'btn-light text-info'"
-                    :style="usuarioSeleccionado?.id === user.id ? `background-color: var(--primary-color); border-color: var(--primary-color);` : ''"
-                    @click="abrirPanelAsignacion(user)" title="Configurar Accesos">
-                    <i class="bi bi-shield-check"></i> Accesos
-                  </button>
-                  <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal"
-                    data-bs-target="#modalUsuario" @click="editarUsuario(user)">
-                    <i class="bi bi-pencil-square" style="color: var(--primary-color);"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light custom-action-btn" 
-                          @click="toggleEstadoUsuario(user)"
-                          :title="user.estado == 1 || user.estado === true ? 'Desactivar Usuario' : 'Activar Usuario'">
-                    <i class="bi" :class="user.estado == 1 || user.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                  <td class="text-muted">{{ user.correo }}</td>
+                  <td>
+                    <span v-if="user.estado == 1 || user.estado === true"
+                      class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">Activo</span>
+                    <span v-else
+                      class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill">Inactivo</span>
+                  </td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-sm me-2 custom-action-btn"
+                      :class="usuarioSeleccionado?.id === user.id ? 'btn-primary text-white' : 'btn-light text-info fw-bold'"
+                      :style="usuarioSeleccionado?.id === user.id ? `background-color: var(--primary-color); border-color: var(--primary-color);` : ''"
+                      @click="abrirPanelAsignacion(user)" title="Configurar Accesos">
+                      <i class="bi bi-shield-check"></i> Accesos
+                    </button>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal"
+                      data-bs-target="#modalUsuario" @click="editarUsuario(user)">
+                      <i class="bi bi-pencil-square" style="color: var(--primary-color);"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light custom-action-btn" 
+                            @click="toggleEstadoUsuario(user)"
+                            :title="user.estado == 1 || user.estado === true ? 'Desactivar Usuario' : 'Activar Usuario'">
+                      <i class="bi" :class="user.estado == 1 || user.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
 
-    <div ref="panelAsignacion"></div>
 
-    <transition name="fade-slide">
-      <div v-if="usuarioSeleccionado" class="card card-custom border-0 shadow-lg mt-4"
-        style="border-top: 4px solid var(--primary-color) !important;">
-        <div class="card-header bg-transparent border-bottom p-4 d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="mb-0 fw-bold" style="color: var(--text-main);">
-              <i class="bi bi-person-bounding-box me-2" style="color: var(--primary-color);"></i>
-              Accesos de <span style="color: var(--primary-color);">{{ usuarioSeleccionado.nombre }}</span>
-            </h5>
-            <small class="text-muted">Habilita los permisos que este usuario tendrá heredados de cada rol.</small>
-          </div>
-          <button type="button" class="btn-close shadow-none" @click="cerrarPanelAsignacion"></button>
+    <div v-if="usuarioSeleccionado" class="card card-custom border-0 shadow-lg"
+      style="border-top: 4px solid var(--primary-color) !important;">
+      <div class="card-header bg-transparent border-bottom p-4 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 fw-bold" style="color: var(--text-main);">
+            <i class="bi bi-person-bounding-box me-2" style="color: var(--primary-color);"></i>
+            Accesos de <span style="color: var(--primary-color);">{{ usuarioSeleccionado.nombre }}</span>
+          </h5>
+          <small class="text-muted">Habilita los permisos que este usuario tendrá heredados de cada rol.</small>
+        </div>
+        <button type="button" class="btn-close shadow-none" @click="cerrarPanelAsignacion"></button>
+      </div>
+
+      <div class="card-body p-4 bg-light bg-opacity-50">
+        <div v-if="cargandoAsignaciones" class="text-center py-4">
+          <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);"></div> Cargando...
         </div>
 
-        <div class="card-body p-4 bg-light bg-opacity-50">
-          <div v-if="cargandoAsignaciones" class="text-center py-4">
-            <div class="spinner-border spinner-border-sm" style="color: var(--primary-color);"></div> Cargando...
-          </div>
-
-          <div v-else>
-            <div v-for="(permisosAsociados, nombreRol) in rolesPermisosAgrupados" :key="nombreRol" class="mb-4">
-              <h6 class="fw-bold mb-3 pb-2 border-bottom text-uppercase"
-                style="color: var(--text-muted); font-size: 0.85rem;">
+        <div v-else>
+          <div v-for="(permisosAsociados, nombreRol) in rolesPermisosAgrupados" :key="nombreRol" class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h6 class="fw-bold mb-0 text-uppercase" style="color: var(--text-muted); font-size: 0.85rem;">
                 <i class="bi bi-diagram-3 me-2"></i> Rol: {{ nombreRol }}
               </h6>
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input custom-switch shadow-none" type="checkbox" role="switch"
+                  :id="'switch-' + nombreRol"
+                  :checked="isRolCompleto(nombreRol)"
+                  @change="toggleGrupoRol(nombreRol, $event.target.checked)">
+                <label class="form-check-label text-muted small fw-semibold" :for="'switch-' + nombreRol" style="cursor: pointer;">
+                  Seleccionar Todo
+                </label>
+              </div>
+            </div>
 
-              <div class="row g-3">
-                <div class="col-xl-3 col-lg-4 col-md-6 col-12" v-for="item in permisosAsociados"
-                  :key="item.rol_permiso_id">
-                  <div
-                    class="p-3 border rounded h-100 d-flex justify-content-between align-items-center permission-card transition-all"
-                    :class="{ 'border-primary bg-primary bg-opacity-10': item.asignado, 'bg-card': !item.asignado }"
-                    @click="item.asignado = !item.asignado" style="cursor: pointer;">
+            <div class="row g-3">
+              <div class="col-xl-3 col-lg-4 col-md-6 col-12" v-for="item in permisosAsociados"
+                :key="item.rol_permiso_id">
+                <div
+                  class="p-3 border rounded h-100 d-flex justify-content-between align-items-center permission-card transition-all"
+                  :class="{ 'border-primary bg-primary bg-opacity-10': item.asignado, 'bg-card': !item.asignado }"
+                  @click="item.asignado = !item.asignado" style="cursor: pointer;">
 
-                    <div class="pe-2 overflow-hidden">
-                      <div class="fw-semibold text-truncate"
-                        :style="item.asignado ? 'color: var(--primary-color);' : 'color: var(--text-main);'">
-                        {{ item.permiso.nombre }}
-                      </div>
-                      <div class="text-muted small text-truncate" style="font-size: 0.75rem;">
-                        {{ item.permiso.descripcion || 'Sin descripción' }}
-                      </div>
+                  <div class="pe-2 overflow-hidden">
+                    <div class="fw-semibold text-truncate"
+                      :style="item.asignado ? 'color: var(--primary-color);' : 'color: var(--text-main);'">
+                      {{ item.permiso.nombre }}
                     </div>
-
-                    <div class="form-check form-switch mb-0" @click.stop>
-                      <input class="form-check-input custom-switch shadow-none fs-4 m-0" type="checkbox" role="switch"
-                        v-model="item.asignado">
+                    <div class="text-muted small text-truncate" style="font-size: 0.75rem;">
+                      {{ item.permiso.descripcion || 'Sin descripción' }}
                     </div>
+                  </div>
+
+                  <div class="form-check form-switch mb-0" @click.stop>
+                    <input class="form-check-input custom-switch shadow-none fs-4 m-0" type="checkbox" role="switch"
+                      v-model="item.asignado">
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div v-if="Object.keys(rolesPermisosAgrupados).length === 0" class="text-center text-muted py-3">
-              No hay combinaciones de Rol-Permiso creadas en el sistema.
-            </div>
+          <div v-if="Object.keys(rolesPermisosAgrupados).length === 0" class="text-center text-muted py-3">
+            No hay combinaciones de Rol-Permiso creadas en el sistema.
           </div>
         </div>
-
-        <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-end gap-2">
-          <button type="button" class="btn btn-light shadow-none" @click="cerrarPanelAsignacion">Cancelar</button>
-          <button type="button" class="btn btn-primary border-0 shadow-sm"
-            style="background-color: var(--primary-color);" @click="guardarAccesosPanel">
-            <i class="bi bi-save me-1"></i> Guardar Accesos
-          </button>
-        </div>
       </div>
-    </transition>
+
+      <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-light shadow-none" @click="cerrarPanelAsignacion">Cancelar</button>
+        <button type="button" class="btn btn-primary border-0 shadow-sm" style="background-color: var(--primary-color);"
+          @click="guardarAccesosPanel">
+          <i class="bi bi-save me-1"></i> Guardar Accesos
+        </button>
+      </div>
+    </div>
+   
 
     <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -527,7 +551,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div v-if="isEditing" class="mb-4 form-check form-switch d-flex align-items-center">
+              <div v-if="isEditing" class="mb-4 form-check form-switch d-flex align-items-center ms-3">
                 <input class="form-check-input shadow-none fs-5 me-2 custom-switch" type="checkbox" v-model="usuarioForm.estado">
                 <label class="form-check-label text-muted fw-medium mt-1">
                   {{ usuarioForm.estado ? 'Cuenta Activa' : 'Cuenta Suspendida' }}
@@ -619,5 +643,9 @@ onMounted(() => {
 /* Transición suave para cuando las letras pasen de gris a verde */
 .transition-colors {
   transition: color 0.3s ease;
+}
+
+.table-users .badge{
+  min-width: 90px;
 }
 </style>

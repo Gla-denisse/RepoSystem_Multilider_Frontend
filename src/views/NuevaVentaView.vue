@@ -263,7 +263,7 @@ const resetAsistente = () => {
               </div>
               <div class="col-md-6 ps-4">
                 <div class="small fw-bold text-muted mb-1">Ubicación</div>
-                <div>Manzano: {{ propiedadObj.manzano?.codigo }} | Lote: {{ propiedadObj.nro_lote || '-' }}</div>
+                <div>Lote: {{ propiedadObj.nro_lote || '-' }}</div>
                 <div class="small mt-2"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ propiedadObj.direccion || 'Sin dirección específica' }}</div>
               </div>
             </div>
