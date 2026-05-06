@@ -107,31 +107,43 @@ const router = createRouter({
       component: () => import('../views/HistorialVentasView.vue'),
       meta: { requiresAuth: true, permission: 'acceso_historial_ventas', layout: 'admin' }
     },
+    {
+      path: '/pagos',
+      name: 'Pagos',
+      component: () => import('../views/PagosView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_pagos', layout: 'admin' }
+    },
+    {
+      path: '/pagos-credito',
+      name: 'PagosCredito',
+      component: () => import('../views/PagosCreditoView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_pagos', layout: 'admin' }
+    },
   ]
 })
 
 // GUARDIA DE NAVEGACIÓN
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
   const isAuthenticated = !!authStore.token
 
   // 1. Si requiere autenticación y NO está logueado
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return next({ name: 'login' })
+    return { name: 'login' }
   } 
   
   // 2. Si es una ruta para "invitados" (como el login) y YA está logueado
   if (to.meta.requiresGuest && isAuthenticated) {
-    return next({ name: 'Dashboard' })
+    return { name: 'Dashboard' }
   } 
 
   // 3. SEGURIDAD DE PERMISOS
   if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
     alert("Acceso denegado: No tienes los permisos necesarios para ver este módulo.");
-    return next({ name: 'Dashboard' }) 
+    return { name: 'Dashboard' } 
   }
 
-  next()
+  return true
 })
 
 export default router

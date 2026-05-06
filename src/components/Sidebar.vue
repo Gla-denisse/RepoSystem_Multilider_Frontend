@@ -87,7 +87,7 @@ const toggleSubmenu = (menuName) => {
            :title="isCompact ? 'Gestión Operativa' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-building fs-5"></i>
-            <span v-if="!isCompact" class="ms-3 fw-medium">Gestión Operativa</span>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Gestión Propiedades</span>
           </div>
           <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'operativa' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
         </a>
@@ -127,7 +127,7 @@ const toggleSubmenu = (menuName) => {
         </ul>
       </li>
 
-      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_asesores')">
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_asesores') || authStore.hasPermission('acceso_ventas') || authStore.hasPermission('acceso_historial_ventas') || authStore.hasPermission('acceso_clientes')">
         <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
            @click.prevent="toggleSubmenu('comercial')" 
            :title="isCompact ? 'Gestión Comercial' : ''">
@@ -163,6 +163,32 @@ const toggleSubmenu = (menuName) => {
             </RouterLink>
           </li>
 
+        </ul>
+      </li>
+
+      <!-- Grupo Cobranzas -->
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_pagos')">
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
+           @click.prevent="toggleSubmenu('cobranzas')" 
+           :title="isCompact ? 'Cobranzas' : ''">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-cash-coin fs-5"></i>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Cobranzas</span>
+          </div>
+          <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'cobranzas' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </a>
+        
+        <ul v-show="!isCompact && openSubmenu === 'cobranzas'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_pagos')">
+            <RouterLink to="/pagos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-cash-stack me-2 fs-6"></i> Pagos al Contado
+            </RouterLink>
+          </li>
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_pagos')">
+            <RouterLink to="/pagos-credito" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-calendar-check me-2 fs-6"></i> Pagos al Crédito
+            </RouterLink>
+          </li>
         </ul>
       </li>
 
