@@ -97,15 +97,15 @@ const formatPrice = (price) => {
 
 <template>
   <div class="landing-page bg-light-landing min-vh-100 d-flex flex-column">
-    <LandingHeader />
+    <LandingHeader :transparentAtTop="false" />
 
     <!-- Hero Section para la vista de listado -->
-    <section class="propiedades-hero py-5 mt-5">
+    <section class="propiedades-hero pb-5" style="padding-top: 100px;">
       <div class="container mt-4">
         <div class="row align-items-center">
           <div class="col-lg-8">
             <h1 class="display-5 fw-bold text-white mb-2">Encuentra tu próximo <span class="text-gradient">Hogar</span></h1>
-            <p class="lead text-white mb-0" style="opacity: 0.9;">Explora nuestro catálogo completo de lotes y casas disponibles.</p>
+            <p class="lead text-white-50 mb-0">Explora nuestro catálogo completo de lotes y casas disponibles.</p>
           </div>
         </div>
       </div>
@@ -374,25 +374,16 @@ const formatPrice = (price) => {
 
 <style scoped>
 .propiedades-hero {
-  background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #020617 0%, #1e40af 100%);
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .propiedades-hero::after {
   content: '';
   position: absolute;
   top: 0; right: 0; bottom: 0; left: 0;
-  background: radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.text-gradient-custom {
-  background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
+  background: radial-gradient(circle at 70% 50%, rgba(37, 99, 235, 0.2) 0%, transparent 70%);
 }
 
 .landing-card:hover img { transform: scale(1.1); }

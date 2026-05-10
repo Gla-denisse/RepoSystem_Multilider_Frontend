@@ -4,6 +4,13 @@ import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { Menu, X } from 'lucide-vue-next'
 
+const props = defineProps({
+  transparentAtTop: {
+    type: Boolean,
+    default: true
+  }
+})
+
 const companyStore = useCompanyStore()
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
@@ -33,7 +40,7 @@ const navLinks = [
   <header 
     :class="[
       'fixed-top w-100 transition-all duration-500',
-      isScrolled ? 'bg-white shadow-sm py-2' : 'bg-transparent py-4'
+      isScrolled ? 'bg-white shadow-sm py-2' : (props.transparentAtTop ? 'bg-transparent py-4' : 'bg-hero-solid py-3 shadow-sm')
     ]"
     style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);"
   >
@@ -159,4 +166,8 @@ const navLinks = [
 }
 
 .logo-box:hover { transform: rotate(5deg) scale(1.1); }
+
+.bg-hero-solid {
+  background: linear-gradient(135deg, #020617 0%, #1e40af 100%);
+}
 </style>
