@@ -23,6 +23,12 @@ const router = createRouter({
       meta: { layout: 'public' }
     },
     {
+      path: '/propiedades-venta/:id',
+      name: 'PropiedadDetalle',
+      component: () => import('../views/landing/PropiedadDetailView.vue'),
+      meta: { layout: 'public' }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),

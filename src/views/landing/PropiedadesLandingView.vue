@@ -2,13 +2,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
-import { 
-  Search, MapPin, Maximize, Bed, Bath, 
-  ArrowRight, Filter, X, ChevronLeft, ChevronRight 
-} from 'lucide-vue-next'
+import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import LandingHeader from '@/components/landing/LandingHeader.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
 import WhatsAppButton from '@/components/landing/WhatsAppButton.vue'
+import PropiedadCard from '@/components/landing/PropiedadCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,11 +70,12 @@ const resetFilters = () => {
 }
 
 onMounted(async () => {
+  companyStore.loading = true // Forzar carga desde el inicio para evitar "No hay resultados"
   if (!companyStore.company) await companyStore.fetchLandingData()
   await companyStore.fetchCities()
-  await loadProperties()
 })
 
+// Centralizar la carga en el watcher para evitar doble petición (onMounted + watch)
 watch(() => route.query, () => {
   filters.value = {
     tipo: route.query.tipo || 'Todos',
@@ -88,11 +87,8 @@ watch(() => route.query, () => {
     page: route.query.page || 1
   }
   loadProperties()
-})
+}, { immediate: true })
 
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('es-BO').format(price)
-}
 </script>
 
 <template>
@@ -104,8 +100,18 @@ const formatPrice = (price) => {
       <div class="container mt-4">
         <div class="row align-items-center">
           <div class="col-lg-8">
-            <h1 class="display-5 fw-bold text-white mb-2">Encuentra tu próximo <span class="text-gradient">Hogar</span></h1>
-            <p class="lead text-white-50 mb-0">Explora nuestro catálogo completo de lotes y casas disponibles.</p>
+            <h1 class="display-5 fw-bold text-white mb-2">Encuentra tu próximo <span>Hogar</span></h1>
+            <p class="lead text-white-50 mb-3">Explora nuestro catálogo completo de lotes y casas disponibles.</p>
+            <div class="d-flex flex-wrap gap-3 mt-2">
+              <div class="hero-stat">
+                <span class="hero-stat-number">{{ companyStore.pagination.totalItems }}</span>
+                <span class="hero-stat-label">Propiedades</span>
+              </div>
+              <div class="hero-stat">
+                <span class="hero-stat-number">{{ companyStore.cities.length }}</span>
+                <span class="hero-stat-label">Ciudades</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -120,7 +126,9 @@ const formatPrice = (price) => {
             <div class="card border-0 shadow-sm rounded-4 p-4 sticky-top" style="top: 100px;">
               <div class="d-flex align-items-center justify-content-between mb-4">
                 <h5 class="fw-bold mb-0">Filtros</h5>
-                <button @click="resetFilters" class="btn btn-link btn-sm text-decoration-none text-muted p-0">Limpiar</button>
+                <button @click="resetFilters" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1">
+                  <i class="bi bi-trash3 me-1"></i> Limpiar
+                </button>
               </div>
 
               <div class="mb-4">
@@ -162,21 +170,21 @@ const formatPrice = (price) => {
                 </div>
               </div>
 
-              <div class="mb-4" v-if="filters.tipo === 'Casa' || filters.tipo === 'Todos'">
+              <div class="mb-4" v-if="filters.tipo === 'Casa'">
                 <label class="form-label small fw-bold text-muted text-uppercase">Habitaciones (+)</label>
                 <div class="d-flex gap-2">
                   <button 
                     v-for="n in [1, 2, 3, 4]" 
                     :key="n"
                     @click="filters.habitaciones = n; applyFilters()"
-                    :class="['btn btn-sm flex-grow-1 border-0', filters.habitaciones == n ? 'btn-primary-landing' : 'bg-light']"
+                    :class="['btn btn-sm flex-grow-1 border-0 transition-all', filters.habitaciones == n ? 'btn-landing btn-landing-primary shadow-sm' : 'bg-light text-muted']"
                   >
                     {{ n }}+
                   </button>
                 </div>
               </div>
 
-              <button @click="applyFilters" class="btn btn-primary-landing w-100 py-2 rounded-3 mt-2">
+              <button @click="applyFilters" class="btn-landing btn-landing-primary w-100 py-2 rounded-3 mt-2 fw-bold btn d-flex align-items-center justify-content-center gap-2">
                 Aplicar Filtros
               </button>
             </div>
@@ -203,12 +211,18 @@ const formatPrice = (price) => {
             <!-- Loading State -->
             <div v-if="companyStore.loading" class="row g-4">
               <div v-for="i in 6" :key="i" class="col-md-6">
-                <div class="landing-card h-100">
-                  <div class="skeleton-box w-100" style="height: 250px;"></div>
+                <div class="bg-white rounded-4 overflow-hidden shadow-sm">
+                  <div class="skeleton-box w-100" style="height:230px"></div>
                   <div class="p-4">
-                    <div class="skeleton-box w-25 mb-3" style="height: 15px;"></div>
-                    <div class="skeleton-box w-75 mb-2" style="height: 25px;"></div>
-                    <div class="skeleton-box w-50" style="height: 15px;"></div>
+                    <div class="skeleton-box w-25 mb-2" style="height:12px"></div>
+                    <div class="skeleton-box w-75 mb-3" style="height:20px"></div>
+                    <div class="skeleton-box w-60 mb-4" style="height:14px"></div>
+                    <div class="d-flex gap-2 mb-3">
+                      <div class="skeleton-box flex-grow-1" style="height:54px"></div>
+                      <div class="skeleton-box flex-grow-1" style="height:54px"></div>
+                      <div class="skeleton-box flex-grow-1" style="height:54px"></div>
+                    </div>
+                    <div class="skeleton-box w-50" style="height:12px"></div>
                   </div>
                 </div>
               </div>
@@ -220,58 +234,14 @@ const formatPrice = (price) => {
                 <i class="bi bi-search display-1 text-muted opacity-25 d-block mb-4"></i>
                 <h3 class="fw-bold">No hay resultados</h3>
                 <p class="text-muted">Intenta ajustando tus filtros de búsqueda.</p>
-                <button @click="resetFilters" class="btn btn-primary-landing px-4 mt-2">Ver todo el catálogo</button>
+                <button @click="resetFilters" class="btn-landing btn-landing-primary px-4 mt-2">Ver todo el catálogo</button>
               </div>
             </div>
 
-            <!-- Grid -->
+            <!-- Grid de propiedades -->
             <div v-else class="row g-4">
               <div v-for="prop in companyStore.allProperties" :key="prop.id" class="col-md-6">
-                <div class="landing-card h-100 group transition-all">
-                  <!-- Image Wrap -->
-                  <div class="position-relative overflow-hidden" style="height: 250px;">
-                    <img 
-                      :src="'http://localhost:8000' + (prop.imagenes.find(i => i.es_principal)?.url || prop.imagenes[0]?.url)" 
-                      class="w-100 h-100 object-fit-cover transition-transform" 
-                      loading="lazy"
-                      style="transition: transform 0.6s ease;"
-                    >
-                    <div class="position-absolute top-0 start-0 p-3 d-flex gap-2">
-                      <span class="badge bg-primary-landing text-uppercase px-3 py-2 shadow-sm">{{ prop.tipo }}</span>
-                      <span v-if="prop.es_destacado" class="badge bg-warning text-dark text-uppercase px-3 py-2 shadow-sm">Destacado</span>
-                    </div>
-                    <div class="position-absolute bottom-0 start-0 p-3 text-white">
-                      <h4 class="fw-bold mb-0 drop-shadow">{{ prop.moneda }} {{ formatPrice(prop.precio_venta) }}</h4>
-                    </div>
-                  </div>
-
-                  <!-- Content -->
-                  <div class="p-4">
-                    <div class="d-flex align-items-center gap-1 text-muted small mb-2">
-                      <MapPin :size="14" class="text-primary-landing" />
-                      <span>{{ prop.zona?.nombre }}, {{ prop.zona?.ciudad?.nombre }}</span>
-                    </div>
-                    <h5 class="fw-bold mb-4">{{ prop.tipo }} en {{ prop.zona?.nombre }}</h5>
-                    
-                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                      <div class="d-flex gap-3">
-                        <div class="d-flex align-items-center gap-1 text-muted small" title="Superficie">
-                          <Maximize :size="16" />
-                          <span>{{ prop.superficie_m2 }}m²</span>
-                        </div>
-                        <template v-if="prop.tipo === 'Casa'">
-                          <div class="d-flex align-items-center gap-1 text-muted small" title="Dormitorios">
-                            <Bed :size="16" />
-                            <span>{{ prop.habitaciones }}</span>
-                          </div>
-                        </template>
-                      </div>
-                      <button class="btn btn-outline-primary rounded-circle p-2 border-opacity-25 hover-bg-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <ArrowRight :size="18" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <PropiedadCard :prop="prop" />
               </div>
             </div>
 
@@ -327,9 +297,23 @@ const formatPrice = (price) => {
               v-for="t in ['Todos', 'Lote', 'Casa']" 
               :key="t"
               @click="filters.tipo = t"
-              :class="['btn flex-grow-1 border-0 py-3 rounded-3', filters.tipo === t ? 'btn-primary-landing' : 'bg-light']"
+              :class="['btn flex-grow-1 border-0 py-3 rounded-3 transition-all', filters.tipo === t ? 'btn-landing btn-landing-primary shadow' : 'bg-light text-muted']"
             >
               {{ t === 'Todos' ? 'Todos' : t }}
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4" v-if="filters.tipo === 'Casa'">
+          <label class="form-label small fw-bold text-muted text-uppercase">Habitaciones (+)</label>
+          <div class="d-flex gap-2">
+            <button 
+              v-for="n in [1, 2, 3, 4]" 
+              :key="n"
+              @click="filters.habitaciones = n"
+              :class="['btn flex-grow-1 border-0 py-3 rounded-3 transition-all', filters.habitaciones == n ? 'btn-landing btn-landing-primary shadow' : 'bg-light text-muted']"
+            >
+              {{ n }}+
             </button>
           </div>
         </div>
@@ -357,11 +341,11 @@ const formatPrice = (price) => {
         </div>
 
         <div class="d-grid gap-2 mt-5 pt-4">
-          <button @click="applyFilters(); showFilters = false" class="btn btn-primary-landing py-3 rounded-3">
-            Mostrar Resultados
+          <button @click="applyFilters(); showFilters = false" class="btn-landing btn-landing-primary py-3 rounded-3 shadow fw-bold">
+            <i class="bi bi-check2-circle me-1"></i> Mostrar Resultados
           </button>
-          <button @click="resetFilters(); showFilters = false" class="btn btn-link text-muted py-2 text-decoration-none">
-            Limpiar todo
+          <button @click="resetFilters(); showFilters = false" class="btn btn-link text-danger py-2 text-decoration-none fw-medium">
+            <i class="bi bi-trash3 me-1"></i> Limpiar todos los filtros
           </button>
         </div>
       </div>
@@ -373,22 +357,34 @@ const formatPrice = (price) => {
 </template>
 
 <style scoped>
+/* ── Hero ───────────────────────────────────── */
 .propiedades-hero {
   background: linear-gradient(135deg, #020617 0%, #1e40af 100%);
   position: relative;
   overflow: hidden;
 }
-
 .propiedades-hero::after {
   content: '';
   position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
+  inset: 0;
   background: radial-gradient(circle at 70% 50%, rgba(37, 99, 235, 0.2) 0%, transparent 70%);
+  pointer-events: none;
 }
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 10px 20px;
+  min-width: 90px;
+}
+.hero-stat-number { font-size: 1.5rem; font-weight: 700; color: #fff; line-height: 1; }
+.hero-stat-label  { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
 
-.landing-card:hover img { transform: scale(1.1); }
-.drop-shadow { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-
+/* ── Mobile filters ─────────────────────────── */
 .mobile-filters-overlay {
   position: fixed;
   inset: 0;
@@ -397,7 +393,6 @@ const formatPrice = (price) => {
   display: flex;
   align-items: flex-end;
 }
-
 .mobile-filters-content {
   width: 100%;
   background: white;
@@ -406,20 +401,9 @@ const formatPrice = (price) => {
   overflow-y: auto;
 }
 
-.hover-bg-primary:hover { 
-  background-color: var(--landing-primary); 
-  color: white !important; 
-  border-color: var(--landing-primary); 
-}
-
-/* Pagination custom styles */
-.page-link {
-  color: #64748b;
-  transition: all 0.3s;
-}
-.page-link:hover {
-  background-color: #f1f5f9;
-}
+/* ── Pagination ─────────────────────────────── */
+.page-link { color: #64748b; transition: all 0.3s; }
+.page-link:hover { background-color: #f1f5f9; }
 .active > .page-link {
   background-color: var(--landing-primary) !important;
   color: white !important;

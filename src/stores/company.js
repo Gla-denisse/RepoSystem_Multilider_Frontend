@@ -6,7 +6,9 @@ export const useCompanyStore = defineStore('company', {
     company: null,
     featuredProperties: [],
     latestProperties: [],
-    allProperties: [], // Para la vista de listado completo
+    allProperties: [],
+    currentProperty: null,
+    similarProperties: [],
     cities: [],
     pagination: {
       currentPage: 1,
@@ -15,6 +17,7 @@ export const useCompanyStore = defineStore('company', {
     },
     advisors: [],
     loading: false,
+    loadingProperty: false,
     error: null
   }),
   
@@ -46,6 +49,7 @@ export const useCompanyStore = defineStore('company', {
 
     async fetchProperties(params = {}) {
       this.loading = true
+      this.allProperties = [] // Limpiar para evitar parpadeos de estados previos
       try {
         const response = await api.get('/landing/propiedades', { params })
         this.allProperties = response.data.data
@@ -58,6 +62,29 @@ export const useCompanyStore = defineStore('company', {
         console.error('Error fetching properties:', err)
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchPropiedad(id) {
+      this.loadingProperty = true
+      this.currentProperty = null
+      try {
+        const response = await api.get(`/landing/propiedades/${id}`)
+        this.currentProperty = response.data
+      } catch (err) {
+        console.error('Error fetching propiedad:', err)
+      } finally {
+        this.loadingProperty = false
+      }
+    },
+
+    async fetchSimilares(id) {
+      try {
+        const response = await api.get(`/landing/propiedades/${id}/similares`)
+        this.similarProperties = response.data
+      } catch (err) {
+        console.error('Error fetching similares:', err)
+        this.similarProperties = []
       }
     },
 
