@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { MapPin, Maximize, Bed, Bath, ArrowRight } from 'lucide-vue-next'
 
@@ -104,9 +105,9 @@ const filteredProperties = computed(() => {
       </div>
 
       <div class="mt-5 text-center">
-        <button class="btn-landing btn-landing-outline">
+        <RouterLink to="/propiedades-venta" class="btn-landing btn-landing-outline text-decoration-none d-inline-flex align-items-center gap-2">
           Ver todas las propiedades <ArrowRight :size="18" />
-        </button>
+        </RouterLink>
       </div>
     </div>
   </section>

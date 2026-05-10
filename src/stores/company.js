@@ -6,6 +6,13 @@ export const useCompanyStore = defineStore('company', {
     company: null,
     featuredProperties: [],
     latestProperties: [],
+    allProperties: [], // Para la vista de listado completo
+    cities: [],
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0
+    },
     advisors: [],
     loading: false,
     error: null
@@ -34,6 +41,32 @@ export const useCompanyStore = defineStore('company', {
         console.error(err)
       } finally {
         this.loading = false
+      }
+    },
+
+    async fetchProperties(params = {}) {
+      this.loading = true
+      try {
+        const response = await api.get('/landing/propiedades', { params })
+        this.allProperties = response.data.data
+        this.pagination = {
+          currentPage: response.data.current_page,
+          totalPages: response.data.last_page,
+          totalItems: response.data.total
+        }
+      } catch (err) {
+        console.error('Error fetching properties:', err)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchCities() {
+      try {
+        const response = await api.get('/landing/ciudades')
+        this.cities = response.data
+      } catch (err) {
+        console.error('Error fetching cities:', err)
       }
     },
 
