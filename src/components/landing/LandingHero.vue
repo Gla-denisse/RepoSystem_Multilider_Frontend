@@ -48,9 +48,9 @@ const formatTitle = (title) => {
   if (!title) return ''
   // Resalta palabras clave como 'Ideal', 'Hogar', 'Inversión' con el gradiente
   return title
-    .replace('Ideal', '<span class="text-gradient">Ideal</span>')
-    .replace('Hogar', '<span class="text-gradient">Hogar</span>')
-    .replace('Inversión', '<span class="text-gradient">Inversión</span>')
+    .replace('Ideal', '<span>Ideal</span>')
+    .replace('Hogar', '<span>Hogar</span>')
+    .replace('Inversión', '<span>Inversión</span>')
 }
 
 onMounted(() => {
