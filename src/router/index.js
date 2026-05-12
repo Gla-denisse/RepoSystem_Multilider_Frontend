@@ -60,9 +60,15 @@ const router = createRouter({
       meta: { requiresAuth: true, permission: 'acceso_ciudades', layout: 'admin' }
     },
     {
-      path: '/zonas',
-      name: 'Zonas',
-      component: () => import('../views/ZonasView.vue'),
+      path: '/distritos',
+      name: 'Distritos',
+      component: () => import('../views/DistritosView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_zonas', layout: 'admin' }
+    },
+    {
+      path: '/sectores-urbanos',
+      name: 'SectoresUrbanos',
+      component: () => import('../views/SectoresUrbanosView.vue'),
       meta: { requiresAuth: true, permission: 'acceso_zonas', layout: 'admin' }
     },
     {
@@ -130,6 +136,12 @@ const router = createRouter({
       name: 'PagosCredito',
       component: () => import('../views/PagosCreditoView.vue'),
       meta: { requiresAuth: true, permission: 'acceso_pagos', layout: 'admin' }
+    },
+    {
+      path: '/contratos',
+      name: 'Contratos',
+      component: () => import('../views/ContratosView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_contratos', layout: 'admin' }
     },
   ]
 })

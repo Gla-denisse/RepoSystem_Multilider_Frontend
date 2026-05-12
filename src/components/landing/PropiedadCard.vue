@@ -36,7 +36,7 @@ const goToDetail = () => {
         <Home :size="44" class="opacity-25 mb-1" />
         <span class="small opacity-50">Sin imagen</span>
       </div>
-      <img v-else :src="mainImage(prop)" class="pc-img" loading="lazy" :alt="`${prop.tipo} en ${prop.zona?.nombre}`">
+      <img v-else :src="mainImage(prop)" class="pc-img" loading="lazy" :alt="`${prop.tipo} en ${prop.sector_urbano?.nombre}`">
       <div class="pc-img-overlay"></div>
 
       <!-- Badges top izquierda -->
@@ -72,12 +72,12 @@ const goToDetail = () => {
       </div>
 
       <!-- Título -->
-      <h5 class="pc-title mb-2">{{ prop.tipo }} en {{ prop.zona?.nombre }}</h5>
+      <h5 class="pc-title mb-2">{{ prop.tipo }} en {{ prop.sector_urbano?.nombre }}</h5>
 
       <!-- Ubicación -->
       <div class="d-flex align-items-center gap-1 pc-location mb-4">
         <MapPin :size="13" />
-        <span>{{ prop.zona?.nombre }}{{ prop.zona?.ciudad?.nombre ? ', ' + prop.zona.ciudad.nombre : '' }}</span>
+        <span>{{ prop.sector_urbano?.nombre }}{{ prop.sector_urbano?.distrito?.ciudad?.nombre ? ', ' + prop.sector_urbano.distrito.ciudad.nombre : '' }}</span>
       </div>
 
       <!-- Stats -->

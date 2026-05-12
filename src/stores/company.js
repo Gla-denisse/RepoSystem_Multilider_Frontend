@@ -10,6 +10,8 @@ export const useCompanyStore = defineStore('company', {
     currentProperty: null,
     similarProperties: [],
     cities: [],
+    distritos: [],
+    sectoresUrbanos: [],
     pagination: {
       currentPage: 1,
       totalPages: 1,
@@ -94,6 +96,26 @@ export const useCompanyStore = defineStore('company', {
         this.cities = response.data
       } catch (err) {
         console.error('Error fetching cities:', err)
+      }
+    },
+
+    async fetchDistritos(ciudadId = null) {
+      try {
+        const params = ciudadId ? { ciudad_id: ciudadId } : {}
+        const response = await api.get('/landing/distritos', { params })
+        this.distritos = response.data
+      } catch (err) {
+        console.error('Error fetching distritos:', err)
+      }
+    },
+
+    async fetchSectoresUrbanos(distritoId) {
+      try {
+        const response = await api.get(`/landing/sectores-urbanos/${distritoId}`)
+        this.sectoresUrbanos = response.data
+      } catch (err) {
+        console.error('Error fetching sectores urbanos:', err)
+        this.sectoresUrbanos = []
       }
     },
 

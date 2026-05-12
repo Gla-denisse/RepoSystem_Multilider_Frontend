@@ -42,7 +42,7 @@ const estadoClass = (estado) => {
 const whatsappUrl = computed(() => {
   if (!store.company?.whatsapp || !prop.value) return '#'
   const num  = store.company.whatsapp.replace(/\D/g, '')
-  const msg  = encodeURIComponent(`Hola, me interesa la propiedad ${prop.value.codigo} — ${prop.value.tipo} en ${prop.value.zona?.nombre}. ¿Podría darme más información?`)
+  const msg  = encodeURIComponent(`Hola, me interesa la propiedad ${prop.value.codigo} — ${prop.value.tipo} en ${prop.value.sector_urbano?.nombre}. ¿Podría darme más información?`)
   return `https://wa.me/${num}?text=${msg}`
 })
 
@@ -106,7 +106,7 @@ watch(() => route.params.id, (id) => { if (id) loadData(id) })
             <i class="bi bi-chevron-right text-muted" style="font-size:.7rem"></i>
             <button @click="router.push('/propiedades-venta')" class="breadcrumb-btn">Propiedades</button>
             <i class="bi bi-chevron-right text-muted" style="font-size:.7rem"></i>
-            <span class="text-dark fw-semibold" style="font-size:.85rem">{{ prop.tipo }} en {{ prop.zona?.nombre }}</span>
+            <span class="text-dark fw-semibold" style="font-size:.85rem">{{ prop.tipo }} en {{ prop.sector_urbano?.nombre }}</span>
           </div>
         </div>
       </div>
@@ -165,11 +165,11 @@ watch(() => route.params.id, (id) => { if (id) loadData(id) })
               </span>
             </div>
 
-            <h1 class="detail-title mb-2">{{ prop.tipo }} en {{ prop.zona?.nombre }}</h1>
+            <h1 class="detail-title mb-2">{{ prop.tipo }} en {{ prop.sector_urbano?.nombre }}</h1>
 
             <div class="d-flex align-items-center gap-2 mb-4 detail-location">
               <MapPin :size="16" />
-              <span>{{ prop.zona?.nombre }}{{ prop.zona?.ciudad?.nombre ? ', ' + prop.zona.ciudad.nombre : '' }}</span>
+              <span>{{ prop.sector_urbano?.nombre }}{{ prop.sector_urbano?.distrito?.ciudad?.nombre ? ', ' + prop.sector_urbano.distrito.ciudad.nombre : '' }}</span>
             </div>
 
             <!-- Precio mobile (visible solo en móvil) -->
@@ -303,8 +303,9 @@ watch(() => route.params.id, (id) => { if (id) loadData(id) })
                   <li><span>Estado</span>
                     <strong :class="['ficha-estado', estadoClass(prop.estado)]">{{ prop.estado }}</strong>
                   </li>
-                  <li><span>Ciudad</span><strong>{{ prop.zona?.ciudad?.nombre || '—' }}</strong></li>
-                  <li><span>Zona</span><strong>{{ prop.zona?.nombre || '—' }}</strong></li>
+                  <li><span>Ciudad</span><strong>{{ prop.sector_urbano?.distrito?.ciudad?.nombre || '—' }}</strong></li>
+                  <li><span>Distrito</span><strong>{{ prop.sector_urbano?.distrito?.nombre || '—' }}</strong></li>
+                  <li><span>Sector</span><strong>{{ prop.sector_urbano?.nombre || '—' }}</strong></li>
                   <li v-if="prop.superficie_m2"><span>Terreno</span><strong>{{ prop.superficie_m2 }} m²</strong></li>
                   <li v-if="prop.superficie_construida_m2"><span>Construido</span><strong>{{ prop.superficie_construida_m2 }} m²</strong></li>
                   <li v-if="prop.habitaciones"><span>Dormitorios</span><strong>{{ prop.habitaciones }}</strong></li>

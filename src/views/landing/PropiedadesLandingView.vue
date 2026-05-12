@@ -135,7 +135,7 @@ watch(() => route.query, () => {
                 <label class="form-label small fw-bold text-muted text-uppercase">Búsqueda</label>
                 <div class="input-group input-group-sm">
                   <span class="input-group-text bg-light border-0"><Search :size="14" /></span>
-                  <input type="text" v-model="filters.search" @keyup.enter="applyFilters" class="form-control bg-light border-0" placeholder="Código o zona...">
+                  <input type="text" v-model="filters.search" @keyup.enter="applyFilters" class="form-control bg-light border-0" placeholder="Código o sector...">
                 </div>
               </div>
 
@@ -287,7 +287,7 @@ watch(() => route.query, () => {
 
         <div class="mb-4">
           <label class="form-label small fw-bold text-muted text-uppercase">Búsqueda</label>
-          <input type="text" v-model="filters.search" class="form-control bg-light border-0 py-3 rounded-3" placeholder="Código o zona...">
+          <input type="text" v-model="filters.search" class="form-control bg-light border-0 py-3 rounded-3" placeholder="Código o sector...">
         </div>
 
         <div class="mb-4">
