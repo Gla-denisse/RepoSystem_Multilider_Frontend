@@ -32,7 +32,7 @@ const getFullUrl = (path) => {
 
 // --- FORMULARIO INTEGRADO (Asesor + Usuario) ---
 const asesorForm = ref({
-  id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true
+  id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true, porcentaje_comision: 3.00
 })
 
 const fotoPreview = ref(null)
@@ -97,7 +97,7 @@ const paginasVisibles = computed(() => {
 // ==========================================
 const nuevoAsesor = () => {
   isEditing.value = false
-  asesorForm.value = { id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true }
+  asesorForm.value = { id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true, porcentaje_comision: 3.00 }
   fotoPreview.value = null
   fotoFile.value = null
   erroresValidacion.value = {}
@@ -133,7 +133,8 @@ const guardarAsesor = async () => {
     formData.append('correo', asesorForm.value.correo)
     formData.append('direccion', asesorForm.value.direccion || '')
     formData.append('estado', asesorForm.value.estado ? 1 : 0)
-    
+    formData.append('porcentaje_comision', asesorForm.value.porcentaje_comision ?? 3.00)
+
     if (asesorForm.value.password) {
       formData.append('password', asesorForm.value.password)
     }
@@ -246,13 +247,14 @@ onMounted(() => cargarDatosBase())
               <tr>
                 <th class="ps-4 border-0 rounded-start">Nombre Asesor</th>
                 <th class="border-0">Contacto</th>
+                <th class="border-0 text-center">% Comisión</th>
                 <th class="border-0 text-center">Estado</th>
                 <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="cargando"><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-              <tr v-else-if="asesores.length === 0"><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No se encontraron asesores.</td></tr>
+              <tr v-if="cargando"><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+              <tr v-else-if="asesores.length === 0"><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No se encontraron asesores.</td></tr>
               <template v-else>
                 <tr v-for="asesor in asesores" :key="asesor.id">
                   <td class="ps-4">
@@ -268,6 +270,11 @@ onMounted(() => cargarDatosBase())
                   <td>
                     <div class="small text-muted"><i class="bi bi-envelope me-1"></i>{{ asesor.correo }}</div>
                     <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ asesor.telefono || 'Sin teléfono' }}</div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3">
+                      {{ asesor.porcentaje_comision ?? 3.00 }}%
+                    </span>
                   </td>
                   <td class="text-center">
                     <span v-if="asesor.estado == 1" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Cuenta Activa</span>
@@ -332,11 +339,19 @@ onMounted(() => cargarDatosBase())
                   <input type="text" class="form-control shadow-none bg-light border-0" :class="{ 'is-invalid border-danger': erroresValidacion.nombre_completo }" v-model="asesorForm.nombre_completo" required>
                   <div class="invalid-feedback">{{ erroresValidacion.nombre_completo?.[0] }}</div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted fw-medium fs-6">% Comisión</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" max="100" class="form-control shadow-none bg-light border-0" v-model="asesorForm.porcentaje_comision">
+                    <span class="input-group-text bg-light border-0 text-muted">%</span>
+                  </div>
+                  <div class="text-muted" style="font-size:.72rem">Se aplica sobre el monto total de cada venta.</div>
+                </div>
+                <div class="col-md-4 mb-3">
                   <label class="form-label text-muted fw-medium fs-6">Teléfono / Celular</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" v-model="asesorForm.telefono">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <label class="form-label text-muted fw-medium fs-6">Dirección (Opcional)</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" v-model="asesorForm.direccion">
                 </div>
@@ -417,6 +432,7 @@ onMounted(() => cargarDatosBase())
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">ID Sistema</div><div class="col-8 fw-medium">Usuario #{{ asesorSeleccionado.user_id }}</div></div>
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">Correo</div><div class="col-8 text-primary">{{ asesorSeleccionado.correo }}</div></div>
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">Teléfono</div><div class="col-8">{{ asesorSeleccionado.telefono || 'No registrado' }}</div></div>
+                <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">% Comisión</div><div class="col-8 fw-bold text-primary">{{ asesorSeleccionado.porcentaje_comision ?? 3.00 }}%</div></div>
                 <div class="row"><div class="col-4 text-muted small fw-bold">Dirección</div><div class="col-8">{{ asesorSeleccionado.direccion || 'No registrada' }}</div></div>
               </div>
             </div>

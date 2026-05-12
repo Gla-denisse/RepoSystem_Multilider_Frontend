@@ -75,6 +75,9 @@ const navLinks = [
             {{ link.name }}
           </a>
         </template>
+        <RouterLink to="/pagar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm me-2">
+          Pagar Cuotas
+        </RouterLink>
         <a href="/login" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
           Admin Portal
         </a>
@@ -119,7 +122,10 @@ const navLinks = [
               {{ link.name }}
             </a>
           </template>
-          <a href="/login" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-3 shadow">
+          <RouterLink to="/pagar" class="btn btn-success w-100 rounded-pill py-3 fw-bold mt-2 shadow" @click="isMobileMenuOpen = false">
+            Pagar Cuotas
+          </RouterLink>
+          <a href="/login" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-2 shadow">
             Panel Administrativo
           </a>
         </div>

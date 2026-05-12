@@ -55,6 +55,7 @@ const propiedadForm = ref({
 
 // Para el selector en cascada en el formulario
 const formDistritoId = ref('')
+const targetSectorId = ref(null) // sector a restaurar tras cargar edición
 
 const ubicacionForm = ref({
   id: null, referencia: '', url_maps: '', latitud: '', longitud: ''
@@ -125,9 +126,12 @@ const cargarSectoresPorDistrito = async (distritoId) => {
   }
 }
 
-watch(formDistritoId, (newVal) => {
-  propiedadForm.value.sector_urbano_id = ''
-  cargarSectoresPorDistrito(newVal)
+watch(formDistritoId, async (newVal) => {
+  const savedId = targetSectorId.value
+  targetSectorId.value = null
+  if (!savedId) propiedadForm.value.sector_urbano_id = ''
+  await cargarSectoresPorDistrito(newVal)
+  if (savedId) propiedadForm.value.sector_urbano_id = savedId
 })
 
 const cargarDatosBase = async (page = 1) => {
@@ -186,8 +190,8 @@ const irFormulario = (prop = null) => {
     };
     // Pre-cargar el distrito del sector para el selector en cascada
     const distritoId = prop.sector_urbano?.distrito_id || ''
-    formDistritoId.value = distritoId
-    if (distritoId) cargarSectoresPorDistrito(distritoId)
+    targetSectorId.value = prop.sector_urbano_id || null
+    formDistritoId.value = distritoId // dispara el watcher, que restaura sector tras cargar
     if (prop.ubicacion) ubicacionForm.value = { ...prop.ubicacion };
     else resetUbicacionForm();
   } else {

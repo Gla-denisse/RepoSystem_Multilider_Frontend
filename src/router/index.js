@@ -29,6 +29,12 @@ const router = createRouter({
       meta: { layout: 'public' }
     },
     {
+      path: '/pagar',
+      name: 'PagoPublico',
+      component: () => import('../views/landing/PagoPublicoView.vue'),
+      meta: { layout: 'public' }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
