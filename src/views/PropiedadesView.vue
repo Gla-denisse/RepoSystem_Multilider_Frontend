@@ -27,6 +27,8 @@ const btnCerrarModal = ref(null) // Mantener referencia para compatibilidad o el
 const erroresValidacion = ref({})
 const propiedadSeleccionada = ref(null)
 
+const baseUrl = import.meta.env.VITE_API_URL
+
 // Para gestión de características
 const caracSearch = ref('')
 const cargandoCarac = ref(false)
@@ -448,7 +450,7 @@ onMounted(() => cargarDatosBase(1));
                   <td class="ps-4">
                     <div class="rounded overflow-hidden bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                       <img v-if="prop.imagenes?.find(i => i.es_principal) || prop.imagenes?.[0]" 
-                           :src="'http://localhost:8000' + (prop.imagenes.find(i => i.es_principal)?.url || prop.imagenes[0].url)" 
+                           :src="baseUrl + (prop.imagenes.find(i => i.es_principal)?.url || prop.imagenes[0].url)" 
                            class="w-100 h-100 object-fit-cover">
                       <i v-else class="bi bi-image text-muted fs-4"></i>
                     </div>
@@ -715,14 +717,14 @@ onMounted(() => cargarDatosBase(1));
              <!-- Galería en Detalle -->
              <div v-if="propiedadSeleccionada.imagenes?.length" class="mb-4">
                 <div class="main-image-container rounded overflow-hidden shadow-sm mb-2 border" style="height: 300px;">
-                  <img :src="'http://localhost:8000' + (propiedadSeleccionada.imagenes.find(i => i.es_principal)?.url || propiedadSeleccionada.imagenes[0].url)" 
+                  <img :src="baseUrl + (propiedadSeleccionada.imagenes.find(i => i.es_principal)?.url || propiedadSeleccionada.imagenes[0].url)" 
                        class="w-100 h-100 object-fit-cover">
                 </div>
                 <div class="d-flex gap-2 overflow-x-auto pb-2">
                   <div v-for="img in propiedadSeleccionada.imagenes" :key="img.id" 
                        class="rounded overflow-hidden border cursor-pointer flex-shrink-0" 
                        style="width: 80px; height: 60px;">
-                    <img :src="'http://localhost:8000' + img.url" class="w-100 h-100 object-fit-cover">
+                    <img :src="baseUrl + img.url" class="w-100 h-100 object-fit-cover">
                   </div>
                 </div>
              </div>

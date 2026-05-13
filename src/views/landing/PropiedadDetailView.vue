@@ -24,7 +24,7 @@ const similares = computed(() => store.similarProperties)
 const images = computed(() => {
   if (!prop.value?.imagenes?.length) return []
   const sorted = [...prop.value.imagenes].sort((a, b) => (b.es_principal ? 1 : 0) - (a.es_principal ? 1 : 0))
-  return sorted.map(i => 'http://localhost:8000' + i.url)
+  return sorted.map(i => import.meta.env.VITE_API_URL + i.url)
 })
 
 const prevImg = () => { activeImg.value = activeImg.value === 0 ? images.value.length - 1 : activeImg.value - 1 }

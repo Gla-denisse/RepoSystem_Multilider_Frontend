@@ -14,7 +14,7 @@ const cargando = ref(false)
 const errorMensaje = ref('')
 const mostrarPassword = ref(false)
 
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 // === NUEVAS VARIABLES PARA EL TEMPORIZADOR ===
 const segundosBloqueo = ref(0)

@@ -55,7 +55,7 @@ const previews = reactive({
   hero_image_3: null
 })
 
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 onMounted(async () => {
   await companyStore.fetchLandingData()

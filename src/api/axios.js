@@ -3,7 +3,7 @@ import router from '@/router';
 
 // Creamos una instancia de Axios con la URL base de tu API en Laravel
 const api = axios.create({
-    baseURL: 'https://codesoft.space/api', // La ruta de tu backend
+    baseURL: `${import.meta.env.VITE_API_URL}/api`, // La ruta de tu backend
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
