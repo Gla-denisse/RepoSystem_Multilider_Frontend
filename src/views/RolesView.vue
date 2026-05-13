@@ -92,13 +92,13 @@ const guardarRol = async () => {
       }
       mensajeHtml += "</ul>";
 
-      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#0B2545' });
     } 
     else if (error.response && error.response.data && error.response.data.message) {
-      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#0B2545' });
     } 
     else {
-      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el rol.', confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el rol.', confirmButtonColor: '#0B2545' });
     }
   }
   finally {
@@ -121,7 +121,7 @@ const toggleEstadoRol = async (rol) => {
     : "Los usuarios con este rol recuperarán sus accesos al sistema.";
   
   // Colores dinámicos: Rojo para desactivar, Lila para activar
-  const btnColor = isActivo ? '#fb7185' : '#a28bfa';
+  const btnColor = isActivo ? '#fb7185' : '#0B2545';
 
   Swal.fire({
     title: tituloTxt,
@@ -149,11 +149,11 @@ const toggleEstadoRol = async (rol) => {
           title: `¡${isActivo ? 'Desactivado' : 'Activado'}!`, 
           text: `El rol ha sido ${isActivo ? 'desactivado' : 'activado'} con éxito.`, 
           icon: 'success', 
-          confirmButtonColor: '#a28bfa' 
+          confirmButtonColor: '#0B2545' 
         })
       } catch (error) { 
         console.error(error)
-        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo ${accionTxt.toLowerCase()} el rol.`, confirmButtonColor: '#a28bfa' })
+        Swal.fire({ icon: 'error', title: 'Error', text: `No se pudo ${accionTxt.toLowerCase()} el rol.`, confirmButtonColor: '#0B2545' })
       }
     }
   })
@@ -206,7 +206,7 @@ const guardarPermisosPanel = async () => {
       icon: 'success',
       title: '¡Permisos sincronizados!',
       text: `Se han configurado los accesos para el rol: ${nombreRol}.`,
-      confirmButtonColor: '#a28bfa'
+      confirmButtonColor: '#0B2545'
     })
 
   } catch (error) {
@@ -215,7 +215,7 @@ const guardarPermisosPanel = async () => {
       icon: 'error',
       title: 'Error al guardar',
       text: 'Ocurrió un error al sincronizar los permisos.',
-      confirmButtonColor: '#a28bfa'
+      confirmButtonColor: '#0B2545'
     })
   }
 }

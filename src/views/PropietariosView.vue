@@ -122,9 +122,9 @@ const guardarPropietario = async () => {
         mensajeHtml += `<li>${erroresValidacion.value[campo].join('</li><li>')}</li>`;
       }
       mensajeHtml += "</ul>";
-      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#0B2545' });
     } else {
-      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar.', confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar.', confirmButtonColor: '#0B2545' });
     }
   } finally {
     guardando.value = false
@@ -137,7 +137,7 @@ const guardarPropietario = async () => {
 const toggleEstadoPropietario = async (prop) => {
   const isActivo = prop.estado == 1 || prop.estado === true;
   const accionTxt = isActivo ? 'Desactivar' : 'Activar';
-  const btnColor = isActivo ? '#fb7185' : '#a28bfa';
+  const btnColor = isActivo ? '#fb7185' : '#0B2545';
 
   Swal.fire({
     title: `¿${accionTxt} propietario?`,

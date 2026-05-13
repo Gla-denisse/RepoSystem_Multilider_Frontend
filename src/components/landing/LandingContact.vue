@@ -39,7 +39,7 @@ const handleSubmit = async () => {
         <!-- Info -->
         <div class="col-lg-5">
           <h2 class="display-5 fw-bold mb-4">Hablemos de tu <br><span class="text-primary-landing">Próximo Hogar</span></h2>
-          <p class="text-muted mb-5 fs-5">¿Tienes alguna duda o quieres visitar un proyecto? Déjanos tus datos y nos pondremos en contacto contigo lo antes posible.</p>
+          <p class="text-secondary mb-5 fs-5">¿Tienes alguna duda o quieres visitar un proyecto? Déjanos tus datos y nos pondremos en contacto contigo lo antes posible.</p>
           
           <div class="d-flex flex-column gap-4">
             <div class="d-flex gap-4 align-items-start">
@@ -48,7 +48,7 @@ const handleSubmit = async () => {
               </div>
               <div>
                 <h5 class="fw-bold mb-1">Visítanos</h5>
-                <p class="text-muted mb-0 small">{{ companyStore.company?.direccion || 'Santa Cruz, Bolivia' }}</p>
+                <p class="text-secondary mb-0 small">{{ companyStore.company?.direccion || 'Santa Cruz, Bolivia' }}</p>
               </div>
             </div>
 
@@ -58,7 +58,7 @@ const handleSubmit = async () => {
               </div>
               <div>
                 <h5 class="fw-bold mb-1">Llámanos</h5>
-                <p class="text-muted mb-0 small">{{ companyStore.company?.telefono || '+591 70000000' }}</p>
+                <p class="text-secondary mb-0 small">{{ companyStore.company?.telefono || '+591 70000000' }}</p>
               </div>
             </div>
 
@@ -68,7 +68,7 @@ const handleSubmit = async () => {
               </div>
               <div>
                 <h5 class="fw-bold mb-1">Email</h5>
-                <p class="text-muted mb-0 small">{{ companyStore.company?.email || 'contacto@multilider.com' }}</p>
+                <p class="text-secondary mb-0 small">{{ companyStore.company?.email || 'contacto@multilider.com' }}</p>
               </div>
             </div>
           </div>
@@ -86,19 +86,19 @@ const handleSubmit = async () => {
             <form @submit.prevent="handleSubmit">
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-muted text-uppercase">Nombre Completo</label>
+                  <label class="form-label small fw-bold text-secondary text-uppercase">Nombre Completo</label>
                   <input v-model="form.nombre" type="text" class="form-control bg-light border-0 py-3 px-4 rounded-3" placeholder="Ej: Juan Perez" required>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold text-muted text-uppercase">Teléfono</label>
+                  <label class="form-label small fw-bold text-secondary text-uppercase">Teléfono</label>
                   <input v-model="form.telefono" type="tel" class="form-control bg-light border-0 py-3 px-4 rounded-3" placeholder="+591 ..." required>
                 </div>
                 <div class="col-12">
-                  <label class="form-label small fw-bold text-muted text-uppercase">Email</label>
+                  <label class="form-label small fw-bold text-secondary text-uppercase">Email</label>
                   <input v-model="form.email" type="email" class="form-control bg-light border-0 py-3 px-4 rounded-3" placeholder="tu@email.com" required>
                 </div>
                 <div class="col-12">
-                  <label class="form-label small fw-bold text-muted text-uppercase">Mensaje</label>
+                  <label class="form-label small fw-bold text-secondary text-uppercase">Mensaje</label>
                   <textarea v-model="form.mensaje" rows="4" class="form-control bg-light border-0 py-3 px-4 rounded-3" placeholder="Escribe tu mensaje aquí..." required></textarea>
                 </div>
                 <div class="col-12 mt-4">

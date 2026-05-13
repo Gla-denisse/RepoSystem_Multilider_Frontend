@@ -110,9 +110,9 @@ const guardarCliente = async () => {
         mensajeHtml += `<li>${erroresValidacion.value[campo].join('</li><li>')}</li>`;
       }
       mensajeHtml += "</ul>";
-      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'warning', title: 'Verifica los datos', html: mensajeHtml, confirmButtonColor: '#0B2545' });
     } else {
-      Swal.fire({ icon: 'error', title: 'Oops...', text: error.response?.data?.message || 'Error al guardar.', confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Oops...', text: error.response?.data?.message || 'Error al guardar.', confirmButtonColor: '#0B2545' });
     }
   } finally {
     guardando.value = false

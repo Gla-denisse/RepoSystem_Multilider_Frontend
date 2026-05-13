@@ -20,10 +20,31 @@ const erroresValidacion = ref({})
 const asesorSeleccionado = ref(null) 
 const mostrarPassword = ref(false)
 
+// URL Base para imágenes
+const getFullUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http')) {
+    // Si la URL guardada tiene el host incorrecto (sin puerto), lo corregimos
+    return path.replace('http://localhost/storage', 'http://localhost:8000/storage');
+  }
+  return `http://localhost:8000${path}`;
+}
+
 // --- FORMULARIO INTEGRADO (Asesor + Usuario) ---
 const asesorForm = ref({
-  id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', estado: true
+  id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true, porcentaje_comision: 3.00
 })
+
+const fotoPreview = ref(null)
+const fotoFile = ref(null)
+
+const handleFotoChange = (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    fotoFile.value = file
+    fotoPreview.value = URL.createObjectURL(file)
+  }
+}
 
 // Validación dinámica de contraseña (Igual que en UsuariosView)
 const validacionPassword = computed(() => {
@@ -76,7 +97,9 @@ const paginasVisibles = computed(() => {
 // ==========================================
 const nuevoAsesor = () => {
   isEditing.value = false
-  asesorForm.value = { id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', estado: true }
+  asesorForm.value = { id: null, nombre_completo: '', telefono: '', correo: '', direccion: '', password: '', foto: null, estado: true, porcentaje_comision: 3.00 }
+  fotoPreview.value = null
+  fotoFile.value = null
   erroresValidacion.value = {}
   mostrarPassword.value = false
 }
@@ -88,6 +111,8 @@ const editarAsesor = (asesor) => {
     password: '', 
     estado: asesor.estado == 1 || asesor.estado === true
   }
+  fotoPreview.value = asesor.foto
+  fotoFile.value = null
   erroresValidacion.value = {}
   mostrarPassword.value = false
 }
@@ -102,13 +127,33 @@ const guardarAsesor = async () => {
   guardando.value = true
 
   try {
-    const payload = { ...asesorForm.value }
-    if (isEditing.value && (!payload.password || payload.password.trim() === '')) {
-      delete payload.password;
+    const formData = new FormData()
+    formData.append('nombre_completo', asesorForm.value.nombre_completo)
+    formData.append('telefono', asesorForm.value.telefono || '')
+    formData.append('correo', asesorForm.value.correo)
+    formData.append('direccion', asesorForm.value.direccion || '')
+    formData.append('estado', asesorForm.value.estado ? 1 : 0)
+    formData.append('porcentaje_comision', asesorForm.value.porcentaje_comision ?? 3.00)
+
+    if (asesorForm.value.password) {
+      formData.append('password', asesorForm.value.password)
+    }
+    
+    if (fotoFile.value) {
+      formData.append('foto', fotoFile.value)
     }
 
-    if (isEditing.value) await api.put(`/asesores/${payload.id}`, payload)
-    else await api.post('/asesores', payload)
+    if (isEditing.value) {
+      // Laravel requiere _method=PUT para procesar archivos vía POST
+      formData.append('_method', 'PUT')
+      await api.post(`/asesores/${asesorForm.value.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+    } else {
+      await api.post('/asesores', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+    }
     
     await cargarDatosBase(currentPage.value)
     
@@ -202,18 +247,20 @@ onMounted(() => cargarDatosBase())
               <tr>
                 <th class="ps-4 border-0 rounded-start">Nombre Asesor</th>
                 <th class="border-0">Contacto</th>
+                <th class="border-0 text-center">% Comisión</th>
                 <th class="border-0 text-center">Estado</th>
                 <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="cargando"><td colspan="4" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
-              <tr v-else-if="asesores.length === 0"><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No se encontraron asesores.</td></tr>
+              <tr v-if="cargando"><td colspan="5" class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></td></tr>
+              <tr v-else-if="asesores.length === 0"><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No se encontraron asesores.</td></tr>
               <template v-else>
                 <tr v-for="asesor in asesores" :key="asesor.id">
                   <td class="ps-4">
                     <div class="d-flex align-items-center">
-                      <!-- <img :src="`https://ui-avatars.com/api/?name=${asesor.nombre_completo}&background=a28bfa&color=fff`" class="rounded-circle me-3" width="40" height="40" alt="Avatar"> -->
+                      <img v-if="asesor.foto" :src="getFullUrl(asesor.foto)" class="rounded-circle me-3 object-fit-cover shadow-sm" width="40" height="40" alt="Avatar">
+                      <img v-else :src="`https://ui-avatars.com/api/?name=${asesor.nombre_completo}&background=0B2545&color=fff`" class="rounded-circle me-3 shadow-sm" width="40" height="40" alt="Avatar">
                       <div>
                         <div class="fw-bold" style="color: var(--text-main);">{{ asesor.nombre_completo }}</div>
                         <div class="text-muted smaller">Usuario ID: #{{ asesor.user_id }}</div>
@@ -223,6 +270,11 @@ onMounted(() => cargarDatosBase())
                   <td>
                     <div class="small text-muted"><i class="bi bi-envelope me-1"></i>{{ asesor.correo }}</div>
                     <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ asesor.telefono || 'Sin teléfono' }}</div>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3">
+                      {{ asesor.porcentaje_comision ?? 3.00 }}%
+                    </span>
                   </td>
                   <td class="text-center">
                     <span v-if="asesor.estado == 1" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Cuenta Activa</span>
@@ -265,17 +317,41 @@ onMounted(() => cargarDatosBase())
             <form @submit.prevent="guardarAsesor">
               
               <h6 class="fw-bold mb-3 text-muted border-bottom pb-2">Datos Personales</h6>
+
+              <!-- SECCIÓN DE FOTO -->
+              <div class="text-center mb-4">
+                <div class="position-relative d-inline-block">
+                  <img :src="fotoPreview?.startsWith('blob:') ? fotoPreview : (getFullUrl(fotoPreview) || `https://ui-avatars.com/api/?name=${asesorForm.nombre_completo || 'Asesor'}&background=0B2545&color=fff&size=100`)" 
+                       class="rounded-circle shadow-sm border object-fit-cover" 
+                       width="100" height="100" alt="Vista previa">
+                  <label for="inputFoto" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center cursor-pointer shadow" 
+                         style="width: 32px; height: 32px; border: 2px solid white;">
+                    <i class="bi bi-camera-fill small"></i>
+                  </label>
+                </div>
+                <input type="file" id="inputFoto" class="d-none" accept="image/*" @change="handleFotoChange">
+                <p class="text-muted smaller mt-2 mb-0">Foto del Asesor (JPG, PNG)</p>
+              </div>
+
               <div class="row mb-3">
                 <div class="col-md-12 mb-3">
                   <label class="form-label text-muted fw-medium fs-6">Nombre Completo *</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" :class="{ 'is-invalid border-danger': erroresValidacion.nombre_completo }" v-model="asesorForm.nombre_completo" required>
                   <div class="invalid-feedback">{{ erroresValidacion.nombre_completo?.[0] }}</div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
+                  <label class="form-label text-muted fw-medium fs-6">% Comisión</label>
+                  <div class="input-group">
+                    <input type="number" step="0.01" min="0" max="100" class="form-control shadow-none bg-light border-0" v-model="asesorForm.porcentaje_comision">
+                    <span class="input-group-text bg-light border-0 text-muted">%</span>
+                  </div>
+                  <div class="text-muted" style="font-size:.72rem">Se aplica sobre el monto total de cada venta.</div>
+                </div>
+                <div class="col-md-4 mb-3">
                   <label class="form-label text-muted fw-medium fs-6">Teléfono / Celular</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" v-model="asesorForm.telefono">
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <label class="form-label text-muted fw-medium fs-6">Dirección (Opcional)</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" v-model="asesorForm.direccion">
                 </div>
@@ -344,7 +420,8 @@ onMounted(() => cargarDatosBase())
           </div>
           <div class="modal-body p-4" v-if="asesorSeleccionado">
             <div class="text-center mb-4">
-              <img :src="`https://ui-avatars.com/api/?name=${asesorSeleccionado.nombre_completo}&background=a28bfa&color=fff&size=80`" class="rounded-circle mb-3 shadow-sm" alt="Avatar">
+              <img v-if="asesorSeleccionado.foto" :src="getFullUrl(asesorSeleccionado.foto)" class="rounded-circle mb-3 shadow-sm object-fit-cover" width="100" height="100" alt="Foto">
+              <img v-else :src="`https://ui-avatars.com/api/?name=${asesorSeleccionado.nombre_completo}&background=0B2545&color=fff&size=100`" class="rounded-circle mb-3 shadow-sm" alt="Avatar">
               <h5 class="fw-bold mb-1">{{ asesorSeleccionado.nombre_completo }}</h5>
               <div class="text-muted small mb-2">Asesor de Ventas</div>
               <span v-if="asesorSeleccionado.estado == 1" class="badge bg-success rounded-pill">Cuenta Activa</span>
@@ -355,6 +432,7 @@ onMounted(() => cargarDatosBase())
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">ID Sistema</div><div class="col-8 fw-medium">Usuario #{{ asesorSeleccionado.user_id }}</div></div>
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">Correo</div><div class="col-8 text-primary">{{ asesorSeleccionado.correo }}</div></div>
                 <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">Teléfono</div><div class="col-8">{{ asesorSeleccionado.telefono || 'No registrado' }}</div></div>
+                <div class="row mb-3 border-bottom pb-2"><div class="col-4 text-muted small fw-bold">% Comisión</div><div class="col-8 fw-bold text-primary">{{ asesorSeleccionado.porcentaje_comision ?? 3.00 }}%</div></div>
                 <div class="row"><div class="col-4 text-muted small fw-bold">Dirección</div><div class="col-8">{{ asesorSeleccionado.direccion || 'No registrada' }}</div></div>
               </div>
             </div>

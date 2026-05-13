@@ -1,16 +1,20 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, onUnmounted, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useCompanyStore } from '../stores/company'
 import api from '../api/axios'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const companyStore = useCompanyStore()
 
 const formulario = ref({ correo: '', password: '' })
 const cargando = ref(false)
 const errorMensaje = ref('')
 const mostrarPassword = ref(false)
+
+const baseUrl = 'http://localhost:8000'
 
 // === NUEVAS VARIABLES PARA EL TEMPORIZADOR ===
 const segundosBloqueo = ref(0)
@@ -33,6 +37,10 @@ const iniciarTemporizador = (segundos) => {
     }
   }, 1000)
 }
+
+onMounted(() => {
+  companyStore.fetchLandingData()
+})
 
 // Limpiar el temporizador si el usuario cambia de página de repente
 onUnmounted(() => {
@@ -85,10 +93,17 @@ const iniciarSesion = async () => {
       <div class="row g-0">
 
         <div class="col-md-5 d-none d-md-flex flex-column justify-content-center align-items-center p-5 brand-section">
-          <div class="text-center text-white z-2">
-            <i class="bi bi-house-door display-1 mb-3"></i>
-            <h2 class="fw-bold mb-2">MultiLider</h2>
-            <p class="opacity-75 fs-6">Gestión Empresarial</p>
+          <div class="text-center text-white z-2 w-100">
+            <template v-if="companyStore.company?.logo_login || companyStore.company?.logo">
+              <img :src="baseUrl + (companyStore.company.logo_login || companyStore.company.logo)" 
+                   class="img-fluid mb-4 animate__animated animate__zoomIn" 
+                   style="max-height: 120px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));">
+            </template>
+            <template v-else>
+              <i class="bi bi-house-door display-1 mb-3"></i>
+            </template>
+            <h2 class="fw-bold mb-2">{{ companyStore.company?.nombre || 'MultiLider' }}</h2>
+            <p class="opacity-75 fs-6">{{ companyStore.company?.eslogan || 'Gestión Empresarial' }}</p>
           </div>
           <div class="brand-overlay"></div>
         </div>

@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useCompanyStore } from '../stores/company'
 
 defineProps({
   isCompact: Boolean,
@@ -10,6 +11,9 @@ defineProps({
 
 const emit = defineEmits(['toggle-compact', 'close-mobile'])
 const authStore = useAuthStore()
+const companyStore = useCompanyStore()
+
+const baseUrl = 'http://localhost:8000'
 
 // Estado para controlar qué menú desplegable está abierto
 const openSubmenu = ref(null)
@@ -23,8 +27,18 @@ const toggleSubmenu = (menuName) => {
 <template>
   <aside :class="['sidebar sidebar-theme-dark shadow-sm border-end', { 'is-compact': isCompact, 'is-open-mobile': isOpenMobile }]">
     <div class="sidebar-brand d-flex align-items-center justify-content-center border-bottom" style="height: var(--topbar-height);">
-        <img v-if="!isCompact" src="/assets/images/logo_multilider.png" alt="Logo" class="w-100 p-2" style="max-height: 63px; object-fit: contain;">
-        <i v-else class="bi bi-hexagon-fill fs-3" style="color: var(--primary-color);"></i>
+        <template v-if="!isCompact">
+          <img v-if="companyStore.company?.logo_sidebar || companyStore.company?.logo" 
+               :src="baseUrl + (companyStore.company.logo_sidebar || companyStore.company.logo)" 
+               alt="Logo" class="w-100 p-2" style="max-height: 63px; object-fit: contain;">
+          <span v-else class="fw-bold fs-4">{{ companyStore.company?.nombre || 'Multilider' }}</span>
+        </template>
+        <template v-else>
+          <img v-if="companyStore.company?.logo_sidebar_compact || companyStore.company?.logo" 
+               :src="baseUrl + (companyStore.company.logo_sidebar_compact || companyStore.company.logo)" 
+               alt="Logo Compact" style="max-height: 40px; object-fit: contain;">
+          <i v-else class="bi bi-hexagon-fill fs-3" style="color: var(--primary-color);"></i>
+        </template>
     </div>
 
     <ul class="nav flex-column px-2 mt-3 gap-1 flex-grow-1 overflow-auto">
@@ -113,8 +127,14 @@ const toggleSubmenu = (menuName) => {
           </li>
 
           <li class="nav-item" v-if="authStore.hasPermission('acceso_zonas')">
-            <RouterLink to="/zonas" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
-              <i class="bi bi-pin-map-fill me-2 fs-6"></i> Zonas
+            <RouterLink to="/distritos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-pin-map-fill me-2 fs-6"></i> Distritos
+            </RouterLink>
+          </li>
+
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_zonas')">
+            <RouterLink to="/sectores-urbanos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-buildings-fill me-2 fs-6"></i> Sectores Urbanos
             </RouterLink>
           </li>
 
@@ -163,6 +183,27 @@ const toggleSubmenu = (menuName) => {
             </RouterLink>
           </li>
 
+        </ul>
+      </li>
+
+      <!-- Grupo Contratos y Entregas -->
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_contratos')">
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('contratos')"
+           :title="isCompact ? 'Contratos y Entregas' : ''">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-file-earmark-text fs-5"></i>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Contratos y Entregas</span>
+          </div>
+          <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'contratos' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </a>
+
+        <ul v-show="!isCompact && openSubmenu === 'contratos'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_contratos')">
+            <RouterLink to="/contratos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-file-earmark-check me-2 fs-6"></i> Contratos
+            </RouterLink>
+          </li>
         </ul>
       </li>
 

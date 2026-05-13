@@ -11,7 +11,7 @@ const props = defineProps({
   hasError: { type: Boolean, default: false }            // Para pintar el borde rojo si hay error
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'search'])
 
 const searchQuery = ref('')
 const isOpen = ref(false)
@@ -50,7 +50,8 @@ const selectOption = (opt) => {
 
 const onInput = () => {
   isOpen.value = true
-  emit('update:modelValue', null) // Borra la selección si el usuario empieza a escribir algo nuevo
+  emit('update:modelValue', null)
+  emit('search', searchQuery.value)
 }
 
 // Cerrar el dropdown si se hace clic fuera del componente

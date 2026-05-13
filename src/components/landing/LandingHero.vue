@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
 import { Search, MapPin, Home, DollarSign, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
+const router = useRouter()
 const companyStore = useCompanyStore()
 const currentSlide = ref(0)
 const baseUrl = 'http://localhost:8000'
@@ -31,7 +33,20 @@ const slides = computed(() => {
 })
 
 const handleSearch = () => {
-  window.location.href = '#catalogo'
+  const query = {}
+  if (filterType.value) query.tipo = filterType.value
+  if (filterCity.value) {
+    const cityObj = companyStore.cities.find(c => c.nombre === filterCity.value)
+    if (cityObj) query.ciudad_id = cityObj.id
+  }
+  
+  if (filterPrice.value) {
+    const [min, max] = filterPrice.value.split('-')
+    if (min) query.precio_min = min
+    if (max) query.precio_max = max.replace('+', '')
+  }
+
+  router.push({ name: 'PropiedadesLanding', query })
 }
 
 const nextSlide = () => {
@@ -48,12 +63,13 @@ const formatTitle = (title) => {
   if (!title) return ''
   // Resalta palabras clave como 'Ideal', 'Hogar', 'Inversión' con el gradiente
   return title
-    .replace('Ideal', '<span class="text-gradient">Ideal</span>')
-    .replace('Hogar', '<span class="text-gradient">Hogar</span>')
-    .replace('Inversión', '<span class="text-gradient">Inversión</span>')
+    .replace('Ideal', '<span>Ideal</span>')
+    .replace('Hogar', '<span>Hogar</span>')
+    .replace('Inversión', '<span>Inversión</span>')
 }
 
 onMounted(() => {
+  companyStore.fetchCities()
   setInterval(() => {
     if (slides.value.length > 1) nextSlide()
   }, 8000)
@@ -123,8 +139,9 @@ onMounted(() => {
                 <label class="search-label"><i class="bi bi-geo-alt me-2"></i>Ubicación</label>
                 <select v-model="filterCity" class="search-select">
                   <option value="">Toda la ciudad</option>
-                  <option value="Santa Cruz">Santa Cruz</option>
-                  <option value="Montero">Montero</option>
+                  <option v-for="ciudad in companyStore.cities" :key="ciudad.id" :value="ciudad.nombre">
+                    {{ ciudad.nombre }}
+                  </option>
                 </select>
               </div>
 

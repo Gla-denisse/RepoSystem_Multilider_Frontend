@@ -1,26 +1,28 @@
 /* src/assets/main.css */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* =========================================
    1. VARIABLES GLOBALES Y TEMA CLARO
    ========================================= */
 :root {
-  /* Fondos Generales */
-  --bg-body: #f8f9fa;
+  /* Fondos Generales (Paper) */
+  --bg-body: #F7F5F0;
   --bg-card: #ffffff;
   
-  /* Textos Generales */
-  --text-main: #343a40;
-  --text-muted: #6c757d;
-  --border-color: #dee2e6;
+  /* Textos Generales (Ink) */
+  --text-main: #0A0E14;
+  --text-muted: #8A92A0;
+  --border-color: #E5E7EB;
 
-  /* PALETA DE COLORES PRINCIPAL */
-  --primary-color: #a28bfa;   /* Lila Suave */
-  --primary-hover: #8b5cf6;   /* Lila más intenso para hovers */
-  --secondary-color: #9ca3af; /* Gris neutro/azulado */
-  --success-color: #34d399;   /* Verde esmeralda suave */
-  --danger-color: #fb7185;    /* Rosa/Rojo suave */
-  --warning-color: #fbbf24;   /* Amarillo ámbar */
-  --info-color: #38bdf8;      /* Celeste claro */
+  /* PALETA DE COLORES PRINCIPAL (Navy & Blue) */
+  --primary-color: #0B2545;   /* Navy */
+  --primary-hover: #1E5AA8;   /* Blue */
+  --accent-color: #3E7BC9;    /* Bright */
+  --secondary-color: #8A92A0; /* Gray */
+  --success-color: #34d399;   
+  --danger-color: #fb7185;    
+  --warning-color: #fbbf24;   
+  --info-color: #38bdf8;      
 
   /* Tamaños y Layout */
   --sidebar-width: 260px;
@@ -29,32 +31,32 @@
 
   /* Variables por defecto del Sidebar (Modo Claro) */
   --bg-sidebar: #ffffff;
-  --text-sidebar-main: #343a40;
-  --text-sidebar-muted: #6c757d;
-  --border-sidebar: #dee2e6;
+  --text-sidebar-main: #0A0E14;
+  --text-sidebar-muted: #8A92A0;
+  --border-sidebar: #E5E7EB;
 }
 
 /* =========================================
-   2. TEMA OSCURO GLOBAL
+   2. TEMA OSCURO GLOBAL (Adaptado a Brand)
    ========================================= */
 [data-theme="dark"] {
-  --bg-body: #121212;
-  --bg-card: #1e1e1e;
+  --bg-body: #0A0E14; /* Ink */
+  --bg-card: #141B26;
 
-  --text-main: #e0e0e0;
-  --text-muted: #a0aab2;
-  --border-color: #333333;
+  --text-main: #F7F5F0; /* Paper */
+  --text-muted: #8A92A0;
+  --border-color: #1E293B;
 
   /* Ajuste de paleta para fondos oscuros */
-  --primary-color: #b39ddb; /* Lila un poco más claro para mejor lectura */
-  --primary-hover: #cba6f7;
+  --primary-color: #3E7BC9; /* Bright para mejor contraste en oscuro */
+  --primary-hover: #1E5AA8;
   --secondary-color: #6b7280;
 
   /* Variables por defecto del Sidebar (Modo Oscuro) */
-  --bg-sidebar: #1a1a1a;
-  --text-sidebar-main: #e0e0e0;
-  --text-sidebar-muted: #a0aab2;
-  --border-sidebar: #333333;
+  --bg-sidebar: #0F172A;
+  --text-sidebar-main: #F7F5F0;
+  --text-sidebar-muted: #8A92A0;
+  --border-sidebar: #1E293B;
 }
 
 /* =========================================
@@ -63,24 +65,24 @@
 /* Obliga al Sidebar a ser CLARO sin importar el tema global */
 .sidebar-theme-light {
   --bg-sidebar: #ffffff;
-  --text-sidebar-main: #343a40;
-  --text-sidebar-muted: #6c757d;
-  --border-sidebar: #dee2e6;
+  --text-sidebar-main: #0A0E14;
+  --text-sidebar-muted: #8A92A0;
+  --border-sidebar: #E5E7EB;
 }
 
 /* Obliga al Sidebar a ser OSCURO sin importar el tema global */
 .sidebar-theme-dark {
-  --bg-sidebar: #111827; /* Azul noche / Pizarra muy oscuro */
-  --text-sidebar-main: #f3f4f6;
-  --text-sidebar-muted: #9ca3af;
-  --border-sidebar: #1f2937;
+  --bg-sidebar: #0B2545; /* Navy */
+  --text-sidebar-main: #F7F5F0;
+  --text-sidebar-muted: #8A92A0;
+  --border-sidebar: #1E293B;
 }
 
-/* Obliga al Sidebar a usar el COLOR LILA PRIMARIO */
+/* Obliga al Sidebar a usar el COLOR PRIMARIO (Navy) */
 .sidebar-theme-primary {
   --bg-sidebar: var(--primary-color);
   --text-sidebar-main: #ffffff;
-  --text-sidebar-muted: #f3e8ff; /* Lila súper claro para textos secundarios */
+  --text-sidebar-muted: #E5E7EB; 
   --border-sidebar: var(--primary-hover);
 }
 
@@ -92,15 +94,20 @@ body {
   color: var(--text-main);
   transition: background-color 0.3s ease, color 0.3s ease; 
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+}
+
+.text-technical {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
 }
 
 .card-custom {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 15px rgba(11, 37, 69, 0.05); /* Sombra teñida de Navy */
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -123,22 +130,23 @@ body {
    5. SOBREESCRITURA DE BOOTSTRAP (BOTONES)
    ========================================= */
 
-/* Botón Primario Normal */
+/* Botón Primario Normal (Navy) */
 .btn-primary {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
-  color: #ffffff !important; /* El texto blanco resalta bien con tu Lila */
+  color: #ffffff !important;
   transition: all 0.3s ease;
+  font-weight: 600;
 }
 
-/* Hover, Focus y Click del Botón Primario */
+/* Hover, Focus y Click del Botón Primario (Blue) */
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active {
   background-color: var(--primary-hover) !important;
   border-color: var(--primary-hover) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 10px rgba(162, 139, 250, 0.3) !important; /* Sombra lila suave */
+  box-shadow: 0 4px 10px rgba(11, 37, 69, 0.2) !important;
 }
 
 /* Botón Primario con Contorno (Outline) */
@@ -147,6 +155,7 @@ body {
   border-color: var(--primary-color) !important;
   background-color: transparent !important;
   transition: all 0.3s ease;
+  font-weight: 600;
 }
 
 /* Hover, Focus y Click del Botón Outline */
@@ -157,3 +166,4 @@ body {
   border-color: var(--primary-color) !important;
   color: #ffffff !important;
 }
+

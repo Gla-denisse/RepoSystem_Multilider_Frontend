@@ -9,7 +9,8 @@ import ImagenPropiedadManager from '../components/ImagenPropiedadManager.vue'
 // --- ESTADO GENERAL Y DATOS ---
 const propiedades = ref([])
 const propietarios = ref([])
-const zonas = ref([])
+const distritos = ref([])
+const sectoresUrbanos = ref([])
 const allCaracteristicas = ref([])
 const cargando = ref(true)
 const guardando = ref(false)
@@ -43,14 +44,18 @@ const caracAgrupadas = computed(() => {
 
 // --- FORMULARIOS ---
 const propiedadForm = ref({
-  id: null, propietario_id: '', zona_id: '', ubicacion_id: null,
+  id: null, propietario_id: '', sector_urbano_id: '', ubicacion_id: null,
   tipo: 'Lote', codigo: '', precio_venta: '', moneda: 'USD',
   superficie_m2: '', superficie_construida_m2: '',
   frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0,
-  es_esquina: false, direccion: '', nro_lote: '', 
-  colinda_norte: '', colinda_sur: '', colinda_este: '', colinda_oeste: '', 
+  es_esquina: false, direccion: '', nro_lote: '',
+  colinda_norte: '', colinda_sur: '', colinda_este: '', colinda_oeste: '',
   estado: 'Disponible', activo: true
 })
+
+// Para el selector en cascada en el formulario
+const formDistritoId = ref('')
+const targetSectorId = ref(null) // sector a restaurar tras cargar edición
 
 const ubicacionForm = ref({
   id: null, referencia: '', url_maps: '', latitud: '', longitud: ''
@@ -110,25 +115,44 @@ const updateCoordsInputs = (lat, lng) => {
 // ==========================================
 // 1. CARGA BASE
 // ==========================================
+const cargarSectoresPorDistrito = async (distritoId) => {
+  if (!distritoId) { sectoresUrbanos.value = []; return }
+  try {
+    const res = await api.get(`/sectores-urbanos/por-distrito/${distritoId}`)
+    sectoresUrbanos.value = res.data
+  } catch (error) {
+    console.error('Error al cargar sectores:', error)
+    sectoresUrbanos.value = []
+  }
+}
+
+watch(formDistritoId, async (newVal) => {
+  const savedId = targetSectorId.value
+  targetSectorId.value = null
+  if (!savedId) propiedadForm.value.sector_urbano_id = ''
+  await cargarSectoresPorDistrito(newVal)
+  if (savedId) propiedadForm.value.sector_urbano_id = savedId
+})
+
 const cargarDatosBase = async (page = 1) => {
   try {
     cargando.value = true;
-    
-    const [resProp, resOwn, resZon] = await Promise.all([
+
+    const [resProp, resOwn, resDist] = await Promise.all([
       api.get(`/propiedades?page=${page}&search=${searchQuery.value}`),
       api.get('/propietarios?per_page=1000'),
-      api.get('/zonas?per_page=1000')
+      api.get('/distritos?per_page=1000')
     ]);
-    
+
     propiedades.value = resProp.data.data;
     currentPage.value = resProp.data.current_page;
     totalPages.value = resProp.data.last_page;
 
     propietarios.value = resOwn.data.data.filter(p => p.estado == 1 || p.estado === true);
-    zonas.value = resZon.data.data.filter(z => z.estado == 1 || z.estado === true);
-    
+    distritos.value = resDist.data.data.filter(d => d.estado == 1 || d.estado === true);
+
   } catch (error) {
-    console.error("Detalle del error en JS:", error); 
+    console.error("Detalle del error en JS:", error);
     Swal.fire('Error', 'No se pudieron procesar los datos', 'error');
   } finally {
     cargando.value = false;
@@ -159,14 +183,21 @@ const irFormulario = (prop = null) => {
   erroresValidacion.value = {};
   if (prop) {
     isEditing.value = true;
-    propiedadForm.value = { 
+    propiedadForm.value = {
       ...prop,
+      sector_urbano_id: prop.sector_urbano_id || '',
       es_esquina: prop.es_esquina == 1 || prop.es_esquina === true
     };
+    // Pre-cargar el distrito del sector para el selector en cascada
+    const distritoId = prop.sector_urbano?.distrito_id || ''
+    targetSectorId.value = prop.sector_urbano_id || null
+    formDistritoId.value = distritoId // dispara el watcher, que restaura sector tras cargar
     if (prop.ubicacion) ubicacionForm.value = { ...prop.ubicacion };
     else resetUbicacionForm();
   } else {
     isEditing.value = false;
+    formDistritoId.value = '';
+    sectoresUrbanos.value = [];
     resetPropiedadForm();
     resetUbicacionForm();
   }
@@ -274,10 +305,10 @@ const volverListado = () => {
 
 const resetPropiedadForm = () => {
   propiedadForm.value = {
-    id: null, propietario_id: '', zona_id: '', tipo: 'Lote', codigo: '', 
+    id: null, propietario_id: '', sector_urbano_id: '', tipo: 'Lote', codigo: '',
     precio_venta: '', moneda: 'USD', superficie_m2: '', superficie_construida_m2: '',
     frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0, es_esquina: false,
-    direccion: '', colinda_norte: '', colinda_sur: '', colinda_este: '', 
+    direccion: '', colinda_norte: '', colinda_sur: '', colinda_este: '',
     colinda_oeste: '', nro_lote: '', estado: 'Disponible', activo: true
   };
 }
@@ -431,8 +462,8 @@ onMounted(() => cargarDatosBase(1));
                       {{ prop.propietario?.nombre_completo || 'Sin Propietario' }}
                     </div>
                     <div class="smaller text-muted">
-                      <i class="bi bi-geo-alt text-primary"></i> 
-                      {{ prop.zona?.nombre }}, {{ prop.zona?.ciudad?.nombre }}
+                      <i class="bi bi-geo-alt text-primary"></i>
+                      {{ prop.sector_urbano?.nombre }}, {{ prop.sector_urbano?.distrito?.ciudad?.nombre }}
                     </div>
                     <div class="smaller text-muted">Lote {{ prop.nro_lote || 'N/A' }}</div>
                   </td>
@@ -505,17 +536,27 @@ onMounted(() => cargarDatosBase(1));
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label small fw-bold">Zona / Urbanización *</label>
-                  <LiveSearchSelect 
-                    v-model="propiedadForm.zona_id"
-                    :options="zonas"
+                  <label class="form-label small fw-bold">Distrito *</label>
+                  <LiveSearchSelect
+                    v-model="formDistritoId"
+                    :options="distritos"
                     displayKey="nombre"
                     subKey="ciudad.nombre"
                     valueKey="id"
-                    placeholder="Buscar zona..."
-                    :hasError="!!erroresValidacion.zona_id"
+                    placeholder="Buscar distrito..."
                   />
-                  <div v-if="erroresValidacion.zona_id" class="text-danger smaller mt-1 fw-medium">Debe seleccionar una zona.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Sector Urbano *</label>
+                  <select class="form-select bg-light border-0 shadow-none"
+                          v-model="propiedadForm.sector_urbano_id"
+                          :class="{'is-invalid': erroresValidacion.sector_urbano_id}"
+                          :disabled="!formDistritoId || !sectoresUrbanos.length">
+                    <option value="">{{ formDistritoId ? 'Selecciona sector...' : 'Primero selecciona distrito' }}</option>
+                    <option v-for="s in sectoresUrbanos" :key="s.id" :value="s.id">{{ s.nombre }} ({{ s.tipo }})</option>
+                  </select>
+                  <div v-if="erroresValidacion.sector_urbano_id" class="text-danger smaller mt-1 fw-medium">Debe seleccionar un sector.</div>
                 </div>
 
                 <div class="col-md-6">
@@ -714,8 +755,8 @@ onMounted(() => cargarDatosBase(1));
 
             <h6 class="fw-bold border-bottom pb-2 text-muted">Ubicación</h6>
             <div class="p-3 bg-light rounded border-start border-4 border-primary mb-3">
-              <div class="fw-bold"><i class="bi bi-geo-alt-fill text-primary"></i> {{ propiedadSeleccionada.zona?.nombre }}</div>
-              <div class="small text-muted">{{ propiedadSeleccionada.zona?.ciudad?.nombre }} - {{ propiedadSeleccionada.zona?.ciudad?.departamento }}</div>
+              <div class="fw-bold"><i class="bi bi-geo-alt-fill text-primary"></i> {{ propiedadSeleccionada.sector_urbano?.nombre }}</div>
+              <div class="small text-muted">{{ propiedadSeleccionada.sector_urbano?.distrito?.nombre }} — {{ propiedadSeleccionada.sector_urbano?.distrito?.ciudad?.nombre }}</div>
             </div>
             <p class="small"><strong>Dirección Exacta:</strong><br>{{ propiedadSeleccionada.direccion || 'No especificada' }}</p>
 
