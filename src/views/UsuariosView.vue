@@ -135,7 +135,7 @@ const guardarUsuario = async () => {
         icon: 'warning',
         title: 'Verifica los datos',
         html: mensajeHtml,
-        confirmButtonColor: '#a28bfa' // Tu color primario lila
+        confirmButtonColor: '#0B2545' // Tu color primario lila
       });
     } 
     else if (error.response && error.response.data && error.response.data.message) {
@@ -143,7 +143,7 @@ const guardarUsuario = async () => {
         icon: 'error',
         title: 'Error',
         text: error.response.data.message,
-        confirmButtonColor: '#a28bfa'
+        confirmButtonColor: '#0B2545'
       });
     } 
     else {
@@ -151,7 +151,7 @@ const guardarUsuario = async () => {
         icon: 'error',
         title: 'Oops...',
         text: 'Ocurrió un error al intentar guardar el usuario.',
-        confirmButtonColor: '#a28bfa'
+        confirmButtonColor: '#0B2545'
       });
     }
   } finally {
@@ -201,7 +201,7 @@ const toggleEstadoUsuario = async (user) => {
           title: `¡${isActivo ? 'Desactivado' : 'Activado'}!`,
           text: `El usuario ha sido ${isActivo ? 'desactivado' : 'activado'} con éxito.`,
           icon: 'success',
-          confirmButtonColor: '#a28bfa'
+          confirmButtonColor: '#0B2545'
         })
       } catch (error) { 
         console.error(error)
@@ -209,7 +209,7 @@ const toggleEstadoUsuario = async (user) => {
           icon: 'error',
           title: 'Error',
           text: `No se pudo ${accionTxt.toLowerCase()} al usuario.`,
-          confirmButtonColor: '#a28bfa'
+          confirmButtonColor: '#0B2545'
         })
       }
     }
@@ -274,7 +274,7 @@ const guardarAccesosPanel = async () => {
       icon: 'success',
       title: '¡Accesos actualizados!',
       text: `Se han configurado los permisos para ${nombreUsuario}.`,
-      confirmButtonColor: '#a28bfa'
+      confirmButtonColor: '#0B2545'
     })
 
   } catch (error) {
@@ -283,7 +283,7 @@ const guardarAccesosPanel = async () => {
       icon: 'error',
       title: 'Error al guardar',
       text: 'Ocurrió un error al actualizar los accesos. Intenta nuevamente.',
-      confirmButtonColor: '#a28bfa'
+      confirmButtonColor: '#0B2545'
     })
   }
 }
@@ -348,7 +348,7 @@ onMounted(() => {
                   :class="{ 'table-active-row': usuarioSeleccionado?.id === user.id }">
                   <td class="ps-4">
                     <div class="d-flex align-items-center">
-                      <img :src="`https://ui-avatars.com/api/?name=${user.nombre}&background=a28bfa&color=fff`"
+                      <img :src="`https://ui-avatars.com/api/?name=${user.nombre}&background=0B2545&color=fff`"
                         class="rounded-circle me-3" width="40" height="40" alt="Avatar">
                       <div>
                         <div class="fw-bold" style="color: var(--text-main);">{{ user.nombre }}</div>

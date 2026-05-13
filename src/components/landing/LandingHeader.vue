@@ -15,6 +15,8 @@ const companyStore = useCompanyStore()
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 
+const baseUrl = 'http://localhost:8000'
+
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50
 }
@@ -48,7 +50,7 @@ const navLinks = [
       <!-- Logo con mejor espaciado -->
       <RouterLink to="/" class="d-flex align-items-center gap-2 text-decoration-none group">
         <div class="logo-box rounded-3 p-1 transition-all">
-           <img v-if="companyStore.company?.logo" :src="'http://localhost:8000' + companyStore.company.logo" style="max-height: 35px;">
+           <img v-if="companyStore.company?.logo" :src="baseUrl + companyStore.company.logo" style="max-height: 45px; object-fit: contain;">
            <i v-else class="bi bi-hexagon-fill fs-3 text-primary"></i>
         </div>
         <span :class="['fw-black fs-4 tracking-tighter transition-colors', isScrolled ? 'text-dark' : 'text-white']">
@@ -78,7 +80,7 @@ const navLinks = [
         <RouterLink to="/pagar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm me-2">
           Pagar Cuotas
         </RouterLink>
-        <a href="/login" class="btn btn-outline-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+        <a href="/login" :class="['btn rounded-pill px-4 py-2 fw-bold shadow-sm transition-all', isScrolled ? 'btn-outline-dark' : 'btn-ghost-white']">
           Admin Portal
         </a>
       </nav>
@@ -175,5 +177,17 @@ const navLinks = [
 
 .bg-hero-solid {
   background: linear-gradient(135deg, #020617 0%, #1e40af 100%);
+}
+
+.btn-ghost-white {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn-ghost-white:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: white;
 }
 </style>

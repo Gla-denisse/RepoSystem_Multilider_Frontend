@@ -28,6 +28,8 @@ const form = reactive({
 
 const files = reactive({
   logo: null,
+  logo_login: null,
+  logo_sidebar_compact: null,
   hero_image_1: null,
   hero_image_2: null,
   hero_image_3: null
@@ -44,6 +46,8 @@ const heroTitles = reactive({
 
 const previews = reactive({
   logo: null,
+  logo_login: null,
+  logo_sidebar_compact: null,
   hero_image_1: null,
   hero_image_2: null,
   hero_image_3: null
@@ -69,9 +73,9 @@ onMounted(async () => {
       }
     }
     
-    if (c.logo) {
-      previews.logo = baseUrl + c.logo
-    }
+    if (c.logo) previews.logo = baseUrl + c.logo
+    if (c.logo_login) previews.logo_login = baseUrl + c.logo_login
+    if (c.logo_sidebar_compact) previews.logo_sidebar_compact = baseUrl + c.logo_sidebar_compact
   }
 })
 
@@ -222,22 +226,43 @@ const saveChanges = async () => {
 
         <div v-if="activeTab === 'branding'" class="row g-4">
           <div class="col-md-4">
-            <label class="form-label fw-bold small text-uppercase">Logo de la Empresa</label>
+            <label class="form-label fw-bold small text-uppercase">Logo Principal (Landing)</label>
             <div class="border rounded p-3 text-center mb-2 bg-light">
               <img v-if="previews.logo" :src="previews.logo" class="img-fluid mb-3" style="max-height: 100px;">
-              <div v-else class="text-muted py-4"><i class="bi bi-image fs-1 d-block"></i> Sin logo cargado</div>
+              <div v-else class="text-muted py-4"><i class="bi bi-image fs-1 d-block"></i> Sin logo</div>
               <input type="file" @change="e => handleFileChange(e, 'logo')" class="form-control form-control-sm" accept="image/*">
             </div>
-            <p class="small text-muted">Se recomienda fondo transparente (PNG).</p>
+            <p class="small text-muted">Uso en Landing Page.</p>
           </div>
+
           <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Logo Login</label>
+            <div class="border rounded p-3 text-center mb-2 bg-light">
+              <img v-if="previews.logo_login" :src="previews.logo_login" class="img-fluid mb-3" style="max-height: 100px;">
+              <div v-else class="text-muted py-4"><i class="bi bi-shield-lock fs-1 d-block"></i> Sin logo</div>
+              <input type="file" @change="e => handleFileChange(e, 'logo_login')" class="form-control form-control-sm" accept="image/*">
+            </div>
+            <p class="small text-muted">Uso en pantalla de acceso.</p>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold small text-uppercase">Logo Sidebar (Compacto)</label>
+            <div class="border rounded p-3 text-center mb-2 bg-light">
+              <img v-if="previews.logo_sidebar_compact" :src="previews.logo_sidebar_compact" class="img-fluid mb-3" style="max-height: 100px;">
+              <div v-else class="text-muted py-4"><i class="bi bi-layout-sidebar-inset fs-1 d-block"></i> Sin logo</div>
+              <input type="file" @change="e => handleFileChange(e, 'logo_sidebar_compact')" class="form-control form-control-sm" accept="image/*">
+            </div>
+            <p class="small text-muted">Uso en menú lateral contraído.</p>
+          </div>
+
+          <div class="col-md-6 mt-4">
             <label class="form-label fw-bold small text-uppercase">Color Primario</label>
             <div class="d-flex gap-3 align-items-center">
               <input v-model="form.color_primario" type="color" class="form-control form-control-color" style="width: 100px; height: 100px;">
               <input v-model="form.color_primario" type="text" class="form-control" placeholder="#000000">
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6 mt-4">
             <label class="form-label fw-bold small text-uppercase">Color Secundario</label>
             <div class="d-flex gap-3 align-items-center">
               <input v-model="form.color_secundario" type="color" class="form-control form-control-color" style="width: 100px; height: 100px;">

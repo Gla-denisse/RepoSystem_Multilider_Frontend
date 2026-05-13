@@ -73,7 +73,7 @@ onMounted(() => {
 
           <div class="dropdown">
             <div class="d-flex align-items-center ms-2 border-start ps-3 cursor-pointer" data-bs-toggle="dropdown" style="border-color: var(--border-color) !important;">
-              <img :src="`https://ui-avatars.com/api/?name=${authStore.user?.nombre}&background=a28bfa&color=fff`" class="rounded-circle me-2" width="36" height="36">
+              <img :src="`https://ui-avatars.com/api/?name=${authStore.user?.nombre}&background=0B2545&color=fff`" class="rounded-circle me-2" width="36" height="36">
               
               <div class="d-none d-lg-block text-start lh-1">
                 <span class="d-block fw-semibold text-truncate" style="color: var(--text-main); font-size: 0.9rem; max-width: 120px;">

@@ -260,7 +260,7 @@ onMounted(() => cargarDatosBase())
                   <td class="ps-4">
                     <div class="d-flex align-items-center">
                       <img v-if="asesor.foto" :src="getFullUrl(asesor.foto)" class="rounded-circle me-3 object-fit-cover shadow-sm" width="40" height="40" alt="Avatar">
-                      <img v-else :src="`https://ui-avatars.com/api/?name=${asesor.nombre_completo}&background=a28bfa&color=fff`" class="rounded-circle me-3 shadow-sm" width="40" height="40" alt="Avatar">
+                      <img v-else :src="`https://ui-avatars.com/api/?name=${asesor.nombre_completo}&background=0B2545&color=fff`" class="rounded-circle me-3 shadow-sm" width="40" height="40" alt="Avatar">
                       <div>
                         <div class="fw-bold" style="color: var(--text-main);">{{ asesor.nombre_completo }}</div>
                         <div class="text-muted smaller">Usuario ID: #{{ asesor.user_id }}</div>
@@ -321,7 +321,7 @@ onMounted(() => cargarDatosBase())
               <!-- SECCIÓN DE FOTO -->
               <div class="text-center mb-4">
                 <div class="position-relative d-inline-block">
-                  <img :src="fotoPreview?.startsWith('blob:') ? fotoPreview : (getFullUrl(fotoPreview) || `https://ui-avatars.com/api/?name=${asesorForm.nombre_completo || 'Asesor'}&background=a28bfa&color=fff&size=100`)" 
+                  <img :src="fotoPreview?.startsWith('blob:') ? fotoPreview : (getFullUrl(fotoPreview) || `https://ui-avatars.com/api/?name=${asesorForm.nombre_completo || 'Asesor'}&background=0B2545&color=fff&size=100`)" 
                        class="rounded-circle shadow-sm border object-fit-cover" 
                        width="100" height="100" alt="Vista previa">
                   <label for="inputFoto" class="position-absolute bottom-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center cursor-pointer shadow" 
@@ -421,7 +421,7 @@ onMounted(() => cargarDatosBase())
           <div class="modal-body p-4" v-if="asesorSeleccionado">
             <div class="text-center mb-4">
               <img v-if="asesorSeleccionado.foto" :src="getFullUrl(asesorSeleccionado.foto)" class="rounded-circle mb-3 shadow-sm object-fit-cover" width="100" height="100" alt="Foto">
-              <img v-else :src="`https://ui-avatars.com/api/?name=${asesorSeleccionado.nombre_completo}&background=a28bfa&color=fff&size=100`" class="rounded-circle mb-3 shadow-sm" alt="Avatar">
+              <img v-else :src="`https://ui-avatars.com/api/?name=${asesorSeleccionado.nombre_completo}&background=0B2545&color=fff&size=100`" class="rounded-circle mb-3 shadow-sm" alt="Avatar">
               <h5 class="fw-bold mb-1">{{ asesorSeleccionado.nombre_completo }}</h5>
               <div class="text-muted small mb-2">Asesor de Ventas</div>
               <span v-if="asesorSeleccionado.estado == 1" class="badge bg-success rounded-pill">Cuenta Activa</span>

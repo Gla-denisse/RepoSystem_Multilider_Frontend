@@ -88,12 +88,12 @@ const guardarPermiso = async () => {
         icon: 'warning',
         title: 'Verifica los datos',
         html: mensajeHtml,
-        confirmButtonColor: '#a28bfa'
+        confirmButtonColor: '#0B2545'
       });
     } else if (error.response && error.response.data && error.response.data.message) {
-      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Error', text: error.response.data.message, confirmButtonColor: '#0B2545' });
     } else {
-      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el permiso.', confirmButtonColor: '#a28bfa' });
+      Swal.fire({ icon: 'error', title: 'Oops...', text: 'Ocurrió un error al guardar el permiso.', confirmButtonColor: '#0B2545' });
     }
   }
   finally {
@@ -109,7 +109,7 @@ const eliminarPermiso = async (id) => {
     text: "Si este permiso está asignado a un Rol, también se le quitará. Esta acción no se puede deshacer.",
     icon: 'warning',
     showCancelButton: true,
-    confirmButtonColor: '#a28bfa',
+    confirmButtonColor: '#0B2545',
     cancelButtonColor: '#fb7185',
     confirmButtonText: 'Sí, eliminar',
     cancelButtonText: 'Cancelar'
@@ -123,7 +123,7 @@ const eliminarPermiso = async (id) => {
           title: '¡Eliminado!',
           text: 'El permiso ha sido eliminado.',
           icon: 'success',
-          confirmButtonColor: '#a28bfa'
+          confirmButtonColor: '#0B2545'
         })
       } catch (error) {
         console.error("Error al eliminar:", error)
@@ -131,7 +131,7 @@ const eliminarPermiso = async (id) => {
           icon: 'error',
           title: 'Error',
           text: 'No se pudo eliminar el permiso.',
-          confirmButtonColor: '#a28bfa'
+          confirmButtonColor: '#0B2545'
         })
       }
     }

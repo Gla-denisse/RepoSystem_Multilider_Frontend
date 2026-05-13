@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useCompanyStore } from '../stores/company'
 
 defineProps({
   isCompact: Boolean,
@@ -10,6 +11,9 @@ defineProps({
 
 const emit = defineEmits(['toggle-compact', 'close-mobile'])
 const authStore = useAuthStore()
+const companyStore = useCompanyStore()
+
+const baseUrl = 'http://localhost:8000'
 
 // Estado para controlar qué menú desplegable está abierto
 const openSubmenu = ref(null)
@@ -23,8 +27,14 @@ const toggleSubmenu = (menuName) => {
 <template>
   <aside :class="['sidebar sidebar-theme-dark shadow-sm border-end', { 'is-compact': isCompact, 'is-open-mobile': isOpenMobile }]">
     <div class="sidebar-brand d-flex align-items-center justify-content-center border-bottom" style="height: var(--topbar-height);">
-        <img v-if="!isCompact" src="/assets/images/logo_multilider.png" alt="Logo" class="w-100 p-2" style="max-height: 63px; object-fit: contain;">
-        <i v-else class="bi bi-hexagon-fill fs-3" style="color: var(--primary-color);"></i>
+        <template v-if="!isCompact">
+          <img v-if="companyStore.company?.logo" :src="baseUrl + companyStore.company.logo" alt="Logo" class="w-100 p-2" style="max-height: 80px; object-fit: contain;">
+          <span v-else class="fw-bold fs-4">{{ companyStore.company?.nombre || 'Multilider' }}</span>
+        </template>
+        <template v-else>
+          <img v-if="companyStore.company?.logo_sidebar_compact" :src="baseUrl + companyStore.company.logo_sidebar_compact" alt="Logo Compact" style="max-height: 40px; object-fit: contain;">
+          <i v-else class="bi bi-hexagon-fill fs-3" style="color: var(--primary-color);"></i>
+        </template>
     </div>
 
     <ul class="nav flex-column px-2 mt-3 gap-1 flex-grow-1 overflow-auto">

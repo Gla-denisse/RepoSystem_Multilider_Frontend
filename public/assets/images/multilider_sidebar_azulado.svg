@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200" role="img" aria-label="Multilider logo horizontal">
+  <title>Multilider · Logo horizontal</title>
+  <g transform="translate(20, 40) scale(1.2)">
+    <path d="M 10 92 L 10 48 L 50 10 L 90 48 L 90 92 Z M 42 92 L 42 64 L 58 64 L 58 92 Z" fill="#0B2545" fill-rule="evenodd"/>
+  </g>
+  <text x="180" y="110" fill="#0B2545" font-family="Space Grotesk, system-ui, sans-serif" font-weight="700" font-size="72" letter-spacing="-1.8" dominant-baseline="alphabetic">Multilider</text>
+  <text x="180" y="148" fill="#8A92A0" font-family="Space Grotesk, system-ui, sans-serif" font-weight="500" font-size="18" letter-spacing="5">SOLUCIONES INTELIGENTES</text>
+</svg>
