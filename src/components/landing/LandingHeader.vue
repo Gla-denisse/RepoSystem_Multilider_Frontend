@@ -15,7 +15,7 @@ const companyStore = useCompanyStore()
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50

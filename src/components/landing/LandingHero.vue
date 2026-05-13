@@ -7,7 +7,7 @@ import { Search, MapPin, Home, DollarSign, ChevronLeft, ChevronRight } from 'luc
 const router = useRouter()
 const companyStore = useCompanyStore()
 const currentSlide = ref(0)
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 const filterType = ref('')
 const filterCity = ref('')

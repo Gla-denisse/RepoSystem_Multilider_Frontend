@@ -13,7 +13,7 @@ const emit = defineEmits(['toggle-compact', 'close-mobile'])
 const authStore = useAuthStore()
 const companyStore = useCompanyStore()
 
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 // Estado para controlar qué menú desplegable está abierto
 const openSubmenu = ref(null)

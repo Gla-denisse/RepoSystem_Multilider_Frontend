@@ -20,7 +20,7 @@ const estadoBadgeClass = (estado) => {
 const mainImage = (prop) => {
   if (!prop.imagenes?.length) return null
   const principal = prop.imagenes.find(i => i.es_principal)
-  return 'http://localhost:8000' + (principal?.url || prop.imagenes[0]?.url)
+  return import.meta.env.VITE_API_URL + (principal?.url || prop.imagenes[0]?.url)
 }
 
 const goToDetail = () => {
