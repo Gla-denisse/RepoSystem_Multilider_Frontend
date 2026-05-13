@@ -1,9 +1,9 @@
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/api/axios'
 
-const router = useRouter()
+const route = useRoute()
 
 // ── Estado del wizard ────────────────────────────────────────────────────────
 const step = ref(1)
@@ -24,7 +24,6 @@ const cuotasSeleccionadas = ref([])   // array de cuota_ids seleccionados
 const pagoContadoSeleccionado = ref(null) // solo un pago de contado a la vez, o null
 
 // ── Paso 3 ───────────────────────────────────────────────────────────────────
-const metodoPago = ref('QR')
 const formPagador = ref({
   ci_pagador: '',
   telefono_pagador: '',
@@ -37,6 +36,7 @@ const erroresPagador = ref({})
 
 // ── Paso 4 ───────────────────────────────────────────────────────────────────
 const urlPago = ref('')
+const qrUrl = ref('')
 const idTransaccion = ref('')
 const estadoPago = ref('PENDIENTE') // PENDIENTE | PAGADO | ERROR
 let pollingInterval = null
@@ -147,6 +147,7 @@ const procesarPago = async () => {
     const res = await api.post('/public/pagos/procesar', payload)
     idTransaccion.value = res.data.id_transaccion
     urlPago.value = res.data.url_pago || ''
+    qrUrl.value = res.data.qr_url || ''
     estadoPago.value = 'PENDIENTE'
     step.value = 4
     iniciarPolling()
@@ -161,19 +162,24 @@ const procesarPago = async () => {
   }
 }
 
+// ── Canal entre pestañas (BroadcastChannel) ──────────────────────────────────
+// Permite que la pestaña de Libélula notifique a la pestaña original del QR
+const pagoChannel = new BroadcastChannel('multilider_pagos')
+
 // ── Paso 4: Polling ───────────────────────────────────────────────────────────
+const confirmarPago = () => {
+  estadoPago.value = 'PAGADO'
+  detenerPolling()
+}
+
 const iniciarPolling = () => {
   pollingInterval = setInterval(async () => {
     try {
       const res = await api.get(`/public/pagos/verificar/${idTransaccion.value}`)
-      if (res.data.estado === 'PAGADO') {
-        estadoPago.value = 'PAGADO'
-        detenerPolling()
-      }
+      if (res.data.estado === 'PAGADO') confirmarPago()
     } catch { /* silent */ }
   }, 3000)
 
-  // Detener automáticamente después de 15 minutos
   setTimeout(() => detenerPolling(), 15 * 60 * 1000)
 }
 
@@ -181,14 +187,55 @@ const detenerPolling = () => {
   if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null }
 }
 
-onUnmounted(() => detenerPolling())
+// Confirmación manual: el usuario ya ve "Pagado" en su app bancaria
+const confirmarManual = async () => {
+  try {
+    await api.post('/public/pagos/confirmar-retorno', { id_transaccion: idTransaccion.value })
+  } catch { /* ignorar, igual mostramos confirmación */ }
+  confirmarPago()
+}
+
+// ── onMounted: dos roles ──────────────────────────────────────────────────────
+onMounted(async () => {
+  const txn = route.query.txn
+
+  if (txn) {
+    // ── Rol "pestaña de retorno": Libélula redirigió aquí tras el pago ──
+    idTransaccion.value = txn
+    step.value = 4
+
+    // 1. Notificar a TODAS las pestañas del portal (la original con el QR)
+    pagoChannel.postMessage({ tipo: 'PAGO_CONFIRMADO', txn })
+
+    // 2. Confirmar en la BD
+    try {
+      await api.post('/public/pagos/confirmar-retorno', { id_transaccion: txn })
+    } catch { /* silent */ }
+
+    // 3. Mostrar confirmación también en esta pestaña
+    estadoPago.value = 'PAGADO'
+
+  } else {
+    // ── Rol "pestaña original": escuchar confirmaciones de otras pestañas ──
+    pagoChannel.onmessage = (event) => {
+      if (event.data?.tipo === 'PAGO_CONFIRMADO' && event.data.txn === idTransaccion.value) {
+        confirmarPago()
+      }
+    }
+  }
+})
+
+onUnmounted(() => {
+  detenerPolling()
+  pagoChannel.close()
+})
 
 const abrirPagina = () => window.open(urlPago.value, '_blank')
 const nuevoPago = () => {
   step.value = 1; ciInput.value = ''; errorBusqueda.value = ''
   cliente.value = null; pagosContado.value = []; cuotasPendientes.value = []
   cuotasSeleccionadas.value = []; pagoContadoSeleccionado.value = null
-  urlPago.value = ''; idTransaccion.value = ''; estadoPago.value = 'PENDIENTE'
+  urlPago.value = ''; qrUrl.value = ''; idTransaccion.value = ''; estadoPago.value = 'PENDIENTE'
   aceptaTerminos.value = false; erroresPagador.value = {}
   detenerPolling()
 }
@@ -486,52 +533,63 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
 
           <!-- ESPERANDO PAGO -->
           <div v-else class="py-2">
-            <div class="qr-waiting-icon mx-auto mb-4">
-              <i class="bi bi-qr-code-scan"></i>
-            </div>
             <h4 class="fw-bold mb-1">Escanea el código QR para pagar</h4>
-            <p class="text-muted mb-4 small">Haz clic en el botón para abrir la página de pago con el código QR generado por Libélula.</p>
+            <p class="text-muted small mb-4">Usa la app de tu banco y escanea el QR. La confirmación aparecerá aquí automáticamente.</p>
 
-            <button v-if="urlPago" class="btn btn-primary btn-lg px-5 fw-bold shadow mb-4" @click="abrirPagina">
-              <i class="bi bi-qr-code-scan me-2"></i>
-              Abrir página de pago QR
-            </button>
+            <!-- QR embebido directo -->
+            <div v-if="qrUrl" class="qr-box mx-auto mb-3">
+              <img :src="qrUrl" alt="Código QR de pago" class="img-fluid">
+            </div>
+
+            <!-- Botón alternativo si no hay QR embebido o como respaldo -->
+            <div class="mb-4">
+              <button v-if="urlPago" class="btn btn-outline-primary px-4" @click="abrirPagina">
+                <i class="bi bi-box-arrow-up-right me-2"></i>
+                Abrir página de pago completa
+              </button>
+            </div>
 
             <!-- Instrucciones -->
             <div class="instrucciones-qr text-start mx-auto mb-4">
               <div class="instruccion-item">
                 <div class="instruccion-num">1</div>
-                <div>Haz clic en el botón de arriba para abrir la página de pago en una nueva ventana.</div>
+                <div>Abre la app de tu banco (BNB, BISA, Banco Unión, BCP, Tigo Money, etc.).</div>
               </div>
               <div class="instruccion-item">
                 <div class="instruccion-num">2</div>
-                <div>Abre la aplicación de tu banco (BNB, BISA, Banco Unión, BCP, etc.) y selecciona la opción <strong>Pago por QR</strong>.</div>
+                <div>Selecciona la opción <strong>Pago por QR</strong> o <strong>Escanear QR</strong>.</div>
               </div>
               <div class="instruccion-item">
                 <div class="instruccion-num">3</div>
-                <div>Escanea el código QR que aparece en la página de Libélula y confirma el pago en tu app.</div>
+                <div>Apunta la cámara al código QR de arriba y confirma el monto en tu app.</div>
               </div>
               <div class="instruccion-item">
                 <div class="instruccion-num">4</div>
-                <div>Una vez confirmado, esta pantalla se actualizará automáticamente mostrando la confirmación.</div>
+                <div>Esta pantalla se actualizará sola cuando el pago sea confirmado.</div>
               </div>
             </div>
 
             <!-- Indicador de espera -->
-            <div class="waiting-indicator">
+            <div class="waiting-indicator mb-3">
               <div class="spinner-border spinner-border-sm text-primary me-2"></div>
-              <span class="text-muted small">Esperando confirmación de pago...</span>
+              <span class="text-muted small">Verificando pago automáticamente...</span>
             </div>
 
-            <div class="mt-3">
+            <!-- Botón de confirmación manual -->
+            <div class="mb-3">
+              <button class="btn btn-success px-4 fw-bold" @click="confirmarManual">
+                <i class="bi bi-check-circle me-2"></i>Ya realicé el pago
+              </button>
+              <div class="text-muted smaller mt-1">¿Ya ves "Pagado" en la app de tu banco? Pulsa este botón.</div>
+            </div>
+
+            <div class="mb-3">
               <span class="text-muted smaller">Ref: {{ idTransaccion }}</span>
             </div>
 
-            <div class="mt-4">
-              <button class="btn btn-link text-muted small" @click="nuevoPago">
-                <i class="bi bi-arrow-left me-1"></i> Cancelar y volver al inicio
-              </button>
-            </div>
+            <button class="btn btn-link text-muted small" @click="nuevoPago">
+              <i class="bi bi-arrow-left me-1"></i> Cancelar y volver al inicio
+            </button>
           </div>
         </div>
 
@@ -638,13 +696,14 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
 }
 
 /* QR step */
-.qr-waiting-icon {
-  width: 100px; height: 100px; border-radius: 50%;
-  background: rgba(30,64,175,.08); color: var(--landing-primary, #1e40af);
+.qr-box {
+  width: 220px; height: 220px;
+  border: 3px solid #dbeafe; border-radius: 16px;
+  padding: 12px; background: #fff;
+  box-shadow: 0 4px 24px rgba(30,64,175,.10);
   display: flex; align-items: center; justify-content: center;
-  font-size: 3rem;
-  animation: pulse 2s infinite;
 }
+.qr-box img { width: 100%; height: 100%; object-fit: contain; }
 @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(30,64,175,.25); } 50% { box-shadow: 0 0 0 16px rgba(30,64,175,0); } }
 
 /* Instrucciones */
