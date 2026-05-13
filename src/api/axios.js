@@ -3,12 +3,12 @@ import router from '@/router';
 
 // Creamos una instancia de Axios con la URL base de tu API en Laravel
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api', // La ruta de tu backend
+    baseURL: 'https://codesoft.space/api', // La ruta de tu backend
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     },
-    // withCredentials: true // Descomenta esto más adelante si usas Laravel Sanctum con cookies
+    withCredentials: true // Descomenta esto más adelante si usas Laravel Sanctum con cookies
 });
 
 api.interceptors.request.use((config) => {
@@ -36,9 +36,5 @@ api.interceptors.response.use(
     }
 );
 
-const token = localStorage.getItem('auth_token')
-if (token) {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-}
 
 export default api;
