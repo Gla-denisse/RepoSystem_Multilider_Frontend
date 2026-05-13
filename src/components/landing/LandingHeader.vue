@@ -50,7 +50,10 @@ const navLinks = [
       <!-- Logo con mejor espaciado -->
       <RouterLink to="/" class="d-flex align-items-center gap-2 text-decoration-none group">
         <div class="logo-box rounded-3 p-1 transition-all">
-           <img v-if="companyStore.company?.logo" :src="baseUrl + companyStore.company.logo" style="max-height: 45px; object-fit: contain;">
+           <img v-if="companyStore.company?.logo" 
+                :src="baseUrl + companyStore.company.logo" 
+                :class="['transition-all duration-500', isScrolled ? 'logo-scrolled-filter' : '']"
+                style="max-height: 35px; object-fit: contain;">
            <i v-else class="bi bi-hexagon-fill fs-3 text-primary"></i>
         </div>
         <span :class="['fw-black fs-4 tracking-tighter transition-colors', isScrolled ? 'text-dark' : 'text-white']">
@@ -78,7 +81,7 @@ const navLinks = [
           </a>
         </template>
         <RouterLink to="/pagar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm me-2">
-          Pagar Cuotas
+          Pagos
         </RouterLink>
         <a href="/login" :class="['btn rounded-pill px-4 py-2 fw-bold shadow-sm transition-all', isScrolled ? 'btn-outline-dark' : 'btn-ghost-white']">
           Admin Portal
@@ -125,7 +128,7 @@ const navLinks = [
             </a>
           </template>
           <RouterLink to="/pagar" class="btn btn-success w-100 rounded-pill py-3 fw-bold mt-2 shadow" @click="isMobileMenuOpen = false">
-            Pagar Cuotas
+            Pagos
           </RouterLink>
           <a href="/login" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-2 shadow">
             Panel Administrativo
@@ -189,5 +192,10 @@ const navLinks = [
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border-color: white;
+}
+
+.logo-scrolled-filter {
+  /* Transforma el blanco en Navy (#0B2545) */
+  filter: brightness(0) saturate(100%) invert(9%) sepia(43%) saturate(1915%) hue-rotate(194deg) brightness(96%) contrast(98%);
 }
 </style>
