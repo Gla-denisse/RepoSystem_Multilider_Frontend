@@ -52,8 +52,9 @@ const toggleSubmenu = (menuName) => {
 
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_usuarios') || authStore.hasPermission('acceso_roles') || authStore.hasPermission('acceso_permisos')">
         
-        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
-           @click.prevent="toggleSubmenu('seguridad')" 
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('seguridad')"
+           :aria-expanded="openSubmenu === 'seguridad'"
            :title="isCompact ? 'Seguridad' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-shield-lock fs-5"></i>
@@ -96,8 +97,9 @@ const toggleSubmenu = (menuName) => {
 
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_propietarios') || authStore.hasPermission('acceso_propiedades') || authStore.hasPermission('acceso_ciudades') || authStore.hasPermission('acceso_zonas') || authStore.hasPermission('acceso_caracteristicas')">
         
-        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
-           @click.prevent="toggleSubmenu('operativa')" 
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('operativa')"
+           :aria-expanded="openSubmenu === 'operativa'"
            :title="isCompact ? 'Gestión Operativa' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-building fs-5"></i>
@@ -148,8 +150,9 @@ const toggleSubmenu = (menuName) => {
       </li>
 
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_asesores') || authStore.hasPermission('acceso_ventas') || authStore.hasPermission('acceso_historial_ventas') || authStore.hasPermission('acceso_clientes')">
-        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
-           @click.prevent="toggleSubmenu('comercial')" 
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('comercial')"
+           :aria-expanded="openSubmenu === 'comercial'"
            :title="isCompact ? 'Gestión Comercial' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-briefcase fs-5"></i>
@@ -190,6 +193,7 @@ const toggleSubmenu = (menuName) => {
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_contratos')">
         <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
            @click.prevent="toggleSubmenu('contratos')"
+           :aria-expanded="openSubmenu === 'contratos'"
            :title="isCompact ? 'Contratos y Entregas' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-file-earmark-text fs-5"></i>
@@ -209,8 +213,9 @@ const toggleSubmenu = (menuName) => {
 
       <!-- Grupo Cobranzas -->
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_pagos')">
-        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between" 
-           @click.prevent="toggleSubmenu('cobranzas')" 
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('cobranzas')"
+           :aria-expanded="openSubmenu === 'cobranzas'"
            :title="isCompact ? 'Cobranzas' : ''">
           <div class="d-flex align-items-center">
             <i class="bi bi-cash-coin fs-5"></i>
@@ -295,20 +300,39 @@ const toggleSubmenu = (menuName) => {
 }
 
 
-/* a.nav-link:hover {
-  color: var(--primary-color) !important;
-} */
-li.nav-link:focus {
-  color: var(--bg-sidebar) !important;
-} 
+/* Bloquea el azul de Bootstrap en todos los estados interactivos */
+.custom-link:hover,
+.custom-link:focus,
+.custom-link:active {
+  color: var(--text-sidebar-main) !important;
+}
 
-a.nav-link:focus {
-  color: var(--primary-color) !important;
-} 
+/* Muestra outline solo al navegar con teclado, no con mouse */
+.custom-link:focus:not(:focus-visible) {
+  outline: none;
+}
 
-a.nav-link.active {
+.custom-link:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: 1px;
+}
+
+/* Ítem activo: blanco en todos los estados sin excepción */
+.custom-link.active,
+.custom-link.active:hover,
+.custom-link.active:focus,
+.custom-link.active:active,
+.custom-link.active:focus-visible {
+  background-color: var(--primary-color) !important;
   color: #ffffff !important;
-} 
+  outline: none;
+}
+
+/* Toggle de submenú expandido: highlight sutil sin texto azul */
+.custom-link[aria-expanded="true"] {
+  color: var(--text-sidebar-main) !important;
+  background-color: rgba(255, 255, 255, 0.07);
+}
 
 
 </style>
