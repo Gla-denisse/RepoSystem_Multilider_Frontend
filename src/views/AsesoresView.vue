@@ -25,9 +25,9 @@ const getFullUrl = (path) => {
   if (!path) return null;
   if (path.startsWith('http')) {
     // Si la URL guardada tiene el host incorrecto (sin puerto), lo corregimos
-    return path.replace('http://localhost/storage', 'http://localhost:8000/storage');
+    return path.replace('http://localhost/storage', import.meta.env.VITE_API_URL + '/storage');
   }
-  return `http://localhost:8000${path}`;
+  return `${import.meta.env.VITE_API_URL}${path}`;
 }
 
 // --- FORMULARIO INTEGRADO (Asesor + Usuario) ---

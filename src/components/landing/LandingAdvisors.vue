@@ -3,6 +3,7 @@ import { useCompanyStore } from '@/stores/company'
 import { MessageCircle } from 'lucide-vue-next'
 
 const companyStore = useCompanyStore()
+const baseUrl = import.meta.env.VITE_API_URL
 
 const getWhatsAppLink = (phone) => {
   const cleanPhone = phone.replace(/\D/g, '')
@@ -31,7 +32,7 @@ const getWhatsAppLink = (phone) => {
           <div class="landing-card h-100 shadow-sm transition-all border-0 bg-white">
             <div class="position-relative overflow-hidden group" style="height: 350px;">
               <img 
-                :src="advisor.foto ? ('http://localhost:8000' + advisor.foto) : `https://ui-avatars.com/api/?name=${advisor.nombre}&background=1e40af&color=fff&size=512`" 
+                :src="advisor.foto ? (baseUrl + advisor.foto) : `https://ui-avatars.com/api/?name=${advisor.nombre}&background=1e40af&color=fff&size=512`" 
                 class="w-100 h-100 object-fit-cover" 
                 style="transition: transform 0.5s ease;"
                 alt="Foto asesor"

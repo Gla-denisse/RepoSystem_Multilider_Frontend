@@ -3,6 +3,7 @@ import { useCompanyStore } from '@/stores/company'
 import { Facebook, Instagram, Linkedin, Twitter, ArrowUp, Send } from 'lucide-vue-next'
 
 const companyStore = useCompanyStore()
+const baseUrl = import.meta.env.VITE_API_URL
 
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -19,7 +20,7 @@ const scrollToTop = () => {
           <div class="d-flex align-items-center gap-2 mb-4">
             <img 
               v-if="companyStore.company?.logo" 
-              :src="'http://localhost:8000' + companyStore.company.logo" 
+              :src="baseUrl + companyStore.company.logo" 
               style="max-height: 40px;"
               alt="Logo"
             >
