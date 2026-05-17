@@ -6,7 +6,7 @@ import { useCompanyStore } from '@/stores/company'
 
 const route = useRoute()
 const companyStore = useCompanyStore()
-const baseUrl = 'http://localhost:8000'
+const baseUrl = import.meta.env.VITE_API_URL
 
 // ── Estado del wizard ────────────────────────────────────────────────────────
 const step = ref(1)
@@ -41,6 +41,8 @@ const qrUrl = ref('')
 const idTransaccion = ref('')
 const estadoPago = ref('PENDIENTE')
 let pollingInterval = null
+let pollingTimeout  = null   // handle del setTimeout de 15 min
+let pollingBusy     = false  // guard: evita peticiones solapadas
 
 // ── Computed ─────────────────────────────────────────────────────────────────
 const pagoIdsSeleccionados = computed(() => {
@@ -147,8 +149,20 @@ const procesarPago = async () => {
     urlPago.value = res.data.url_pago || ''
     qrUrl.value = res.data.qr_url || ''
     estadoPago.value = 'PENDIENTE'
+
+    if (companyStore.libelulaEnabled === 0) {
+      // Modo 0: redirige en la misma pestaña, sin mostrar el paso 4
+      window.location.href = urlPago.value
+      return
+    }
+
     step.value = 4
     iniciarPolling()
+
+    if (companyStore.libelulaEnabled === 2) {
+      // Modo 2: abre la pasarela en popup; BroadcastChannel notifica esta pestaña al completar
+      abrirPopup()
+    }
   } catch (err) {
     if (err.response?.status === 422) {
       erroresPagador.value = err.response.data.errors || {}
@@ -170,42 +184,59 @@ const confirmarPago = () => {
 }
 
 const iniciarPolling = () => {
+  if (pollingInterval) return  // guard: evita doble arranque
+
   pollingInterval = setInterval(async () => {
+    if (pollingBusy) return    // skip si la petición anterior aún no terminó
+    pollingBusy = true
     try {
       const res = await api.get(`/public/pagos/verificar/${idTransaccion.value}`)
       if (res.data.estado === 'PAGADO') confirmarPago()
-    } catch { /* silent */ }
+    } catch (err) {
+      if (err.response?.status === 404) detenerPolling()  // txn inválida, detener
+    } finally {
+      pollingBusy = false
+    }
   }, 3000)
-  setTimeout(() => detenerPolling(), 15 * 60 * 1000)
+
+  // Guardar el handle para poder cancelarlo si el pago se confirma antes
+  pollingTimeout = setTimeout(detenerPolling, 15 * 60 * 1000)
 }
 
 const detenerPolling = () => {
   if (pollingInterval) { clearInterval(pollingInterval); pollingInterval = null }
+  if (pollingTimeout)  { clearTimeout(pollingTimeout);  pollingTimeout  = null }
+  pollingBusy = false
 }
 
-const confirmarManual = async () => {
-  try {
-    await api.post('/public/pagos/confirmar-retorno', { id_transaccion: idTransaccion.value })
-  } catch { /* ignorar */ }
-  confirmarPago()
-}
 
 onMounted(async () => {
   const txn = route.query.txn
-  if (txn) {
-    idTransaccion.value = txn
-    step.value = 4
-    pagoChannel.postMessage({ tipo: 'PAGO_CONFIRMADO', txn })
-    try {
-      await api.post('/public/pagos/confirmar-retorno', { id_transaccion: txn })
-    } catch { /* silent */ }
-    estadoPago.value = 'PAGADO'
-  } else {
+
+  if (!txn) {
+    // Registrar el listener ANTES de cualquier await para evitar la race condition
+    // donde el mensaje del BroadcastChannel llega mientras fetchLandingData está en curso
     pagoChannel.onmessage = (event) => {
       if (event.data?.tipo === 'PAGO_CONFIRMADO' && event.data.txn === idTransaccion.value) {
         confirmarPago()
       }
     }
+  }
+
+  // Hidratar datos de empresa si se recargó directamente esta página
+  if (!companyStore.company) {
+    await companyStore.fetchLandingData()
+  }
+
+  if (txn) {
+    // Pestaña de retorno: Libélula redirigió aquí tras el pago
+    idTransaccion.value = txn
+    step.value = 4
+    estadoPago.value = 'PAGADO'
+    pagoChannel.postMessage({ tipo: 'PAGO_CONFIRMADO', txn })
+    try {
+      await api.post('/public/pagos/confirmar-retorno', { id_transaccion: txn })
+    } catch { /* silent: el estado ya se marcó como PAGADO en la UI */ }
   }
 })
 
@@ -214,13 +245,53 @@ onUnmounted(() => {
   pagoChannel.close()
 })
 
-const abrirPagina = () => window.open(urlPago.value, '_blank')
+// Modo 0: redirige en la misma pestaña
+const abrirPagina = () => { window.location.href = urlPago.value }
+
+// Modo 2: abre ventana popup centrada
+const popupBloqueado = ref(false)
+
+const abrirPopup = () => {
+  const w = 960, h = 720
+  const left = Math.round((screen.width - w) / 2)
+  const top  = Math.round((screen.height - h) / 2)
+  const popup = window.open(
+    urlPago.value,
+    'libelula_pago',
+    `width=${w},height=${h},scrollbars=yes,resizable=yes,left=${left},top=${top}`
+  )
+  popupBloqueado.value = !popup || popup.closed
+}
+
+const verificandoPago = ref(false)
+const mensajeVerificacion = ref('')
+const tipoMensaje = ref('') // 'ok' | 'error'
+
+const verificarPago = async () => {
+  mensajeVerificacion.value = ''
+  verificandoPago.value = true
+  try {
+    const res = await api.get(`/public/pagos/verificar/${idTransaccion.value}`)
+    if (res.data.estado === 'PAGADO') {
+      confirmarPago()
+    } else {
+      tipoMensaje.value = 'error'
+      mensajeVerificacion.value = 'Aún no confirmamos tu pago. Si ya pagaste, espera unos segundos e intenta nuevamente.'
+    }
+  } catch {
+    tipoMensaje.value = 'error'
+    mensajeVerificacion.value = 'No se pudo verificar el estado. Intenta nuevamente.'
+  } finally {
+    verificandoPago.value = false
+  }
+}
 const nuevoPago = () => {
   step.value = 1; ciInput.value = ''; errorBusqueda.value = ''
   cliente.value = null; pagosContado.value = []; cuotasPendientes.value = []
   cuotasSeleccionadas.value = []; pagoContadoSeleccionado.value = null
   urlPago.value = ''; qrUrl.value = ''; idTransaccion.value = ''; estadoPago.value = 'PENDIENTE'
   aceptaTerminos.value = false; erroresPagador.value = {}
+  mensajeVerificacion.value = ''; tipoMensaje.value = ''
   detenerPolling()
 }
 
@@ -498,14 +569,60 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
                 </div>
               </div>
 
-              <!-- PASO 4: QR (DENTRO DE COLUMNA IZQUIERDA) -->
+              <!-- PASO 4: PAGO -->
               <div v-if="step === 4" class="paso-fade text-center">
-                <h4 class="fw-bold mb-2">Escanea el código QR para pagar</h4>
-                <p class="text-muted small mb-4 px-3">
-                  Usa la app de tu banco y escanea el código. La confirmación aparecerá aquí automáticamente al detectar la transferencia.
-                </p>
 
-                <div v-if="qrUrl" class="pp-qr-container mx-auto mb-4">
+                <!-- ── Modo 1: redirect mismo tab ── -->
+                <template v-if="companyStore.libelulaEnabled === 1">
+                  <h4 class="fw-bold mb-2">Completa tu pago</h4>
+                  <p class="text-muted small mb-4 px-3">
+                    Haz clic en el botón para ir a la pasarela de pago. Al finalizar serás redirigido aquí automáticamente.
+                  </p>
+                  <div v-if="urlPago" class="mb-4">
+                    <button class="btn btn-primary btn-lg px-5 fw-bold shadow-sm" @click="abrirPagina">
+                      <i class="bi bi-credit-card me-2"></i>Ir a pagar ahora
+                      <i class="bi bi-arrow-right ms-2"></i>
+                    </button>
+                    <p class="text-muted mt-2" style="font-size:.78rem">
+                      Serás redirigido a la pasarela segura de Libélula y al completar el pago volverás automáticamente.
+                    </p>
+                  </div>
+                </template>
+
+                <!-- ── Modo 2: popup ── -->
+                <template v-else-if="companyStore.libelulaEnabled === 2">
+                  <h4 class="fw-bold mb-2">Completa tu pago en la ventana emergente</h4>
+                  <p class="text-muted small mb-4 px-3">
+                    Se abrió una ventana con la pasarela de pago. Completa el pago allí y esta página se actualizará automáticamente.
+                  </p>
+                  <!-- Popup bloqueado por el navegador -->
+                  <div v-if="popupBloqueado" class="alert alert-warning d-inline-flex align-items-center gap-2 mb-4 px-4">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Tu navegador bloqueó la ventana emergente.</span>
+                    <button class="btn btn-sm btn-warning fw-semibold ms-1" @click="abrirPopup">
+                      <i class="bi bi-window-stack me-1"></i>Abrir manualmente
+                    </button>
+                  </div>
+                  <!-- Popup abierto correctamente -->
+                  <div v-else class="mb-4">
+                    <div class="pp-popup-icon mx-auto mb-3">
+                      <i class="bi bi-window-stack"></i>
+                    </div>
+                    <p class="text-muted small mb-3">¿Se cerró la ventana antes de completar el pago?</p>
+                    <button class="btn btn-outline-primary fw-semibold px-4" @click="abrirPopup">
+                      <i class="bi bi-arrow-repeat me-2"></i>Reabrir ventana de pago
+                    </button>
+                  </div>
+                </template>
+
+                <!-- ── Separador + QR (modos 1 y 2) ── -->
+                <div class="d-flex align-items-center gap-3 mx-auto mb-4" style="max-width:400px">
+                  <hr class="flex-grow-1 opacity-25">
+                  <span class="text-muted small">o escanea con tu app bancaria</span>
+                  <hr class="flex-grow-1 opacity-25">
+                </div>
+
+                <div v-if="qrUrl" class="pp-qr-container mx-auto mb-3">
                   <div class="pp-qr-box shadow-sm">
                     <img :src="qrUrl" alt="Código QR de pago">
                     <div class="qr-corner top-left"></div>
@@ -515,33 +632,37 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
                   </div>
                 </div>
 
-                <div class="mb-4">
-                  <button v-if="urlPago" class="btn btn-outline-primary px-4 btn-sm" @click="abrirPagina">
-                    <i class="bi bi-box-arrow-up-right me-2"></i>Abrir página de pago completa
-                  </button>
-                </div>
+                <p class="text-muted mb-4" style="font-size:.78rem">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Al escanear el QR con tu app bancaria, esta pantalla se actualizará automáticamente cuando el pago sea procesado.
+                </p>
 
-                <div class="pp-instrucciones mx-auto mb-4">
-                  <div v-for="(inst, i) in [
-                    'Abre la app de tu banco (BNB, BISA, Unión, BCP, Tigo Money, etc).',
-                    'Selecciona la opción <strong>Pago por QR</strong> o <strong>Escanear QR</strong>.',
-                    'Apunta la cámara al código QR de arriba y confirma el monto.',
-                    'Esta pantalla se actualizará sola cuando el pago sea confirmado.'
-                  ]" :key="i" class="pp-inst-item">
-                    <div class="pp-inst-num">{{ i + 1 }}</div>
-                    <div class="small text-secondary" v-html="inst"></div>
-                  </div>
-                </div>
-
-                <div class="pp-waiting mb-4">
+                <div class="pp-waiting mb-3">
                   <div class="spinner-border spinner-border-sm text-primary me-2"></div>
-                  <span class="text-muted small">Verificando pago automáticamente…</span>
+                  <span class="text-muted small">Verificando automáticamente cada 3 segundos…</span>
                 </div>
 
-                <div class="mb-3">
-                  <button class="btn btn-success px-5 fw-bold" @click="confirmarManual">
-                    <i class="bi bi-check-circle me-2"></i>Ya realicé el pago
+                <!-- Verificación manual para pagos por QR (app bancaria) -->
+                <div class="pp-verify-box mx-auto mb-4">
+                  <p class="small text-muted mb-2">
+                    <i class="bi bi-phone me-1"></i>
+                    ¿Pagaste con tu app bancaria escaneando el QR?
+                  </p>
+                  <button
+                    class="btn btn-outline-success fw-semibold px-4"
+                    @click="verificarPago"
+                    :disabled="verificandoPago"
+                  >
+                    <span v-if="verificandoPago" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="bi bi-patch-check me-2"></i>
+                    {{ verificandoPago ? 'Verificando…' : 'Ya pagué — Verificar ahora' }}
                   </button>
+                  <div v-if="mensajeVerificacion" class="mt-2">
+                    <span :class="tipoMensaje === 'ok' ? 'text-success' : 'text-danger'" class="small">
+                      <i :class="tipoMensaje === 'ok' ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'" class="me-1"></i>
+                      {{ mensajeVerificacion }}
+                    </span>
+                  </div>
                 </div>
 
                 <button class="btn btn-link text-muted small" @click="nuevoPago">
@@ -613,9 +734,9 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
                 </button>
 
                 <!-- Info adicional en paso 4 -->
-                <div v-if="step === 4" class="alert alert-warning border-0 small mt-3 mb-0">
-                  <i class="bi bi-clock-history me-1"></i>
-                  Esperando confirmación de la red bancaria. No cierres esta ventana.
+                <div v-if="step === 4" class="alert alert-info border-0 small mt-3 mb-0">
+                  <i class="bi bi-shield-lock-fill me-1"></i>
+                  Pago 100% seguro a través de Libélula.
                 </div>
               </div>
             </div>
@@ -963,7 +1084,25 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
   font-size: .74rem; font-weight: 700; flex-shrink: 0;
 }
 
+/* ── Paso 4: icono popup ───────────────────────────────────────────────────── */
+.pp-popup-icon {
+  width: 80px; height: 80px; border-radius: 20px;
+  background: var(--pp-accent-soft, #eff6ff);
+  color: var(--pp-accent, #1e40af);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+}
+
 .pp-waiting { display: inline-flex; align-items: center; }
+
+.pp-verify-box {
+  max-width: 420px;
+  background: #f8faff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
 
 /* ── Éxito ─────────────────────────────────────────────────────────────────── */
 .pp-success-circle {

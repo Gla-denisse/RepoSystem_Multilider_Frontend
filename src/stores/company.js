@@ -4,6 +4,7 @@ import api from '@/api/axios'
 export const useCompanyStore = defineStore('company', {
   state: () => ({
     company: null,
+    libelulaEnabled: 1,
     featuredProperties: [],
     latestProperties: [],
     allProperties: [],
@@ -36,6 +37,7 @@ export const useCompanyStore = defineStore('company', {
         const data = response.data
         
         this.company = data.empresa
+        this.libelulaEnabled = data.libelula_enabled ?? true
         this.featuredProperties = data.propiedades_destacadas
         this.latestProperties = data.ultimas_propiedades
         this.advisors = data.asesores
