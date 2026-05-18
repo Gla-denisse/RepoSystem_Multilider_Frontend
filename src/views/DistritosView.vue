@@ -245,21 +245,19 @@ onMounted(() => {
                   <span v-else class="badge-status badge-status-inactive">Inactivo</span>
                 </td>
                 <td class="text-end pe-4">
-                  <div class="btn-group shadow-sm rounded">
-                    <button class="btn btn-sm btn-light border text-primary" title="Ver Detalles"
-                            data-bs-toggle="modal" data-bs-target="#modalDetalle" @click="verDistrito(distrito)">
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light border text-info" title="Editar"
-                            data-bs-toggle="modal" data-bs-target="#modalDistrito" @click="editarDistrito(distrito)">
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light border"
-                            @click="toggleEstadoDistrito(distrito)"
-                            :title="distrito.estado == 1 || distrito.estado === true ? 'Desactivar' : 'Activar'">
-                      <i class="bi" :class="distrito.estado == 1 || distrito.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
-                    </button>
-                  </div>
+                  <button class="btn btn-sm btn-light me-2 custom-action-btn" title="Ver Detalles"
+                          data-bs-toggle="modal" data-bs-target="#modalDetalle" @click="verDistrito(distrito)">
+                    <i class="bi bi-eye text-primary"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light me-2 custom-action-btn" title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#modalDistrito" @click="editarDistrito(distrito)">
+                    <i class="bi bi-pencil-square text-info"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light custom-action-btn"
+                          @click="toggleEstadoDistrito(distrito)"
+                          :title="distrito.estado == 1 || distrito.estado === true ? 'Desactivar' : 'Activar'">
+                    <i class="bi" :class="distrito.estado == 1 || distrito.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
+                  </button>
                 </td>
               </tr>
               <tr v-if="distritos.length === 0">
@@ -430,6 +428,9 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.custom-action-btn { background-color: transparent; border: 1px solid transparent; transition: all 0.2s; }
+.custom-action-btn:hover { background-color: var(--border-color); }
+
 .smaller { font-size: 0.75rem; }
 .cursor-pointer { cursor: pointer; }
 .hover-danger:hover { color: #dc3545 !important; }

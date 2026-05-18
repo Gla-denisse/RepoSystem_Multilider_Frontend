@@ -236,21 +236,19 @@ onMounted(() => {
                   <span v-else class="badge-status badge-status-inactive">Inactivo</span>
                 </td>
                 <td class="text-end pe-4">
-                  <div class="d-flex justify-content-end gap-2">
-                    <button class="btn btn-sm btn-light border" title="Ver Detalles"
-                            data-bs-toggle="modal" data-bs-target="#modalDetalle" @click="verCiudad(ciudad)">
-                      <i class="bi bi-eye text-primary"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light border" title="Editar"
-                            data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="editarCiudad(ciudad)">
-                      <i class="bi bi-pencil-square text-info"></i>
-                    </button>
-                    <button class="btn btn-sm btn-light border" 
-                            @click="toggleEstadoCiudad(ciudad)"
-                            :title="ciudad.estado == 1 || ciudad.estado === true ? 'Desactivar Ciudad' : 'Activar Ciudad'">
-                      <i class="bi" :class="ciudad.estado == 1 || ciudad.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
-                    </button>
-                  </div>
+                  <button class="btn btn-sm btn-light me-2 custom-action-btn" title="Ver Detalles"
+                          data-bs-toggle="modal" data-bs-target="#modalDetalle" @click="verCiudad(ciudad)">
+                    <i class="bi bi-eye text-primary"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light me-2 custom-action-btn" title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="editarCiudad(ciudad)">
+                    <i class="bi bi-pencil-square text-info"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light custom-action-btn" 
+                          @click="toggleEstadoCiudad(ciudad)"
+                          :title="ciudad.estado == 1 || ciudad.estado === true ? 'Desactivar Ciudad' : 'Activar Ciudad'">
+                    <i class="bi" :class="ciudad.estado == 1 || ciudad.estado === true ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
+                  </button>
                 </td>
               </tr>
               <tr v-if="ciudades.length === 0">
@@ -387,6 +385,9 @@ onMounted(() => {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
 }
+
+.custom-action-btn { background-color: transparent; border: 1px solid transparent; transition: all 0.2s; }
+.custom-action-btn:hover { background-color: var(--border-color); }
 
 .cursor-pointer { cursor: pointer; }
 .hover-danger:hover { color: #dc3545 !important; }

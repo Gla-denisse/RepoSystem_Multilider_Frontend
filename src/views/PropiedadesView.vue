@@ -499,13 +499,13 @@ onMounted(() => cargarDatosBase(1));
                     </span>
                   </td>
                   <td class="text-end pe-4">
-                    <div class="btn-group shadow-sm rounded">
-                      <button class="btn btn-sm btn-white text-primary border" @click="irDetalle(prop)" title="Ver Detalles"><i class="bi bi-eye"></i></button>
-                      <button class="btn btn-sm btn-white text-success border" @click="irGestionImagenes(prop)" title="Imágenes"><i class="bi bi-images"></i></button>
-                      <button class="btn btn-sm btn-white text-warning border" @click="irGestionCaracteristicas(prop)" title="Características"><i class="bi bi-tags"></i></button>
-                      <button class="btn btn-sm btn-white text-info border" @click="irFormulario(prop)" title="Editar"><i class="bi bi-pencil-square"></i></button>
-                      <button class="btn btn-sm btn-white border" :class="prop.activo ? 'text-danger' : 'text-success'" @click="toggleActivo(prop)" :title="prop.activo ? 'Ocultar' : 'Publicar'"><i class="bi" :class="prop.activo ? 'bi-trash' : 'bi-check-circle'"></i></button>
-                    </div>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" @click="irDetalle(prop)" title="Ver Detalles"><i class="bi bi-eye text-primary"></i></button>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" @click="irGestionImagenes(prop)" title="Imágenes"><i class="bi bi-images text-success"></i></button>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" @click="irGestionCaracteristicas(prop)" title="Características"><i class="bi bi-tags text-warning"></i></button>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" @click="irFormulario(prop)" title="Editar"><i class="bi bi-pencil-square text-info"></i></button>
+                    <button class="btn btn-sm btn-light custom-action-btn" @click="toggleActivo(prop)" :title="prop.activo ? 'Ocultar' : 'Publicar'">
+                      <i class="bi" :class="prop.activo ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
+                    </button>
                   </td>
                 </tr>
               </template>
@@ -954,7 +954,6 @@ onMounted(() => cargarDatosBase(1));
 <style scoped>
 .card-custom { background-color: var(--bg-card); border-radius: 12px; }
 .smaller { font-size: 0.75rem; }
-.btn-white { background-color: #fff; }
 .cursor-pointer { cursor: pointer; }
 .hover-danger:hover { color: #dc3545 !important; }
 .transition-all { transition: all 0.2s ease-in-out; }
@@ -965,6 +964,9 @@ onMounted(() => cargarDatosBase(1));
   color: white !important;
 }
 .custom-page-btn { color: var(--text-main); font-weight: 500; }
+
+.custom-action-btn { background-color: transparent; border: 1px solid transparent; transition: all 0.2s; }
+.custom-action-btn:hover { background-color: var(--border-color); }
 
 .form-control:focus, .form-select:focus {
   background-color: var(--bg-card) !important;

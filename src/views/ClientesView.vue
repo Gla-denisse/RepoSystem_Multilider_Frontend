@@ -214,11 +214,17 @@ onMounted(() => cargarDatosBase())
                     <span v-else class="badge-status badge-status-danger">Suspendido</span>
                   </td>
                   <td class="text-end pe-4">
-                    <div class="btn-group shadow-sm rounded">
-                      <button class="btn btn-sm btn-light text-primary border" data-bs-toggle="modal" data-bs-target="#modalVerCliente" @click="verCliente(cliente)" title="Ver Detalles"><i class="bi bi-eye"></i></button>
-                      <button class="btn btn-sm btn-light text-info border" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="editarCliente(cliente)" title="Editar Perfil"><i class="bi bi-pencil-square"></i></button>
-                      <button class="btn btn-sm btn-light border" :class="cliente.estado == 1 ? 'text-danger' : 'text-success'" @click="toggleEstadoCliente(cliente)" :title="cliente.estado == 1 ? 'Suspender' : 'Activar'"><i class="bi" :class="cliente.estado == 1 ? 'bi-trash' : 'bi-check-circle'"></i></button>
-                    </div>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal" data-bs-target="#modalVerCliente" @click="verCliente(cliente)" title="Ver Detalles">
+                      <i class="bi bi-eye text-primary"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="editarCliente(cliente)" title="Editar Perfil">
+                      <i class="bi bi-pencil-square text-info"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light custom-action-btn" 
+                            @click="toggleEstadoCliente(cliente)" 
+                            :title="cliente.estado == 1 ? 'Suspender' : 'Activar'">
+                      <i class="bi" :class="cliente.estado == 1 ? 'bi-trash text-danger' : 'bi-check-circle text-success'"></i>
+                    </button>
                   </td>
                 </tr>
               </template>
