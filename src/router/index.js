@@ -149,6 +149,12 @@ const router = createRouter({
       component: () => import('../views/ContratosView.vue'),
       meta: { requiresAuth: true, permission: 'acceso_contratos', layout: 'admin' }
     },
+    {
+      path: '/perfil',
+      name: 'Perfil',
+      component: () => import('../views/PerfilView.vue'),
+      meta: { requiresAuth: true, layout: 'admin' }
+    },
   ]
 })
 

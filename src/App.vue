@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView, RouterLink, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import { useAuthStore } from './stores/auth'
 
@@ -85,7 +85,11 @@ onMounted(() => {
             </div>
             
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-              <li><a class="dropdown-item py-2" href="#"><i class="bi bi-person me-2"></i> Mi Perfil</a></li>
+              <li>
+                <RouterLink class="dropdown-item py-2" :to="{ name: 'Perfil' }">
+                  <i class="bi bi-person me-2"></i> Mi Perfil
+                </RouterLink>
+              </li>
               <li><hr class="dropdown-divider"></li>
               <li>
                 <a class="dropdown-item py-2 text-danger" href="#" @click.prevent="authStore.logout">
