@@ -84,7 +84,7 @@ const navLinks = [
           Pagos
         </RouterLink>
         <a href="/login" :class="['btn rounded-pill px-4 py-2 fw-bold shadow-sm transition-all', isScrolled ? 'btn-outline-dark' : 'btn-ghost-white']">
-          Admin Portal
+          Iniciar Sesión
         </a>
       </nav>
 
