@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useCompanyStore } from '@/stores/company'
-import { Menu, X } from 'lucide-vue-next'
+import { Menu, X, CreditCard } from 'lucide-vue-next'
 
 const props = defineProps({
   transparentAtTop: {
@@ -80,8 +80,12 @@ const navLinks = [
             {{ link.name }}
           </a>
         </template>
-        <RouterLink to="/pagar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm me-2">
-          Pagos
+        <RouterLink 
+          to="/pagar" 
+          :class="['btn-pagos-premium me-2', isScrolled ? 'btn-pagos-scrolled' : 'btn-pagos-top']"
+        >
+          <CreditCard :size="17" />
+          <span>Pagos</span>
         </RouterLink>
         <a href="/login" :class="['btn rounded-pill px-4 py-2 fw-bold shadow-sm transition-all', isScrolled ? 'btn-outline-dark' : 'btn-ghost-white']">
           Iniciar Sesión
@@ -127,8 +131,13 @@ const navLinks = [
               {{ link.name }}
             </a>
           </template>
-          <RouterLink to="/pagar" class="btn btn-success w-100 rounded-pill py-3 fw-bold mt-2 shadow" @click="isMobileMenuOpen = false">
-            Pagos
+          <RouterLink 
+            to="/pagar" 
+            class="btn-pagos-premium btn-pagos-mobile w-100 justify-content-center py-3 mt-2" 
+            @click="isMobileMenuOpen = false"
+          >
+            <CreditCard :size="20" />
+            <span>Pagos</span>
           </RouterLink>
           <a href="/login" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-2 shadow">
             Panel Administrativo
@@ -197,5 +206,55 @@ const navLinks = [
 .logo-scrolled-filter {
   /* Transforma el blanco en Navy (#0B2545) */
   filter: brightness(0) saturate(100%) invert(9%) sepia(43%) saturate(1915%) hue-rotate(194deg) brightness(96%) contrast(98%);
+}
+
+.btn-pagos-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  border-radius: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  border: 1px solid transparent;
+  letter-spacing: 0.01em;
+}
+
+/* Estado: Encabezado Transparente (Fondo Oscuro/Hero) */
+.btn-pagos-top {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.btn-pagos-top:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+/* Estado: Encabezado con Scroll (Fondo Blanco) */
+.btn-pagos-scrolled {
+  background: #ecfdf5; /* Verde esmeralda ultra-ligero */
+  color: #059669;      /* Verde esmeralda desaturado y elegante */
+  border-color: #d1fae5;
+}
+
+.btn-pagos-scrolled:hover {
+  background: #d1fae5;
+  color: #047857;
+  border-color: #a7f3d0;
+  transform: translateY(-1px);
+}
+
+/* Versión Mobile: Siempre sobre fondo blanco en el overlay */
+.btn-pagos-mobile {
+  background: #059669;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
 }
 </style>
