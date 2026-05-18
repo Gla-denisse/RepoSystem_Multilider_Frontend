@@ -27,7 +27,7 @@ const subiendo = ref(false)
 const inputArchivos = ref(null)
 
 // URL base para las imágenes (ajustar según el backend)
-const baseUrl = api.defaults.baseURL.replace('/api', '')
+const baseUrl = import.meta.env.VITE_API_URL
 
 const handleFileSelect = () => {
   inputArchivos.value.click()
