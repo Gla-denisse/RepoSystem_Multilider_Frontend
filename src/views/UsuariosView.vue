@@ -315,11 +315,12 @@ onMounted(() => {
   <div class="usuarios-container pb-5">
 
     <div v-if="!usuarioSeleccionado">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Usuarios</h2>
-          <p class="text-muted mb-0 fs-6">Administra el personal y sus credenciales de acceso.</p>
-        </div>
+      <div class="mb-4">
+        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Usuarios</h2>
+        <p class="text-muted mb-0 fs-6">Administra el personal y sus credenciales de acceso.</p>
+      </div>
+
+      <div class="table-controls d-flex justify-content-end align-items-center">
         <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm"
           style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalUsuario"
           @click="nuevoUsuario">
@@ -327,7 +328,7 @@ onMounted(() => {
         </button>
       </div>
 
-      <div class="card card-custom border-0 mb-4">
+      <div class="card card-custom border-0 shadow-sm mb-4" style="border-top-left-radius: 0; border-top-right-radius: 0;">
         <div class="card-body p-0">
           <div v-if="cargando" class="text-center p-5">
             <div class="spinner-border" style="color: var(--primary-color);" role="status"></div>
@@ -335,15 +336,15 @@ onMounted(() => {
 
           <div v-else class="table-responsive table-users">
             <table class="table table-hover mb-0 align-middle">
-              <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
+              <thead>
                 <tr>
-                  <th class="ps-4 border-0 rounded-start">Usuario</th>
-                  <th class="border-0">Correo Electrónico</th>
-                  <th class="border-0">Estado</th>
-                  <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
+                  <th class="ps-4">Usuario</th>
+                  <th>Correo Electrónico</th>
+                  <th>Estado</th>
+                  <th class="text-end pe-4">Acciones</th>
                 </tr>
               </thead>
-              <tbody style="border-top: none;">
+              <tbody>
                 <tr v-for="user in usuarios" :key="user.id"
                   :class="{ 'table-active-row': usuarioSeleccionado?.id === user.id }">
                   <td class="ps-4">
@@ -358,10 +359,8 @@ onMounted(() => {
                   </td>
                   <td class="text-muted">{{ user.correo }}</td>
                   <td>
-                    <span v-if="user.estado == 1 || user.estado === true"
-                      class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">Activo</span>
-                    <span v-else
-                      class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill">Inactivo</span>
+                    <span v-if="user.estado == 1 || user.estado === true" class="badge-status badge-status-active">Activo</span>
+                    <span v-else class="badge-status badge-status-inactive">Inactivo</span>
                   </td>
                   <td class="text-end pe-4">
                     <button class="btn btn-sm me-2 custom-action-btn"
@@ -624,15 +623,6 @@ onMounted(() => {
 
 .custom-action-btn:hover:not(.btn-primary) {
   background-color: var(--border-color);
-}
-
-[data-theme="dark"] .modal-content .bg-light {
-  background-color: #2a2a2a !important;
-  color: var(--text-main);
-}
-
-[data-theme="dark"] .btn-close {
-  filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* Quita la "X" roja o el check nativo de Bootstrap que se encimaba al botón */

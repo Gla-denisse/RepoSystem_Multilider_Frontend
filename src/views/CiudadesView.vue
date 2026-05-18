@@ -182,13 +182,13 @@ onMounted(() => {
   <div class="container-fluid py-4">
     
     <!-- Encabezado de Pantalla -->
-    <div class="row align-items-center mb-4">
-      <div class="col-md-5 mb-3 mb-md-0">
-        <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Gestión de Ciudades</h2>
-        <p class="text-muted small mb-0">Registra y administra las ciudades disponibles en el sistema.</p>
-      </div>
-      
-      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+    <div class="mb-4">
+      <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Gestión de Ciudades</h2>
+      <p class="text-muted small mb-0">Registra y administra las ciudades disponibles en el sistema.</p>
+    </div>
+
+    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex flex-grow-1 gap-2 align-items-center">
         <div class="input-group" style="max-width: 350px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
@@ -199,17 +199,16 @@ onMounted(() => {
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="cargarCiudades(1)" type="button">Buscar</button>
         </div>
-        
-        <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm border-0 px-3" 
-                style="background-color: var(--primary-color);" 
-                data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="nuevaCiudad">
-          <i class="bi bi-plus-lg"></i> Nueva
-        </button>
       </div>
+      <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm border-0 px-3" 
+              style="background-color: var(--primary-color);" 
+              data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="nuevaCiudad">
+        <i class="bi bi-plus-lg"></i> Nueva
+      </button>
     </div>
 
     <!-- Tarjeta de Listado -->
-    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3">
+    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
       <div class="card-body p-0">
         <div v-if="cargando" class="text-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -218,13 +217,13 @@ onMounted(() => {
 
         <div v-else class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light text-muted small text-uppercase">
+            <thead>
               <tr>
-                <th class="ps-4 border-0">ID</th>
-                <th class="border-0">Ciudad</th>
-                <th class="border-0">Departamento</th>
-                <th class="border-0">Estado</th>
-                <th class="text-end pe-4 border-0">Acciones</th>
+                <th class="ps-4">ID</th>
+                <th>Ciudad</th>
+                <th>Departamento</th>
+                <th>Estado</th>
+                <th class="text-end pe-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -233,10 +232,8 @@ onMounted(() => {
                 <td><span class="fw-bold" style="color: var(--text-main);">{{ ciudad.nombre }}</span></td>
                 <td>{{ ciudad.departamento }}</td>
                 <td>
-                  <span v-if="ciudad.estado == 1 || ciudad.estado === true"
-                    class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">Activo</span>
-                  <span v-else
-                    class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 px-2 py-1 rounded-pill">Inactivo</span>
+                  <span v-if="ciudad.estado == 1 || ciudad.estado === true" class="badge-status badge-status-active">Activo</span>
+                  <span v-else class="badge-status badge-status-inactive">Inactivo</span>
                 </td>
                 <td class="text-end pe-4">
                   <div class="d-flex justify-content-end gap-2">
@@ -271,20 +268,20 @@ onMounted(() => {
             Mostrando {{ ciudades.length }} de {{ pagination.total }} registros
           </div>
           <nav v-if="pagination.last_page > 1">
-            <ul class="pagination pagination-sm mb-0">
+            <ul class="pagination pagination-sm mb-0 shadow-sm">
               <li class="page-item" :class="{ disabled: pagination.current_page === 1 }">
-                <a class="page-link shadow-none" href="#" @click.prevent="cargarCiudades(pagination.current_page - 1)">
+                <button class="page-link shadow-none" @click="cargarCiudades(pagination.current_page - 1)">
                   <i class="bi bi-chevron-left"></i>
-                </a>
+                </button>
               </li>
               <li v-for="page in pagination.last_page" :key="page" class="page-item" 
                   :class="{ active: pagination.current_page === page }">
-                <a class="page-link shadow-none" href="#" @click.prevent="cargarCiudades(page)">{{ page }}</a>
+                <button class="page-link shadow-none custom-page-btn" @click="cargarCiudades(page)">{{ page }}</button>
               </li>
               <li class="page-item" :class="{ disabled: pagination.current_page === pagination.last_page }">
-                <a class="page-link shadow-none" href="#" @click.prevent="cargarCiudades(pagination.current_page + 1)">
+                <button class="page-link shadow-none" @click="cargarCiudades(pagination.current_page + 1)">
                   <i class="bi bi-chevron-right"></i>
-                </a>
+                </button>
               </li>
             </ul>
           </nav>
@@ -380,27 +377,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.card-custom {
-  border-radius: 12px;
-  background-color: var(--bg-card);
-}
-
-.page-link {
-  color: var(--text-main);
-  border: none;
-  background-color: var(--bg-card);
-  margin: 0 2px;
-  border-radius: 4px;
-}
-
-.page-item.active .page-link {
+.page-item.active .custom-page-btn {
   background-color: var(--primary-color) !important;
   border-color: var(--primary-color) !important;
-}
-
-.btn-primary:active, .btn-primary:focus {
-  background-color: var(--primary-color) !important;
-  opacity: 0.9;
+  color: white !important;
 }
 
 .custom-switch:checked {
@@ -411,11 +391,4 @@ onMounted(() => {
 .cursor-pointer { cursor: pointer; }
 .hover-danger:hover { color: #dc3545 !important; }
 .transition-all { transition: all 0.2s ease-in-out; }
-
-[data-theme="dark"] .bg-light { background-color: #252525 !important; }
-[data-theme="dark"] .input-group-text.bg-white { background-color: #2a2a2a !important; border-color: #444 !important;}
-[data-theme="dark"] .form-control.border-start-0 { border-color: #444 !important; background-color: #2a2a2a; color: white;}
-[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-[data-theme="dark"] .page-link { background-color: #2a2a2a; border-color: #444; color: #ccc;}
-[data-theme="dark"] .page-item.disabled .page-link { background-color: #1a1a1a; color: #666; }
 </style>

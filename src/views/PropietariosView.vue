@@ -481,10 +481,4 @@ onMounted(() => cargarDatosBase())
   color: white !important;
 }
 .custom-page-btn { color: var(--text-main); font-weight: 500; }
-[data-theme="dark"] .modal-content .bg-light { background-color: #2a2a2a !important; color: var(--text-main); }
-[data-theme="dark"] .input-group-text.bg-white { background-color: #2a2a2a !important; border-color: #444 !important; }
-[data-theme="dark"] .form-control.border-start-0 { border-color: #444 !important; background-color: #2a2a2a; color: white; }
-[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-[data-theme="dark"] .page-link { background-color: #2a2a2a; border-color: #444; color: #ccc; }
-[data-theme="dark"] .page-item.disabled .page-link { background-color: #1a1a1a; color: #666; }
 </style>

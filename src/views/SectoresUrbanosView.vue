@@ -461,9 +461,4 @@ onMounted(() => {
 .page-link { color: var(--text-main); border: none; background-color: var(--bg-card); margin: 0 2px; border-radius: 4px; }
 .page-item.active .custom-page-btn { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; color: white !important; }
 .custom-page-btn { color: var(--text-main); font-weight: 500; }
-[data-theme="dark"] .bg-light { background-color: #252525 !important; }
-[data-theme="dark"] .input-group-text.bg-white { background-color: #2a2a2a !important; border-color: #444 !important;}
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select { background-color: #2a2a2a; color: white; border-color: #444 !important;}
-[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-[data-theme="dark"] .page-link { background-color: #2a2a2a; border-color: #444; color: #ccc;}
 </style>

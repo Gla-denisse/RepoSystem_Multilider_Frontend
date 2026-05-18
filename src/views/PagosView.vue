@@ -208,15 +208,15 @@ const conceptoPagoBadge = (concepto) => {
         </div>
 
         <div v-else class="table-responsive">
-          <table class="table table-hover table-striped mb-0 align-middle" style="font-size: 0.95rem;">
-            <thead style="background-color: #34495e; color: white;">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
               <tr>
-                <th class="py-3 fw-medium border-0">Venta</th>
-                <th class="py-3 fw-medium border-0">Cliente</th>
-                <th class="py-3 fw-medium border-0">Concepto</th>
-                <th class="py-3 fw-medium border-0">Modalidad</th>
-                <th class="py-3 fw-medium border-0 text-end">Monto (Bs)</th>
-                <th class="py-3 fw-medium border-0 text-center">Acciones</th>
+                <th class="ps-4">Venta</th>
+                <th>Cliente</th>
+                <th>Concepto</th>
+                <th>Modalidad</th>
+                <th class="text-end">Monto (Bs)</th>
+                <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -429,25 +429,5 @@ const conceptoPagoBadge = (concepto) => {
 .table-responsive {
   max-height: 500px;
   overflow-y: auto;
-}
-
-.card-custom {
-  border-radius: 12px;
-  border: 1px solid #ecf0f1;
-}
-
-.pagination .page-link {
-  color: #2c3e50;
-  border-color: #dee2e6;
-}
-
-.pagination .page-item.active .page-link {
-  background-color: #2c3e50;
-  border-color: #2c3e50;
-  color: white;
-}
-
-.pagination .page-link:hover {
-  background-color: #f8f9fa;
 }
 </style>

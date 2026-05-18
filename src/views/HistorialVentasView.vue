@@ -138,74 +138,70 @@ const paginasVisibles = computed(() => {
     
     <div v-if="!mostrarDetalle" class="animate-fade">
       
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="h4 fw-bold mb-0" style="color: #2c3e50;">Historial de Ventas</h2>
-          <p class="text-muted small mb-0">Auditoría, filtros y consultas de contratos</p>
-        </div>
+      <div class="mb-4">
+        <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Historial de Ventas</h2>
+        <p class="text-muted small mb-0">Auditoría, filtros y consultas de contratos</p>
       </div>
 
-      <div class="card card-custom border-0 shadow-sm mb-4">
-        <div class="card-body p-4 bg-light bg-opacity-50">
-          <div class="row g-3 align-items-end">
-            <div class="col-lg-3 col-md-6">
-              <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar3 me-1"></i>Rango de Fechas</label>
-              <div class="input-group input-group-sm">
-                <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_inicio" @change="validarFechas">
-                <span class="input-group-text bg-white text-muted border-start-0 border-end-0">a</span>
-                <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_fin" @change="validarFechas">
+      <div class="table-controls mb-0">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-3 col-md-6">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar3 me-1"></i>Rango de Fechas</label>
+            <div class="input-group input-group-sm">
+              <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_inicio" @change="validarFechas">
+              <span class="input-group-text bg-white text-muted border-start-0 border-end-0">a</span>
+              <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_fin" @change="validarFechas">
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold text-muted mb-0"><i class="bi bi-person-badge me-1"></i>Asesor</label>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input shadow-none" type="checkbox" v-model="todosAsesores" style="transform: scale(0.8);">
+                <label class="form-check-label" style="font-size: 0.75rem;">Todos</label>
               </div>
             </div>
+            <div v-if="todosAsesores"><input type="text" class="form-control form-control-sm bg-white text-muted" value="Todos..." disabled></div>
+            <div v-else><LiveSearchSelect v-model="filtros.asesor_id" :options="asesores" displayKey="nombre_completo" placeholder="Buscar..." /></div>
+          </div>
 
-            <div class="col-lg-3 col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label small fw-bold text-muted mb-0"><i class="bi bi-person-badge me-1"></i>Asesor</label>
-                <div class="form-check form-switch m-0">
-                  <input class="form-check-input shadow-none" type="checkbox" v-model="todosAsesores" style="transform: scale(0.8);">
-                  <label class="form-check-label" style="font-size: 0.75rem;">Todos</label>
-                </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold text-muted mb-0"><i class="bi bi-people me-1"></i>Cliente</label>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input shadow-none" type="checkbox" v-model="todosClientes" style="transform: scale(0.8);">
+                <label class="form-check-label" style="font-size: 0.75rem;">Todos</label>
               </div>
-              <div v-if="todosAsesores"><input type="text" class="form-control form-control-sm bg-white text-muted" value="Todos..." disabled></div>
-              <div v-else><LiveSearchSelect v-model="filtros.asesor_id" :options="asesores" displayKey="nombre_completo" placeholder="Buscar..." /></div>
             </div>
+            <div v-if="todosClientes"><input type="text" class="form-control form-control-sm bg-white text-muted" value="Todos..." disabled></div>
+            <div v-else><LiveSearchSelect v-model="filtros.cliente_id" :options="clientes" displayKey="nombre_completo" subKey="ci" placeholder="Buscar..." /></div>
+          </div>
 
-            <div class="col-lg-3 col-md-6">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label small fw-bold text-muted mb-0"><i class="bi bi-people me-1"></i>Cliente</label>
-                <div class="form-check form-switch m-0">
-                  <input class="form-check-input shadow-none" type="checkbox" v-model="todosClientes" style="transform: scale(0.8);">
-                  <label class="form-check-label" style="font-size: 0.75rem;">Todos</label>
-                </div>
-              </div>
-              <div v-if="todosClientes"><input type="text" class="form-control form-control-sm bg-white text-muted" value="Todos..." disabled></div>
-              <div v-else><LiveSearchSelect v-model="filtros.cliente_id" :options="clientes" displayKey="nombre_completo" subKey="ci" placeholder="Buscar..." /></div>
+          <div class="col-lg-3 col-md-6 d-flex gap-2">
+            <div class="flex-grow-1">
+              <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-tag me-1"></i>Modalidad</label>
+              <select class="form-select form-select-sm bg-white shadow-none" v-model="filtros.tipo_venta">
+                <option value="TODOS">Todas</option>
+                <option value="CONTADO">Contado</option>
+                <option value="CREDITO">Crédito</option>
+              </select>
             </div>
-
-            <div class="col-lg-3 col-md-6 d-flex gap-2">
-              <div class="flex-grow-1">
-                <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-tag me-1"></i>Modalidad</label>
-                <select class="form-select form-select-sm bg-white shadow-none" v-model="filtros.tipo_venta">
-                  <option value="TODOS">Todas</option>
-                  <option value="CONTADO">Contado</option>
-                  <option value="CREDITO">Crédito</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label small fw-bold text-muted mb-1" style="color: transparent; user-select: none;">&nbsp;</label>
-                <button class="btn justify-content-start px-3 d-flex align-items-center btn-sm btn-primary" @click="buscar">
-                  <i class="bi bi-arrow-clockwise me-1"></i> Filtrar
-                </button>
-              </div>
+            <div>
+              <label class="form-label small fw-bold text-muted mb-1" style="color: transparent; user-select: none;">&nbsp;</label>
+              <button class="btn justify-content-start px-3 d-flex align-items-center btn-sm btn-primary" @click="buscar">
+                <i class="bi bi-arrow-clockwise me-1"></i> Filtrar
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3">
+      <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
-              <tr class="text-muted small text-uppercase">
+            <thead>
+              <tr>
                 <th class="ps-4">Fecha & Nro</th>
                 <th>Propiedad</th>
                 <th>Comprador & Asesor</th>
@@ -217,7 +213,7 @@ const paginasVisibles = computed(() => {
               </tr>
             </thead>
             <tbody>
-              <tr v-if="cargando"><td colspan="8" class="text-center py-5"><div class="spinner-border" style="color: #2c3e50;" role="status"></div></td></tr>
+              <tr v-if="cargando"><td colspan="8" class="text-center py-5"><div class="spinner-border" style="color: var(--primary-color);" role="status"></div></td></tr>
               <tr v-else-if="ventas.length === 0"><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2 d-block mb-2"></i> No hay registros.</td></tr>
               <template v-else>
                 <tr v-for="venta in ventas" :key="venta.id">
@@ -226,7 +222,7 @@ const paginasVisibles = computed(() => {
                     <div class="text-muted smaller">VTA-{{ venta.id.toString().padStart(5, '0') }}</div>
                   </td>
                   <td>
-                    <div class="fw-bold" style="color: #34495e;">{{ venta.propiedad?.codigo }}</div>
+                    <div class="fw-bold" style="color: var(--text-main);">{{ venta.propiedad?.codigo }}</div>
                     <div class="smaller text-muted">{{ venta.propiedad?.tipo }}</div>
                   </td>
                   <td>
@@ -244,12 +240,15 @@ const paginasVisibles = computed(() => {
                     </div>
                     <div class="small text-muted" v-else>-</div>
                   </td>
-                  <td class="text-end fw-bold" style="color: #2c3e50;">Bs. {{ venta.monto_total }}</td>
-                  <td class="text-center"><span class="badge" :class="venta.estado === 'Completada' ? 'bg-success' : 'bg-danger'">{{ venta.estado }}</span></td>
+                  <td class="text-end fw-bold" style="color: var(--text-main);">Bs. {{ venta.monto_total }}</td>
+                  <td class="text-center">
+                    <span v-if="venta.estado === 'Completada'" class="badge-status badge-status-active">Completada</span>
+                    <span v-else class="badge-status badge-status-danger">{{ venta.estado }}</span>
+                  </td>
                   <td class="text-end pe-4">
                     <button 
                       class="btn btn-sm btn-light border shadow-sm" 
-                      style="color: #2c3e50; min-width: 110px;" 
+                      style="color: var(--primary-color); min-width: 110px;" 
                       @click="verVenta(venta)" 
                       :disabled="idCargando === venta.id"
                       title="Ver Detalles"
@@ -416,16 +415,16 @@ const paginasVisibles = computed(() => {
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0 text-center align-middle" style="font-size: 0.9rem;">
-              <thead style="background-color: #34495e; color: white;">
+            <table class="table table-hover mb-0 text-center align-middle" style="font-size: 0.9rem;">
+              <thead>
                 <tr>
-                  <th class="py-3 fw-medium border-0">Nro</th>
-                  <th class="py-3 fw-medium border-0">Vencimiento</th>
-                  <th class="py-3 fw-medium border-0">Cuota Total (Bs)</th>
-                  <th class="py-3 fw-medium border-0">Capital (Bs)</th>
-                  <th class="py-3 fw-medium border-0">Interés (Bs)</th>
-                  <th class="py-3 fw-medium border-0">Saldo Restante (Bs)</th>
-                  <th class="py-3 fw-medium border-0">Estado</th>
+                  <th>Nro</th>
+                  <th>Vencimiento</th>
+                  <th>Cuota Total (Bs)</th>
+                  <th>Capital (Bs)</th>
+                  <th>Interés (Bs)</th>
+                  <th>Saldo Restante (Bs)</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -437,14 +436,9 @@ const paginasVisibles = computed(() => {
                   <td style="color: #e74c3c;">{{ cuota.monto_interes }}</td>
                   <td class="fw-medium text-dark">{{ cuota.saldo_capital }}</td>
                   <td>
-                    <span class="badge rounded-pill border fw-normal"
-                      :class="{
-                        'bg-warning bg-opacity-10 text-dark border-warning': cuota.estado === 'Pendiente',
-                        'bg-success bg-opacity-10 text-success border-success': cuota.estado === 'Pagada',
-                        'bg-danger bg-opacity-10 text-danger border-danger': cuota.estado === 'Vencida'
-                      }">
-                      {{ cuota.estado }}
-                    </span>
+                    <span v-if="cuota.estado === 'Pagada'" class="badge-status badge-status-active">Pagada</span>
+                    <span v-else-if="cuota.estado === 'Vencida'" class="badge-status badge-status-danger">Vencida</span>
+                    <span v-else class="badge-status badge-status-inactive">Pendiente</span>
                   </td>
                 </tr>
               </tbody>
@@ -459,14 +453,14 @@ const paginasVisibles = computed(() => {
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0 align-middle" style="font-size: 0.9rem;">
-              <thead style="background-color: #34495e; color: white;">
+            <table class="table table-hover mb-0 align-middle" style="font-size: 0.9rem;">
+              <thead>
                 <tr>
-                  <th class="py-3 fw-medium border-0">Fecha</th>
-                  <th class="py-3 fw-medium border-0">Concepto</th>
-                  <th class="py-3 fw-medium border-0">Método de Pago</th>
-                  <th class="py-3 fw-medium border-0 text-end">Monto (Bs)</th>
-                  <th class="py-3 fw-medium border-0">Estado</th>
+                  <th>Fecha</th>
+                  <th>Concepto</th>
+                  <th>Método de Pago</th>
+                  <th class="text-end">Monto (Bs)</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -476,14 +470,9 @@ const paginasVisibles = computed(() => {
                   <td>{{ pago.metodo_pago?.nombre_metodo || '-' }}</td>
                   <td class="text-end fw-bold" style="color: #27ae60;">Bs. {{ pago.monto }}</td>
                   <td>
-                    <span class="badge rounded-pill fw-normal"
-                      :class="{
-                        'bg-success bg-opacity-10 text-success border border-success': pago.estado === 'Registrado',
-                        'bg-danger bg-opacity-10 text-danger border border-danger': pago.estado === 'Cancelado',
-                        'bg-warning bg-opacity-10 text-dark border border-warning': pago.estado === 'Rechazado'
-                      }">
-                      {{ pago.estado }}
-                    </span>
+                    <span v-if="pago.estado === 'Registrado'" class="badge-status badge-status-active">Registrado</span>
+                    <span v-else-if="pago.estado === 'Cancelado' || pago.estado === 'Rechazado'" class="badge-status badge-status-danger">{{ pago.estado }}</span>
+                    <span v-else class="badge-status badge-status-inactive">{{ pago.estado }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -508,17 +497,5 @@ const paginasVisibles = computed(() => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.card-custom { background-color: var(--bg-card); border-radius: 12px; }
 .smaller { font-size: 0.75rem; }
-
-/* Ajustes Tema Oscuro */
-[data-theme="dark"] .bg-white, [data-theme="dark"] .bg-light, [data-theme="dark"] .card-header {
-  background-color: #2a2a2a !important; border-color: #444 !important; color: #eee !important;
-}
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select {
-  background-color: #333; border-color: #444; color: white;
-}
-[data-theme="dark"] .text-dark, [data-theme="dark"] .text-muted, [data-theme="dark"] [style*="color: #2c3e50"], [data-theme="dark"] [style*="color: #34495e"], [data-theme="dark"] [style*="color: #7f8c8d"] {
-  color: #ccc !important;
-}
 </style>

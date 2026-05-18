@@ -278,13 +278,4 @@ onMounted(() => {
 .custom-action-btn:hover {
   background-color: var(--border-color);
 }
-
-/* Ajustes para el Modal en modo oscuro */
-[data-theme="dark"] .modal-content .bg-light {
-  background-color: #2a2a2a !important; /* Un gris un poco más claro que el fondo de la tarjeta */
-  color: var(--text-main);
-}
-[data-theme="dark"] .btn-close {
-  filter: invert(1) grayscale(100%) brightness(200%);
-}
 </style>

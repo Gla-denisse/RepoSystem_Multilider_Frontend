@@ -40,23 +40,333 @@
    2. TEMA OSCURO GLOBAL (Adaptado a Brand)
    ========================================= */
 [data-theme="dark"] {
-  --bg-body: #0A0E14; /* Ink */
-  --bg-card: #141B26;
+  --bg-body: #0A0E14; /* Ink Black */
+  --bg-card: #111827; /* Rich Navy Dark */
 
-  --text-main: #F7F5F0; /* Paper */
-  --text-muted: #8A92A0;
-  --border-color: #1E293B;
+  --text-main: #F9FAFB; /* Off-white for readability */
+  --text-muted: #9CA3AF; /* Desaturated gray */
+  --border-color: #1F2937; /* Subtle border */
 
   /* Ajuste de paleta para fondos oscuros */
-  --primary-color: #3E7BC9; /* Bright para mejor contraste en oscuro */
-  --primary-hover: #1E5AA8;
-  --secondary-color: #6b7280;
+  --primary-color: #60A5FA; /* Blue-400 for better visibility */
+  --primary-hover: #3B82F6; /* Blue-500 */
+  --secondary-color: #4B5563; /* Gray-600 */
 
   /* Variables por defecto del Sidebar (Modo Oscuro) */
   --bg-sidebar: #0F172A;
-  --text-sidebar-main: #F7F5F0;
-  --text-sidebar-muted: #8A92A0;
-  --border-sidebar: #1E293B;
+  --text-sidebar-main: #F9FAFB;
+  --text-sidebar-muted: #9CA3AF;
+  --border-sidebar: #1F2937;
+
+  /* Sobreescritura específica para Bootstrap en Dark Mode */
+  
+  /* 2.1 Tablas */
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text-main);
+  --bs-table-border-color: var(--border-color);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.02);
+  --bs-table-hover-color: var(--text-main);
+
+  /* Headers de tabla Premium */
+  --bg-table-header: #1F2937;
+  --text-table-header: #9CA3AF;
+}
+
+/* =========================================
+   2.2 SOBREESCRITURAS DARK MODE (GLOBAL)
+   ========================================= */
+
+[data-theme="dark"] .bg-light { 
+  background-color: #1F2937 !important; /* Tailwind Gray-800 equivalent */
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .table,
+[data-theme="dark"] .table > :not(caption) > * > *,
+[data-theme="dark"] .table tr,
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+  --bs-table-bg: transparent !important;
+  --bs-table-accent-bg: transparent !important;
+  --bs-table-striped-bg: transparent !important;
+  --bs-table-active-bg: rgba(255, 255, 255, 0.05) !important;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.03) !important;
+  --bs-table-color: var(--text-main) !important;
+  --bs-table-border-color: var(--border-color) !important;
+  
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .table-light {
+  --bs-table-bg: #1F2937 !important;
+  --bs-table-color: var(--text-main) !important;
+  --bs-table-border-color: var(--border-color) !important;
+}
+
+/* Tablas Standard SaaS */
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background-color: #F9FAFB;
+  color: #6B7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .table thead th {
+  background-color: #111827;
+  color: #9CA3AF;
+  border-bottom-color: var(--border-color);
+}
+
+.table tbody td {
+  padding: 1rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+/* Hover effect elegante */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+  transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Contenedor de búsqueda y filtros arriba de tablas */
+.table-controls {
+  background-color: var(--bg-card);
+  padding: 1.25rem;
+  border-radius: 12px 12px 0 0;
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+}
+
+/* Badges de Estado Premium */
+.badge-status {
+  padding: 0.4em 0.8em;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border-radius: 50px;
+  text-transform: capitalize;
+}
+
+.badge-status-active {
+  background-color: #ECFDF5;
+  color: #059669;
+}
+
+[data-theme="dark"] .badge-status-active {
+  background-color: rgba(5, 150, 105, 0.15);
+  color: #34D399;
+}
+
+.badge-status-inactive {
+  background-color: #F3F4F6;
+  color: #6B7280;
+}
+
+[data-theme="dark"] .badge-status-inactive {
+  background-color: rgba(107, 114, 128, 0.15);
+  color: #9CA3AF;
+}
+
+.badge-status-danger {
+  background-color: #FEF2F2;
+  color: #DC2626;
+}
+
+[data-theme="dark"] .badge-status-danger {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #F87171;
+}
+
+[data-theme="dark"] .bg-white { 
+  background-color: var(--bg-card) !important; 
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-dark { color: var(--text-main) !important; }
+[data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+
+/* 2.3 Formularios e Inputs */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: #1F2937;
+  border-color: #374151;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: #1F2937;
+  border-color: var(--primary-color);
+  color: #fff;
+  box-shadow: 0 0 0 0.25rem rgba(96, 165, 250, 0.15);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+  color: #6B7280;
+}
+
+[data-theme="dark"] .input-group-text {
+  background-color: #374151;
+  border-color: #374151;
+  color: #F9FAFB;
+}
+
+/* 2.4 Cards */
+[data-theme="dark"] .card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-color);
+}
+
+/* 2.5 Modales */
+[data-theme="dark"] .modal-content {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* 2.6 Paginación */
+[data-theme="dark"] .page-link {
+  background-color: #1F2937;
+  border-color: #374151;
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .page-link:hover {
+  background-color: #374151;
+  color: #fff;
+}
+
+[data-theme="dark"] .page-item.active .page-link {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+[data-theme="dark"] .page-item.disabled .page-link {
+  background-color: #111827;
+  border-color: #1F2937;
+  color: #4B5563;
+}
+
+/* 2.7 Otros Elementos */
+[data-theme="dark"] .dropdown-menu {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: var(--border-color);
+  color: #fff;
+}
+
+[data-theme="dark"] .dropdown-divider {
+  border-top-color: var(--border-color);
+}
+
+[data-theme="dark"] hr {
+  background-color: var(--border-color);
+  opacity: 1;
+}
+
+[data-theme="dark"] .list-group-item {
+  background-color: transparent;
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+[data-theme="dark"] .list-group-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .badge.bg-light {
+  background-color: #374151 !important;
+  color: #F9FAFB !important;
+  border: 1px solid #4B5563;
+}
+
+[data-theme="dark"] .btn-light {
+  background-color: #1F2937;
+  border-color: #374151;
+  color: #F9FAFB;
+}
+
+[data-theme="dark"] .btn-light:hover {
+  background-color: #374151;
+  border-color: #445563;
+  color: #fff;
+}
+
+/* 2.8 Overrides para Estilos Hardcoded (Inline Styles) */
+[data-theme="dark"] [style*="color: #2c3e50"],
+[data-theme="dark"] [style*="color: #34495e"] {
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] [style*="background-color: #e8f4f8"],
+[data-theme="dark"] [style*="background-color: #ecf0f1"],
+[data-theme="dark"] [style*="background-color: #f8f9fa"] {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] [style*="color: #0c5460"] {
+  color: #7dd3fc !important;
+}
+
+[data-theme="dark"] [style*="border-color: #0c5460"] {
+  border-color: #0c5460 !important;
+}
+
+[data-theme="dark"] .alert-info i[style*="color: #0c5460"] {
+  color: #38bdf8 !important;
+}
+
+/* 2.9 Alertas Específicas */
+[data-theme="dark"] .alert-info {
+  background-color: rgba(56, 189, 248, 0.1) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+[data-theme="dark"] .alert-light {
+  background-color: #1F2937 !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
 }
 
 /* =========================================

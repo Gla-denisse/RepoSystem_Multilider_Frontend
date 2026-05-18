@@ -135,10 +135,4 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .dropdown-menu::-webkit-scrollbar { width: 6px; }
 .dropdown-menu::-webkit-scrollbar-track { background: transparent; }
 .dropdown-menu::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
-
-/* Modo Oscuro */
-[data-theme="dark"] .input-group-text, [data-theme="dark"] .form-control { background-color: #2a2a2a !important; border-color: #444 !important; color: white; }
-[data-theme="dark"] .dropdown-menu { background-color: #2a2a2a; border: 1px solid #444 !important; }
-[data-theme="dark"] .dropdown-item { color: #eee; }
-[data-theme="dark"] .dropdown-item:hover { background-color: #333; }
 </style>

@@ -257,7 +257,7 @@ const getNombreCuenta = (id) => {
 
             <div v-else class="table-responsive">
               <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-muted small text-uppercase">
+                <thead>
                   <tr>
                     <th class="ps-4">Venta / Cliente</th>
                     <th>Propiedad</th>
@@ -383,7 +383,7 @@ const getNombreCuenta = (id) => {
                 </div>
                 <div v-else class="table-responsive" style="max-height: 550px;">
                   <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light sticky-top">
+                    <thead>
                       <tr>
                         <th width="60" class="text-center">#</th>
                         <th>Vencimiento</th>
@@ -403,10 +403,8 @@ const getNombreCuenta = (id) => {
                         </td>
                         <td class="text-end fw-bold">Bs. {{ formatoMoneda(cuota.monto_cuota) }}</td>
                         <td class="text-center">
-                          <span class="badge rounded-pill px-3" 
-                                :class="cuota.estado === 'Pagada' ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-warning bg-opacity-10 text-dark border border-warning'">
-                            {{ cuota.estado }}
-                          </span>
+                          <span v-if="cuota.estado === 'Pagada'" class="badge-status badge-status-active">Pagada</span>
+                          <span v-else class="badge-status badge-status-inactive">Pendiente</span>
                         </td>
                         <td class="text-center">
                           <div class="form-check">

@@ -152,12 +152,13 @@ onMounted(() => cargarDatosBase())
 <template>
   <div class="clientes-container pb-5">
     
-    <div class="row align-items-center mb-4">
-      <div class="col-md-5 mb-3 mb-md-0">
-        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Directorio de Clientes</h2>
-        <p class="text-muted mb-0 fs-6">Administra a los compradores y su acceso al portal.</p>
-      </div>
-      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+    <div class="mb-4">
+      <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Directorio de Clientes</h2>
+      <p class="text-muted mb-0 fs-6">Administra a los compradores y su acceso al portal.</p>
+    </div>
+
+    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex flex-grow-1 gap-2 align-items-center">
         <div class="input-group" style="max-width: 350px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
@@ -169,23 +170,23 @@ onMounted(() => cargarDatosBase())
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="buscar" type="button">Buscar</button>
         </div>
-        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="nuevoCliente">
-          <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
-        </button>
       </div>
+      <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="nuevoCliente">
+        <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
+      </button>
     </div>
 
-    <div class="card card-custom border-0 shadow-sm mb-3">
+    <div class="card card-custom border-0 shadow-sm mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0 align-middle table-clientes">
-            <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
+            <thead>
               <tr>
-                <th class="ps-4 border-0 rounded-start">Cédula</th>
-                <th class="border-0">Cliente</th>
-                <th class="border-0">Contacto</th>
-                <th class="border-0 text-center">Estado / Acceso</th>
-                <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
+                <th class="ps-4">Cédula</th>
+                <th>Cliente</th>
+                <th>Contacto</th>
+                <th class="text-center">Estado / Acceso</th>
+                <th class="text-end pe-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -209,14 +210,14 @@ onMounted(() => cargarDatosBase())
                     <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ cliente.telefono || '-' }}</div>
                   </td>
                   <td class="text-center">
-                    <span v-if="cliente.estado == 1" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Cuenta Activa</span>
-                    <span v-else class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Suspendido</span>
+                    <span v-if="cliente.estado == 1" class="badge-status badge-status-active">Cuenta Activa</span>
+                    <span v-else class="badge-status badge-status-danger">Suspendido</span>
                   </td>
                   <td class="text-end pe-4">
                     <div class="btn-group shadow-sm rounded">
-                      <button class="btn btn-sm btn-white text-primary border" data-bs-toggle="modal" data-bs-target="#modalVerCliente" @click="verCliente(cliente)" title="Ver Detalles"><i class="bi bi-eye"></i></button>
-                      <button class="btn btn-sm btn-white text-info border" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="editarCliente(cliente)" title="Editar Perfil"><i class="bi bi-pencil-square"></i></button>
-                      <button class="btn btn-sm btn-white border" :class="cliente.estado == 1 ? 'text-danger' : 'text-success'" @click="toggleEstadoCliente(cliente)" :title="cliente.estado == 1 ? 'Suspender' : 'Activar'"><i class="bi" :class="cliente.estado == 1 ? 'bi-trash' : 'bi-check-circle'"></i></button>
+                      <button class="btn btn-sm btn-light text-primary border" data-bs-toggle="modal" data-bs-target="#modalVerCliente" @click="verCliente(cliente)" title="Ver Detalles"><i class="bi bi-eye"></i></button>
+                      <button class="btn btn-sm btn-light text-info border" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="editarCliente(cliente)" title="Editar Perfil"><i class="bi bi-pencil-square"></i></button>
+                      <button class="btn btn-sm btn-light border" :class="cliente.estado == 1 ? 'text-danger' : 'text-success'" @click="toggleEstadoCliente(cliente)" :title="cliente.estado == 1 ? 'Suspender' : 'Activar'"><i class="bi" :class="cliente.estado == 1 ? 'bi-trash' : 'bi-check-circle'"></i></button>
                     </div>
                   </td>
                 </tr>
@@ -380,9 +381,7 @@ onMounted(() => cargarDatosBase())
 </template>
 
 <style scoped>
-.card-custom { background-color: var(--bg-card); border-radius: 12px; }
 .smaller { font-size: 0.75rem; }
-.btn-white { background-color: #fff; }
 .cursor-pointer { cursor: pointer; }
 .hover-danger:hover { color: #dc3545 !important; }
 .transition-all { transition: all 0.2s ease-in-out; }
@@ -391,17 +390,7 @@ onMounted(() => cargarDatosBase())
 .custom-page-btn { color: var(--text-main); font-weight: 500; }
 .custom-switch:checked { background-color: var(--primary-color) !important; border-color: var(--primary-color) !important; }
 
-.form-control:focus, .form-select:focus { background-color: var(--bg-card) !important; border: 1px solid var(--primary-color) !important; box-shadow: 0 0 0 0.25rem rgba(162, 139, 250, 0.25) !important; }
 .custom-action-btn { background-color: transparent; border: 1px solid transparent; transition: all 0.2s; }
 .custom-action-btn:hover { background-color: var(--border-color); }
 .table-clientes .badge{ min-width:110px;}
-
-[data-theme="dark"] .btn-white { background-color: #333; color: #eee; border-color: #444; }
-[data-theme="dark"] .bg-light { background-color: #252525 !important; }
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select { color: #fff; }
-[data-theme="dark"] .input-group-text.bg-white { background-color: #2a2a2a !important; border-color: #444 !important;}
-[data-theme="dark"] .form-control.border-start-0 { border-color: #444 !important; background-color: #2a2a2a; color: white;}
-[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-[data-theme="dark"] .page-link { background-color: #2a2a2a; border-color: #444; color: #ccc;}
-[data-theme="dark"] .page-item.disabled .page-link { background-color: #1a1a1a; color: #666; }
 </style>

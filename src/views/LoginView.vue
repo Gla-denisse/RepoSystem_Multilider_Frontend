@@ -242,11 +242,6 @@ const iniciarSesion = async () => {
   background-color: var(--bg-card);
 }
 
-/* El label flotante necesita color en modo oscuro */
-[data-theme="dark"] .form-floating>label {
-  color: var(--text-muted) !important;
-}
-
 /* Checkbox lila */
 .custom-checkbox:checked {
   background-color: var(--primary-color);

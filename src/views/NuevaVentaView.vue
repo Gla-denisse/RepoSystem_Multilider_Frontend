@@ -400,8 +400,8 @@ const resetAsistente = () => {
             <div v-if="planPagosPreview.length > 0" class="mt-4 border rounded overflow-hidden">
               <div class="bg-dark text-white p-2 text-center fw-bold small">PREVISUALIZACIÓN PLAN DE PAGOS (Ref. Sistema Francés)</div>
               <div style="max-height: 200px; overflow-y: auto;">
-                <table class="table table-sm table-hover mb-0 text-center" style="font-size: 0.8rem;">
-                  <thead class="table-light sticky-top">
+                <table class="table table-hover mb-0 text-center" style="font-size: 0.8rem;">
+                  <thead>
                     <tr><th>Nro</th><th>Cuota Mensual</th><th>Capital</th><th>Interés</th><th>Saldo Restante</th></tr>
                   </thead>
                   <tbody>
@@ -460,8 +460,4 @@ const resetAsistente = () => {
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
-
-[data-theme="dark"] .bg-light { background-color: #2a2a2a !important; border-color: #444 !important; }
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select { background-color: #333; border-color: #444; color: white; }
-[data-theme="dark"] .table-light { background-color: #333 !important; color: white; }
 </style>

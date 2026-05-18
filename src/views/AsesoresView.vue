@@ -216,12 +216,13 @@ onMounted(() => cargarDatosBase())
 <template>
   <div class="asesores-container pb-5">
     
-    <div class="row align-items-center mb-4">
-      <div class="col-md-5 mb-3 mb-md-0">
-        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Equipo Comercial</h2>
-        <p class="text-muted mb-0 fs-6">Administra los asesores de ventas y sus accesos al sistema.</p>
-      </div>
-      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+    <div class="mb-4">
+      <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Equipo Comercial</h2>
+      <p class="text-muted mb-0 fs-6">Administra los asesores de ventas y sus accesos al sistema.</p>
+    </div>
+
+    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div class="d-flex gap-2 align-items-center">
         <div class="input-group" style="max-width: 350px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
@@ -233,23 +234,23 @@ onMounted(() => cargarDatosBase())
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="buscar" type="button">Buscar</button>
         </div>
-        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalAsesor" @click="nuevoAsesor">
-          <i class="bi bi-person-plus-fill"></i> Nuevo Asesor
-        </button>
       </div>
+      <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalAsesor" @click="nuevoAsesor">
+        <i class="bi bi-person-plus-fill"></i> Nuevo Asesor
+      </button>
     </div>
 
-    <div class="card card-custom border-0 shadow-sm mb-3">
+    <div class="card card-custom border-0 shadow-sm mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
       <div class="card-body p-0">
         <div class="table-responsive table-asesores">
           <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
+            <thead>
               <tr>
-                <th class="ps-4 border-0 rounded-start">Nombre Asesor</th>
-                <th class="border-0">Contacto</th>
-                <th class="border-0 text-center">% Comisión</th>
-                <th class="border-0 text-center">Estado</th>
-                <th class="text-end pe-4 border-0 rounded-end">Acciones</th>
+                <th class="ps-4">Nombre Asesor</th>
+                <th>Contacto</th>
+                <th class="text-center">% Comisión</th>
+                <th class="text-center">Estado</th>
+                <th class="text-end pe-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -277,8 +278,8 @@ onMounted(() => cargarDatosBase())
                     </span>
                   </td>
                   <td class="text-center">
-                    <span v-if="asesor.estado == 1" class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-3">Cuenta Activa</span>
-                    <span v-else class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-3">Suspendido</span>
+                    <span v-if="asesor.estado == 1" class="badge-status badge-status-active">Cuenta Activa</span>
+                    <span v-else class="badge-status badge-status-danger">Suspendido</span>
                   </td>
                   <td class="text-end pe-4">
                     <button class="btn btn-sm btn-light me-2 custom-action-btn" data-bs-toggle="modal" data-bs-target="#modalVerAsesor" @click="verAsesor(asesor)" title="Ver Detalles"><i class="bi bi-eye text-primary"></i></button>
@@ -463,13 +464,4 @@ onMounted(() => cargarDatosBase())
 .custom-action-btn:hover { background-color: var(--border-color); }
 .no-validation-icon { background-image: none !important; }
 .table-asesores .badge{ min-width:110px;}
-
-[data-theme="dark"] .btn-white { background-color: #333; color: #eee; border-color: #444; }
-[data-theme="dark"] .bg-light { background-color: #252525 !important; }
-[data-theme="dark"] .form-control, [data-theme="dark"] .form-select { color: #fff; }
-[data-theme="dark"] .input-group-text.bg-white { background-color: #2a2a2a !important; border-color: #444 !important;}
-[data-theme="dark"] .form-control.border-start-0 { border-color: #444 !important; background-color: #2a2a2a; color: white;}
-[data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
-[data-theme="dark"] .page-link { background-color: #2a2a2a; border-color: #444; color: #ccc;}
-[data-theme="dark"] .page-item.disabled .page-link { background-color: #1a1a1a; color: #666; }
 </style>

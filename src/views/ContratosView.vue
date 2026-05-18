@@ -183,9 +183,9 @@ const descargarContrato = async (contrato) => {
 // HELPERS
 // ==========================================
 const estadoBadge = (estado) => {
-  if (estado === 'Firmado')  return 'bg-success'
-  if (estado === 'Anulado')  return 'bg-danger'
-  return 'bg-warning text-dark'
+  if (estado === 'Firmado')  return 'badge-status badge-status-active'
+  if (estado === 'Anulado')  return 'badge-status badge-status-danger'
+  return 'badge-status badge-status-inactive'
 }
 
 const tipoBadge = (tipo) => {
@@ -204,67 +204,63 @@ const formatFecha = (fecha) => {
   <div class="container-fluid py-4">
 
     <!-- ENCABEZADO -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h4 class="fw-bold mb-0">Contratos</h4>
-        <small class="text-muted">Gestiona los contratos generados por cada venta</small>
-      </div>
+    <div class="mb-4">
+      <h4 class="fw-bold mb-0">Contratos</h4>
+      <small class="text-muted">Gestiona los contratos generados por cada venta</small>
     </div>
 
     <!-- FILTROS -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <div class="row g-3 align-items-end">
+    <div class="table-controls mb-0">
+      <div class="row g-3 align-items-end">
 
-          <div class="col-md-3">
-            <label class="form-label fw-semibold small">Buscar</label>
-            <input
-              v-model="filtros.buscar"
-              type="text"
-              class="form-control form-control-sm"
-              placeholder="Código o nombre de cliente..."
-              @keyup.enter="buscar"
-            />
-          </div>
-
-          <div class="col-md-2">
-            <label class="form-label fw-semibold small">Estado</label>
-            <select v-model="filtros.estado" class="form-select form-select-sm">
-              <option value="TODOS">Todos</option>
-              <option value="Pendiente">Pendiente</option>
-              <option value="Firmado">Firmado</option>
-              <option value="Anulado">Anulado</option>
-            </select>
-          </div>
-
-          <div class="col-md-2">
-            <label class="form-label fw-semibold small">Fecha Desde</label>
-            <input v-model="filtros.fecha_inicio" type="date" class="form-control form-control-sm" />
-          </div>
-
-          <div class="col-md-2">
-            <label class="form-label fw-semibold small">Fecha Hasta</label>
-            <input v-model="filtros.fecha_fin" type="date" class="form-control form-control-sm" />
-          </div>
-
-          <div class="col-md-3 d-flex gap-2">
-            <button class="btn btn-primary btn-sm flex-fill" @click="buscar">
-              <i class="bi bi-search me-1"></i> Buscar
-            </button>
-            <button
-              class="btn btn-outline-secondary btn-sm"
-              @click="filtros = { buscar: '', estado: 'TODOS', fecha_inicio: '', fecha_fin: '' }; buscar()"
-            >
-              <i class="bi bi-x-lg"></i>
-            </button>
-          </div>
-
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small">Buscar</label>
+          <input
+            v-model="filtros.buscar"
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Código o nombre de cliente..."
+            @keyup.enter="buscar"
+          />
         </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-semibold small">Estado</label>
+          <select v-model="filtros.estado" class="form-select form-select-sm">
+            <option value="TODOS">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Firmado">Firmado</option>
+            <option value="Anulado">Anulado</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-semibold small">Fecha Desde</label>
+          <input v-model="filtros.fecha_inicio" type="date" class="form-control form-control-sm" />
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label fw-semibold small">Fecha Hasta</label>
+          <input v-model="filtros.fecha_fin" type="date" class="form-control form-control-sm" />
+        </div>
+
+        <div class="col-md-3 d-flex gap-2">
+          <button class="btn btn-primary btn-sm flex-fill" @click="buscar">
+            <i class="bi bi-search me-1"></i> Buscar
+          </button>
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="filtros = { buscar: '', estado: 'TODOS', fecha_inicio: '', fecha_fin: '' }; buscar()"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+
       </div>
     </div>
 
     <!-- TABLA -->
-    <div class="card shadow-sm">
+    <div class="card shadow-sm" style="border-top-left-radius: 0; border-top-right-radius: 0;">
       <div class="card-body p-0">
         <div v-if="cargando" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -278,7 +274,7 @@ const formatFecha = (fecha) => {
 
         <div v-else class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
                 <th class="ps-3">Código</th>
                 <th>Cliente</th>
@@ -305,7 +301,7 @@ const formatFecha = (fecha) => {
                 <td>{{ formatFecha(c.fecha_emision) }}</td>
                 <td>{{ formatFecha(c.fecha_firma) }}</td>
                 <td>
-                  <span class="badge" :class="estadoBadge(c.estado)">{{ c.estado }}</span>
+                  <span :class="estadoBadge(c.estado)">{{ c.estado }}</span>
                 </td>
                 <td class="text-center pe-3">
                   <div class="d-flex justify-content-center gap-1">
