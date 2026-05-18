@@ -86,14 +86,6 @@ const toggleSubmenu = (menuName) => {
           </ul>
           </li>
 
-          <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_empresa')">
-            <RouterLink to="/empresa" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Configuración' : ''">
-
-          <i class="bi bi-gear fs-5"></i>
-          <span v-if="!isCompact" class="ms-3 fw-medium">Configuración</span>
-          </RouterLink>
-          </li>
-
 
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_propietarios') || authStore.hasPermission('acceso_propiedades') || authStore.hasPermission('acceso_ciudades') || authStore.hasPermission('acceso_zonas') || authStore.hasPermission('acceso_caracteristicas')">
         
@@ -236,6 +228,13 @@ const toggleSubmenu = (menuName) => {
             </RouterLink>
           </li>
         </ul>
+      </li>
+
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_empresa')">
+        <RouterLink to="/empresa" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Configuración' : ''">
+          <i class="bi bi-gear fs-5"></i>
+          <span v-if="!isCompact" class="ms-3 fw-medium">Configuración</span>
+        </RouterLink>
       </li>
 
     </ul>

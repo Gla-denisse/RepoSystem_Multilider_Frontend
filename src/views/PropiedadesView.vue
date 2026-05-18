@@ -4,6 +4,7 @@ import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import api from '../api/axios'
 import Swal from 'sweetalert2'
 import LiveSearchSelect from '../components/LiveSearchSelect.vue'
+import LiveSearchMultiSelect from '../components/LiveSearchMultiSelect.vue'
 import ImagenPropiedadManager from '../components/ImagenPropiedadManager.vue'
 
 // --- ESTADO GENERAL Y DATOS ---
@@ -44,9 +45,17 @@ const caracAgrupadas = computed(() => {
   }, {})
 })
 
+const propietariosParaSelector = computed(() =>
+  propietarios.value.map(p => ({
+    ...p,
+    display_label: p.tipo === 'empresa' ? (p.nombre_empresa || p.nombre_completo) : p.nombre_completo,
+    display_sub:   p.tipo === 'empresa' ? `Empresa · ${p.nombre_completo}` : (p.ci ? `CI: ${p.ci}` : ''),
+  }))
+)
+
 // --- FORMULARIOS ---
 const propiedadForm = ref({
-  id: null, propietario_id: '', sector_urbano_id: '', ubicacion_id: null,
+  id: null, propietario_ids: [], sector_urbano_id: '', ubicacion_id: null,
   tipo: 'Lote', codigo: '', precio_venta: '', moneda: 'USD',
   superficie_m2: '', superficie_construida_m2: '',
   frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0,
@@ -187,6 +196,7 @@ const irFormulario = (prop = null) => {
     isEditing.value = true;
     propiedadForm.value = {
       ...prop,
+      propietario_ids: prop.propietarios?.map(p => p.id) ?? [],
       sector_urbano_id: prop.sector_urbano_id || '',
       es_esquina: prop.es_esquina == 1 || prop.es_esquina === true
     };
@@ -307,7 +317,7 @@ const volverListado = () => {
 
 const resetPropiedadForm = () => {
   propiedadForm.value = {
-    id: null, propietario_id: '', sector_urbano_id: '', tipo: 'Lote', codigo: '',
+    id: null, propietario_ids: [], sector_urbano_id: '', tipo: 'Lote', codigo: '',
     precio_venta: '', moneda: 'USD', superficie_m2: '', superficie_construida_m2: '',
     frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0, es_esquina: false,
     direccion: '', colinda_norte: '', colinda_sur: '', colinda_este: '',
@@ -460,8 +470,18 @@ onMounted(() => cargarDatosBase(1));
                     <div class="text-muted smaller">{{ prop.tipo }}</div>
                   </td>
                   <td>
-                    <div class="fw-medium text-truncate" style="max-width: 200px;" :title="prop.propietario?.nombre_completo">
-                      {{ prop.propietario?.nombre_completo || 'Sin Propietario' }}
+                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                      <span class="fw-medium text-truncate" style="max-width: 160px;"
+                            :title="prop.propietarios?.map(p => p.tipo === 'empresa' ? p.nombre_empresa : p.nombre_completo).join(', ')">
+                        {{ prop.propietarios?.[0]
+                            ? (prop.propietarios[0].tipo === 'empresa' ? prop.propietarios[0].nombre_empresa : prop.propietarios[0].nombre_completo)
+                            : 'Sin Propietario' }}
+                      </span>
+                      <span v-if="prop.propietarios?.length > 1"
+                            class="badge rounded-pill bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25"
+                            style="font-size:.68rem;">
+                        +{{ prop.propietarios.length - 1 }}
+                      </span>
                     </div>
                     <div class="smaller text-muted">
                       <i class="bi bi-geo-alt text-primary"></i>
@@ -567,17 +587,17 @@ onMounted(() => cargarDatosBase(1));
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label small fw-bold">Propietario *</label>
-                  <LiveSearchSelect 
-                    v-model="propiedadForm.propietario_id"
-                    :options="propietarios"
-                    displayKey="nombre_completo"
-                    subKey="ci"
+                  <label class="form-label small fw-bold">Propietario(s) *</label>
+                  <LiveSearchMultiSelect
+                    v-model="propiedadForm.propietario_ids"
+                    :options="propietariosParaSelector"
+                    displayKey="display_label"
+                    subKey="display_sub"
                     valueKey="id"
-                    placeholder="Buscar por Nombre o Cédula..."
-                    :hasError="!!erroresValidacion.propietario_id"
+                    placeholder="Buscar por Nombre, Empresa o CI..."
+                    :hasError="!!erroresValidacion.propietario_ids"
                   />
-                  <div v-if="erroresValidacion.propietario_id" class="text-danger smaller mt-1 fw-medium">Debe seleccionar un propietario.</div>
+                  <div v-if="erroresValidacion.propietario_ids" class="text-danger smaller mt-1 fw-medium">Debe seleccionar al menos un propietario.</div>
                 </div>
 
                 <div class="col-md-3">
@@ -743,12 +763,31 @@ onMounted(() => cargarDatosBase(1));
             </ul>
           </div>
           <div class="col-md-5 mb-4">
-            <h6 class="fw-bold border-bottom pb-2 text-muted">Propietario y Estado</h6>
+            <h6 class="fw-bold border-bottom pb-2 text-muted">Propietario(s) y Estado</h6>
+            <div class="mb-3">
+              <div v-if="propiedadSeleccionada.propietarios?.length" class="d-flex flex-column gap-2">
+                <div v-for="p in propiedadSeleccionada.propietarios" :key="p.id"
+                     class="p-2 bg-light rounded border d-flex align-items-start gap-2 small">
+                  <i class="bi mt-1 flex-shrink-0"
+                     :class="p.tipo === 'empresa' ? 'bi-building text-info' : 'bi-person-fill text-primary'"></i>
+                  <div>
+                    <div class="fw-bold">
+                      {{ p.tipo === 'empresa' ? p.nombre_empresa : p.nombre_completo }}
+                    </div>
+                    <div class="text-muted" style="font-size:.72rem;">
+                      <span v-if="p.tipo === 'empresa'">Rep: {{ p.nombre_completo }}</span>
+                      <span v-else-if="p.ci">CI: {{ p.ci }}{{ p.lugar_expedicion ? ' ' + p.lugar_expedicion : '' }}</span>
+                    </div>
+                    <div class="text-muted" style="font-size:.72rem;" v-if="p.telefono">
+                      <i class="bi bi-telephone me-1"></i>{{ p.telefono }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <span v-else class="text-muted small">Sin propietario registrado</span>
+            </div>
             <ul class="list-group list-group-flush small mb-4">
-              <li class="list-group-item px-0 bg-transparent"><strong>Nombre:</strong> {{ propiedadSeleccionada.propietario?.nombre_completo }}</li>
-              <li class="list-group-item px-0 bg-transparent"><strong>CI:</strong> {{ propiedadSeleccionada.propietario?.ci }}</li>
-              <li class="list-group-item px-0 bg-transparent"><strong>Teléfono:</strong> {{ propiedadSeleccionada.propietario?.telefono || '-' }}</li>
-              <li class="list-group-item px-0 bg-transparent"><strong>Estado Comercial:</strong> 
+              <li class="list-group-item px-0 bg-transparent"><strong>Estado Comercial:</strong>
                 <span class="ms-2 badge" :class="propiedadSeleccionada.estado === 'Disponible' ? 'bg-success' : 'bg-warning text-dark'">
                   {{ propiedadSeleccionada.estado }}
                 </span>
