@@ -56,7 +56,7 @@ const propietariosParaSelector = computed(() =>
 // --- FORMULARIOS ---
 const propiedadForm = ref({
   id: null, propietario_ids: [], sector_urbano_id: '', ubicacion_id: null,
-  tipo: 'Lote', codigo: '', precio_venta: '', moneda: 'USD',
+  tipo: 'Lote', codigo: '', precio_venta: '', moneda: 'BOB',
   superficie_m2: '', superficie_construida_m2: '',
   frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0,
   es_esquina: false, direccion: '', nro_lote: '',
@@ -194,12 +194,35 @@ const irFormulario = (prop = null) => {
   erroresValidacion.value = {};
   if (prop) {
     isEditing.value = true;
+    
+    // Solo extraemos los campos necesarios para el formulario, 
+    // evitando enviar objetos de relaciones (como caracteristicas o imagenes) que causan errores de validación.
     propiedadForm.value = {
-      ...prop,
+      id: prop.id,
       propietario_ids: prop.propietarios?.map(p => p.id) ?? [],
       sector_urbano_id: prop.sector_urbano_id || '',
-      es_esquina: prop.es_esquina == 1 || prop.es_esquina === true
+      ubicacion_id: prop.ubicacion_id,
+      tipo: prop.tipo || 'Lote',
+      codigo: prop.codigo || '',
+      precio_venta: prop.precio_venta || '',
+      moneda: prop.moneda || 'USD',
+      superficie_m2: prop.superficie_m2 || '',
+      superficie_construida_m2: prop.superficie_construida_m2 || '',
+      frente_mts: prop.frente_mts || '',
+      fondo_mts: prop.fondo_mts || '',
+      habitaciones: prop.habitaciones || 0,
+      banos: prop.banos || 0,
+      es_esquina: prop.es_esquina == 1 || prop.es_esquina === true,
+      direccion: prop.direccion || '',
+      nro_lote: prop.nro_lote || '',
+      colinda_norte: prop.colinda_norte || '',
+      colinda_sur: prop.colinda_sur || '',
+      colinda_este: prop.colinda_este || '',
+      colinda_oeste: prop.colinda_oeste || '',
+      estado: prop.estado || 'Disponible',
+      activo: prop.activo == 1 || prop.activo === true
     };
+
     // Pre-cargar el distrito del sector para el selector en cascada
     const distritoId = prop.sector_urbano?.distrito_id || ''
     targetSectorId.value = prop.sector_urbano_id || null
@@ -318,7 +341,7 @@ const volverListado = () => {
 const resetPropiedadForm = () => {
   propiedadForm.value = {
     id: null, propietario_ids: [], sector_urbano_id: '', tipo: 'Lote', codigo: '',
-    precio_venta: '', moneda: 'USD', superficie_m2: '', superficie_construida_m2: '',
+    precio_venta: '', moneda: 'BOB', superficie_m2: '', superficie_construida_m2: '',
     frente_mts: '', fondo_mts: '', habitaciones: 0, banos: 0, es_esquina: false,
     direccion: '', colinda_norte: '', colinda_sur: '', colinda_este: '',
     colinda_oeste: '', nro_lote: '', estado: 'Disponible', activo: true
@@ -331,6 +354,17 @@ watch(() => propiedadForm.value.tipo, (newTipo) => {
     propiedadForm.value.superficie_construida_m2 = '';
     propiedadForm.value.habitaciones = 0;
     propiedadForm.value.banos = 0;
+  }
+})
+
+// Cálculo automático de superficie (Frente x Fondo)
+watch([() => propiedadForm.value.frente_mts, () => propiedadForm.value.fondo_mts], ([frente, fondo]) => {
+  if (frente && fondo && frente > 0 && fondo > 0) {
+    const total = parseFloat(frente) * parseFloat(fondo);
+    // Solo actualizamos si el resultado es un número válido
+    if (!isNaN(total)) {
+      propiedadForm.value.superficie_m2 = Number(total.toFixed(2));
+    }
   }
 })
 
@@ -600,6 +634,7 @@ onMounted(() => cargarDatosBase(1));
                   <div v-if="erroresValidacion.propietario_ids" class="text-danger smaller mt-1 fw-medium">Debe seleccionar al menos un propietario.</div>
                 </div>
 
+                <!-- 
                 <div class="col-md-3">
                   <label class="form-label small fw-bold">Moneda</label>
                   <select class="form-select bg-light border-0" v-model="propiedadForm.moneda">
@@ -607,12 +642,14 @@ onMounted(() => cargarDatosBase(1));
                     <option value="BOB">BOB</option>
                   </select>
                 </div>
+                -->
 
-                <div class="col-md-5">
-                  <label class="form-label small fw-bold">Precio de Venta *</label>
+                <div class="col-md-8">
+                  <label class="form-label small fw-bold">Precio de Venta ({{ propiedadForm.moneda }}) *</label>
                   <input type="number" step="0.01" class="form-control bg-light border-0 text-success fw-bold" v-model="propiedadForm.precio_venta" required>
                 </div>
 
+                <!-- 
                 <div class="col-md-4">
                   <label class="form-label small fw-bold">Estado</label>
                   <select class="form-select bg-light border-0" v-model="propiedadForm.estado">
@@ -621,16 +658,7 @@ onMounted(() => cargarDatosBase(1));
                     <option value="Vendido">Vendido</option>
                   </select>
                 </div>
-
-                <div class="col-md-6">
-                  <label class="form-label small fw-bold">Sup. Terreno (m²) *</label>
-                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.superficie_m2" required>
-                </div>
-
-                <div class="col-md-6" v-if="propiedadForm.tipo === 'Casa'">
-                  <label class="form-label small fw-bold">Sup. Construida (m²)</label>
-                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.superficie_construida_m2">
-                </div>
+                -->
 
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Frente (mts)</label>
@@ -640,6 +668,17 @@ onMounted(() => cargarDatosBase(1));
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Fondo (mts)</label>
                   <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.fondo_mts">
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-primary">Sup. Terreno (m²) *</label>
+                  <input type="number" step="0.01" class="form-control bg-primary bg-opacity-10 border-0 fw-bold" v-model="propiedadForm.superficie_m2" readonly required>
+                  <div class="extra-small text-muted mt-1"><i class="bi bi-info-circle me-1"></i>Calculado automáticamente</div>
+                </div>
+
+                <div class="col-md-6" v-if="propiedadForm.tipo === 'Casa'">
+                  <label class="form-label small fw-bold">Sup. Construida (m²)</label>
+                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.superficie_construida_m2">
                 </div>
 
                 <template v-if="propiedadForm.tipo === 'Casa'">
