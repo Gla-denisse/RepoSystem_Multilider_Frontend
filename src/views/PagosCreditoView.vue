@@ -860,22 +860,27 @@ const getNombreCuenta = (id) => {
 
 .modal-custom-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(15, 23, 42, 0.95);
+  background-color: rgba(11, 37, 69, 0.4);
   display: flex; align-items: center; justify-content: center;
   z-index: 2000; backdrop-filter: blur(8px);
 }
 .modal-custom-container {
-  background: white; width: 95%; max-width: 550px; border-radius: 24px; overflow: hidden;
+  background: var(--bg-card); color: var(--text-main); width: 95%; max-width: 550px; border-radius: 24px; overflow: hidden;
   animation: modalScale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes modalScale { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 .modal-custom-header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; }
 .icon-circle { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-.border-dashed { border: 2px dashed #e2e8f0; background-color: #f8fafc; }
+.border-dashed { border: 2px dashed var(--border-color); background-color: rgba(255, 255, 255, 0.03); }
 
-.form-select, .form-control { border-radius: 10px; padding: 0.65rem 1rem; border: 1px solid #e2e8f0; font-size: 0.95rem; }
-.form-select:focus, .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+.modal-custom-body {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+
+.form-select, .form-control { border-radius: 10px; padding: 0.65rem 1rem; border: 1px solid var(--border-color); font-size: 0.95rem; background-color: var(--bg-card); color: var(--text-main); }
+.form-select:focus, .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
 
 .form-check-input:checked { background-color: #198754; border-color: #198754; }
 </style>

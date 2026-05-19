@@ -19,9 +19,13 @@ const totalItems    = ref(0)
 const totales       = ref([])
 
 // Filtros
+const hoy = new Date()
+const haceDosMeses = new Date()
+haceDosMeses.setMonth(haceDosMeses.getMonth() - 2)
+
 const filtros = reactive({
-  fecha_inicio: '',
-  fecha_fin:    '',
+  fecha_inicio: haceDosMeses.toISOString().split('T')[0],
+  fecha_fin:    hoy.toISOString().split('T')[0],
   categoria:    '',
   origen:       '',
   estado:       'CONFIRMADO',
@@ -102,7 +106,13 @@ onMounted(async () => {
 })
 
 const limpiarFiltros = () => {
-  Object.assign(filtros, { fecha_inicio: '', fecha_fin: '', categoria: '', origen: '', estado: 'CONFIRMADO' })
+  Object.assign(filtros, {
+    fecha_inicio: haceDosMeses.toISOString().split('T')[0],
+    fecha_fin:    hoy.toISOString().split('T')[0],
+    categoria:    '',
+    origen:       '',
+    estado:       'CONFIRMADO'
+  })
   cargar(1)
 }
 
@@ -204,53 +214,53 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
     <!-- Tarjetas de totales -->
     <div class="row g-3 mb-4">
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-currency-dollar text-success fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-cash-coin text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Total confirmado (Bs)</div>
-              <div class="fw-bold fs-5 text-success">Bs {{ formatMonto(totalBs) }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Confirmado (Bs)</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">Bs {{ formatMonto(totalBs) }}</div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-currency-dollar text-info fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-currency-dollar text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Total confirmado ($)</div>
-              <div class="fw-bold fs-5 text-info">$ {{ formatMonto(totalUsd) }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Confirmado ($)</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">$ {{ formatMonto(totalUsd) }}</div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-robot text-primary fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-list-check text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Registros totales</div>
-              <div class="fw-bold fs-5">{{ totalItems }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Registros</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">{{ totalItems }} <small class="fw-normal text-muted" style="font-size: 0.75rem;">Ingresos</small></div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-filter-circle text-warning fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-calendar3 text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Página actual</div>
-              <div class="fw-bold fs-5">{{ currentPage }} / {{ lastPage }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Vista Actual</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">{{ currentPage }} / {{ lastPage }} <small class="fw-normal text-muted" style="font-size: 0.75rem;">Pág.</small></div>
             </div>
           </div>
         </div>
@@ -307,7 +317,7 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
     <!-- Tabla -->
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
       <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
-        <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing:1px;">
+        <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing:1px; color: var(--text-main);">
           <i class="bi bi-table me-2"></i>Listado de Ingresos
         </h6>
         <button class="btn btn-sm btn-outline-secondary" @click="cargar(currentPage)" :disabled="cargando">

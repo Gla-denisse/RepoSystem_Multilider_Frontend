@@ -79,10 +79,14 @@ const cargarCuentas = async () => {
 
 // ─── Impagas ──────────────────────────────────────────────────────────────────
 const abrirImpagas = async (asesor) => {
+  const hoy = new Date()
+  const haceUnMes = new Date()
+  haceUnMes.setMonth(haceUnMes.getMonth() - 1)
+
   asesorSeleccionado.value = asesor
   impagasPage.value = 1
-  filtrosImpagas.fecha_inicio = ''
-  filtrosImpagas.fecha_fin    = ''
+  filtrosImpagas.fecha_inicio = haceUnMes.toISOString().split('T')[0]
+  filtrosImpagas.fecha_fin    = hoy.toISOString().split('T')[0]
   modalImpagasVisible.value = true
   await cargarImpagas()
 }
@@ -108,10 +112,14 @@ const cargarImpagas = async (page = 1) => {
 
 // ─── Pagadas ──────────────────────────────────────────────────────────────────
 const abrirPagadas = async (asesor) => {
+  const hoy = new Date()
+  const haceUnMes = new Date()
+  haceUnMes.setMonth(haceUnMes.getMonth() - 1)
+
   asesorSeleccionado.value = asesor
   pagadasPage.value = 1
-  filtrosPagadas.fecha_inicio = ''
-  filtrosPagadas.fecha_fin    = ''
+  filtrosPagadas.fecha_inicio = haceUnMes.toISOString().split('T')[0]
+  filtrosPagadas.fecha_fin    = hoy.toISOString().split('T')[0]
   modalPagadasVisible.value = true
   await cargarPagadas()
 }
@@ -196,12 +204,9 @@ const descargarComprobante = async (egreso) => {
     const res = await api.get(`/comisiones-asesores/egreso/${egreso.id}/comprobante`, {
       responseType: 'blob',
     })
-    const url  = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    const link = document.createElement('a')
-    link.href     = url
-    link.download = `comprobante-comision-${egreso.id}.pdf`
-    link.click()
-    URL.revokeObjectURL(url)
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   } catch (e) {
     Swal.fire('Error', 'No se pudo generar el comprobante.', 'error')
   } finally {
@@ -214,7 +219,11 @@ const fmt = (val) => Number(val || 0).toFixed(2)
 
 const fmtFecha = (f) => {
   if (!f) return '—'
-  return new Date(f + 'T00:00:00').toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  // Si es solo fecha YYYY-MM-DD, forzamos T00:00:00 para evitar desfases de zona horaria
+  const dateStr = (typeof f === 'string' && f.length === 10) ? f + 'T00:00:00' : f
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return f
+  return d.toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 let searchTimer = null
@@ -302,7 +311,7 @@ onMounted(() => {
                 </td>
                 <!-- Pendientes -->
                 <td class="text-center">
-                  <span class="badge fs-6 px-3"
+                  <span class="badge"
                         :class="a.comisiones_pendientes > 0 ? 'bg-danger' : 'bg-secondary bg-opacity-25 text-secondary'">
                     {{ a.comisiones_pendientes }}
                   </span>
@@ -315,7 +324,7 @@ onMounted(() => {
                 </td>
                 <!-- Pagadas -->
                 <td class="text-center">
-                  <span class="badge fs-6 px-3"
+                  <span class="badge"
                         :class="a.comisiones_pagadas > 0 ? 'bg-success' : 'bg-secondary bg-opacity-25 text-secondary'">
                     {{ a.comisiones_pagadas }}
                   </span>
@@ -365,19 +374,19 @@ onMounted(() => {
     <!-- MODAL: VER IMPAGAS                                                      -->
     <!-- ════════════════════════════════════════════════════════════════════════ -->
     <div v-if="modalImpagasVisible" class="modal d-block" style="background:rgba(0,0,0,0.5); z-index:1050;">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header bg-danger text-white">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" style="max-width: 1350px;">
+        <div class="modal-content card-custom border-0 shadow-lg">
+          <div class="modal-header bg-danger text-white border-0">
             <div>
               <h5 class="modal-title fw-bold mb-0">
                 <i class="bi bi-clock-history me-2"></i>Comisiones Impagas
               </h5>
-              <small>{{ asesorSeleccionado?.nombre_completo }}</small>
+              <small class="opacity-75">{{ asesorSeleccionado?.nombre_completo }}</small>
             </div>
-            <button class="btn-close btn-close-white" @click="modalImpagasVisible = false"></button>
+            <button class="btn-close btn-close-white shadow-none" @click="modalImpagasVisible = false"></button>
           </div>
 
-          <div class="modal-body">
+          <div class="modal-body p-4">
             <!-- Filtros de fecha -->
             <div class="row g-2 mb-3">
               <div class="col-md-4">
@@ -389,10 +398,10 @@ onMounted(() => {
                 <input type="date" class="form-control form-control-sm" v-model="filtrosImpagas.fecha_fin" />
               </div>
               <div class="col-md-4 d-flex align-items-end gap-2">
-                <button class="btn btn-sm btn-danger" @click="cargarImpagas(1)">
+                <button class="btn btn-sm btn-danger border-0 shadow-sm px-3" @click="cargarImpagas(1)">
                   <i class="bi bi-funnel me-1"></i>Filtrar
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" @click="filtrosImpagas.fecha_inicio=''; filtrosImpagas.fecha_fin=''; cargarImpagas(1)">
+                <button class="btn btn-sm btn-outline-secondary px-3" @click="filtrosImpagas.fecha_inicio=''; filtrosImpagas.fecha_fin=''; cargarImpagas(1)">
                   Limpiar
                 </button>
               </div>
@@ -401,13 +410,13 @@ onMounted(() => {
             <!-- Totales -->
             <div class="row g-2 mb-3" v-if="!impagasCargando && impagas.length > 0">
               <div class="col-6 col-md-3">
-                <div class="alert alert-danger py-2 mb-0 text-center">
+                <div class="alert alert-danger py-2 mb-0 text-center border-0 shadow-sm bg-danger bg-opacity-10 text-danger">
                   <div class="small fw-semibold">Total Deuda Bs</div>
                   <div class="fw-bold">Bs. {{ fmt(impagasTotales.bs) }}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <div class="alert alert-danger py-2 mb-0 text-center">
+                <div class="alert alert-danger py-2 mb-0 text-center border-0 shadow-sm bg-danger bg-opacity-10 text-danger">
                   <div class="small fw-semibold">Total Deuda $</div>
                   <div class="fw-bold">$ {{ fmt(impagasTotales.usd) }}</div>
                 </div>
@@ -418,10 +427,10 @@ onMounted(() => {
             </div>
 
             <!-- Spinner / vacío -->
-            <div v-if="impagasCargando" class="text-center py-4 text-muted">
+            <div v-if="impagasCargando" class="text-center py-5 text-muted">
               <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
             </div>
-            <div v-else-if="impagas.length === 0" class="text-center py-4 text-muted">
+            <div v-else-if="impagas.length === 0" class="text-center py-5 text-muted">
               <i class="bi bi-check2-circle fs-1 d-block mb-2 text-success"></i>
               No hay comisiones impagas
             </div>
@@ -446,24 +455,24 @@ onMounted(() => {
                       <span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="font-size:10px">PENDIENTE</span>
                     </td>
                     <td>
-                      <div class="small">{{ e.concepto }}</div>
+                      <div class="small fw-medium">{{ e.concepto }}</div>
                       <div v-if="e.nota_venta_id" class="text-muted" style="font-size:11px">Venta #{{ e.nota_venta_id }}</div>
                     </td>
                     <td>
                       <div class="small text-muted">
-                        {{ e.nota_venta?.propiedad?.nombre ?? '—' }}
+                        {{ e.nota_venta?.propiedad?.codigo ?? '—' }}
                       </div>
                     </td>
                     <td>
                       <div class="small">
-                        {{ e.nota_venta?.cliente ? (e.nota_venta.cliente.nombre + ' ' + (e.nota_venta.cliente.apellido ?? '')) : '—' }}
+                        {{ e.nota_venta?.cliente?.nombre_completo ?? '—' }}
                       </div>
                     </td>
                     <td class="text-end fw-bold text-danger">
                       {{ e.moneda }} {{ fmt(e.monto) }}
                     </td>
                     <td class="text-center">
-                      <button class="btn btn-sm btn-success" @click="abrirPagar(e)" title="Pagar comisión">
+                      <button class="btn btn-sm btn-success border-0 shadow-sm" @click="abrirPagar(e)" title="Pagar comisión">
                         <i class="bi bi-check-circle me-1"></i>Pagar
                       </button>
                     </td>
@@ -473,8 +482,8 @@ onMounted(() => {
             </div>
 
             <!-- Paginación impagas -->
-            <div v-if="impagasLastPage > 1" class="d-flex justify-content-between align-items-center mt-2">
-              <small class="text-muted">Pág. {{ impagasPage }} de {{ impagasLastPage }}</small>
+            <div v-if="impagasLastPage > 1" class="d-flex justify-content-between align-items-center mt-3">
+              <small class="text-muted small">Pág. {{ impagasPage }} de {{ impagasLastPage }}</small>
               <div class="d-flex gap-1">
                 <button class="btn btn-sm btn-outline-secondary" :disabled="impagasPage <= 1" @click="cargarImpagas(impagasPage - 1)">
                   <i class="bi bi-chevron-left"></i>
@@ -486,8 +495,8 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="modalImpagasVisible = false">Cerrar</button>
+          <div class="modal-footer border-0 bg-light p-3">
+            <button class="btn btn-secondary px-4 shadow-sm" @click="modalImpagasVisible = false">Cerrar</button>
           </div>
         </div>
       </div>
@@ -497,19 +506,19 @@ onMounted(() => {
     <!-- MODAL: VER PAGADAS                                                      -->
     <!-- ════════════════════════════════════════════════════════════════════════ -->
     <div v-if="modalPagadasVisible" class="modal d-block" style="background:rgba(0,0,0,0.5); z-index:1050;">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered" style="max-width: 1350px;">
+        <div class="modal-content card-custom border-0 shadow-lg">
+          <div class="modal-header bg-success text-white border-0">
             <div>
               <h5 class="modal-title fw-bold mb-0">
                 <i class="bi bi-check2-circle me-2"></i>Comisiones Pagadas
               </h5>
-              <small>{{ asesorSeleccionado?.nombre_completo }}</small>
+              <small class="opacity-75">{{ asesorSeleccionado?.nombre_completo }}</small>
             </div>
-            <button class="btn-close btn-close-white" @click="modalPagadasVisible = false"></button>
+            <button class="btn-close btn-close-white shadow-none" @click="modalPagadasVisible = false"></button>
           </div>
 
-          <div class="modal-body">
+          <div class="modal-body p-4">
             <!-- Filtros de fecha -->
             <div class="row g-2 mb-3">
               <div class="col-md-4">
@@ -521,10 +530,10 @@ onMounted(() => {
                 <input type="date" class="form-control form-control-sm" v-model="filtrosPagadas.fecha_fin" />
               </div>
               <div class="col-md-4 d-flex align-items-end gap-2">
-                <button class="btn btn-sm btn-success" @click="cargarPagadas(1)">
+                <button class="btn btn-sm btn-success border-0 shadow-sm px-3" @click="cargarPagadas(1)">
                   <i class="bi bi-funnel me-1"></i>Filtrar
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" @click="filtrosPagadas.fecha_inicio=''; filtrosPagadas.fecha_fin=''; cargarPagadas(1)">
+                <button class="btn btn-sm btn-outline-secondary px-3" @click="filtrosPagadas.fecha_inicio=''; filtrosPagadas.fecha_fin=''; cargarPagadas(1)">
                   Limpiar
                 </button>
               </div>
@@ -533,13 +542,13 @@ onMounted(() => {
             <!-- Totales -->
             <div class="row g-2 mb-3" v-if="!pagadasCargando && pagadas.length > 0">
               <div class="col-6 col-md-3">
-                <div class="alert alert-success py-2 mb-0 text-center">
+                <div class="alert alert-success py-2 mb-0 text-center border-0 shadow-sm bg-success bg-opacity-10 text-success">
                   <div class="small fw-semibold">Total Pagado Bs</div>
                   <div class="fw-bold">Bs. {{ fmt(pagadasTotales.bs) }}</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <div class="alert alert-success py-2 mb-0 text-center">
+                <div class="alert alert-success py-2 mb-0 text-center border-0 shadow-sm bg-success bg-opacity-10 text-success">
                   <div class="small fw-semibold">Total Pagado $</div>
                   <div class="fw-bold">$ {{ fmt(pagadasTotales.usd) }}</div>
                 </div>
@@ -550,10 +559,10 @@ onMounted(() => {
             </div>
 
             <!-- Spinner / vacío -->
-            <div v-if="pagadasCargando" class="text-center py-4 text-muted">
+            <div v-if="pagadasCargando" class="text-center py-5 text-muted">
               <div class="spinner-border spinner-border-sm me-2"></div> Cargando...
             </div>
-            <div v-else-if="pagadas.length === 0" class="text-center py-4 text-muted">
+            <div v-else-if="pagadas.length === 0" class="text-center py-5 text-muted">
               <i class="bi bi-inbox fs-1 d-block mb-2"></i>
               No hay comisiones pagadas en este período
             </div>
@@ -579,35 +588,35 @@ onMounted(() => {
                       <span class="badge bg-success bg-opacity-10 text-success border border-success" style="font-size:10px">PAGADO</span>
                     </td>
                     <td>
-                      <div class="small">{{ e.concepto }}</div>
+                      <div class="small fw-medium">{{ e.concepto }}</div>
                       <div v-if="e.nota_venta_id" class="text-muted" style="font-size:11px">Venta #{{ e.nota_venta_id }}</div>
                     </td>
                     <td>
                       <div class="small text-muted">
-                        {{ e.nota_venta?.propiedad?.nombre ?? '—' }}
+                        {{ e.nota_venta?.propiedad?.codigo ?? '—' }}
                       </div>
                     </td>
                     <td>
                       <div class="small">
-                        {{ e.nota_venta?.cliente ? (e.nota_venta.cliente.nombre + ' ' + (e.nota_venta.cliente.apellido ?? '')) : '—' }}
+                        {{ e.nota_venta?.cliente?.nombre_completo ?? '—' }}
                       </div>
                     </td>
                     <td class="text-end fw-bold text-success">
                       {{ e.moneda }} {{ fmt(e.monto) }}
                     </td>
                     <td>
-                      <div class="small">{{ e.cuenta_bancaria?.banco ?? '—' }}</div>
+                      <div class="small">{{ e.cuenta_bancaria?.nombre ?? '—' }}</div>
                       <div class="text-muted" style="font-size:11px">{{ e.comprobante || '—' }}</div>
                     </td>
                     <td class="text-center">
                       <div class="d-flex gap-1 justify-content-center">
-                        <button class="btn btn-sm btn-outline-primary" @click="descargarComprobante(e)"
+                        <button class="btn btn-sm btn-outline-primary border-0 shadow-none bg-light" @click="descargarComprobante(e)"
                                 :disabled="descargando === e.id"
                                 title="Descargar comprobante PDF">
                           <span v-if="descargando === e.id" class="spinner-border spinner-border-sm"></span>
                           <i v-else class="bi bi-file-earmark-pdf"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" @click="anularComision(e)" title="Anular comisión">
+                        <button class="btn btn-sm btn-outline-danger border-0 shadow-none bg-light" @click="anularComision(e)" title="Anular comisión">
                           <i class="bi bi-x-circle"></i>
                         </button>
                       </div>
@@ -618,8 +627,8 @@ onMounted(() => {
             </div>
 
             <!-- Paginación pagadas -->
-            <div v-if="pagadasLastPage > 1" class="d-flex justify-content-between align-items-center mt-2">
-              <small class="text-muted">Pág. {{ pagadasPage }} de {{ pagadasLastPage }}</small>
+            <div v-if="pagadasLastPage > 1" class="d-flex justify-content-between align-items-center mt-3">
+              <small class="text-muted small">Pág. {{ pagadasPage }} de {{ pagadasLastPage }}</small>
               <div class="d-flex gap-1">
                 <button class="btn btn-sm btn-outline-secondary" :disabled="pagadasPage <= 1" @click="cargarPagadas(pagadasPage - 1)">
                   <i class="bi bi-chevron-left"></i>
@@ -631,8 +640,8 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="modalPagadasVisible = false">Cerrar</button>
+          <div class="modal-footer border-0 bg-light p-3">
+            <button class="btn btn-secondary px-4 shadow-sm" @click="modalPagadasVisible = false">Cerrar</button>
           </div>
         </div>
       </div>
@@ -642,49 +651,48 @@ onMounted(() => {
     <!-- MODAL: PAGAR COMISIÓN                                                   -->
     <!-- ════════════════════════════════════════════════════════════════════════ -->
     <div v-if="modalPagarVisible" class="modal d-block" style="background:rgba(0,0,0,0.6); z-index:1060;">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-custom border-0 shadow-lg">
+          <div class="modal-header bg-success text-white border-0">
             <h5 class="modal-title fw-bold">
-              <i class="bi bi-cash-coin me-2"></i>Registrar Pago de Comisión
+              <i class="bi bi-cash-coin me-2"></i>Registrar Pago
             </h5>
-            <button class="btn-close btn-close-white" @click="modalPagarVisible = false"></button>
+            <button class="btn-close btn-close-white shadow-none" @click="modalPagarVisible = false"></button>
           </div>
-          <div class="modal-body">
-            <div class="alert alert-info py-2 small mb-3">
-              <strong>Asesor:</strong> {{ asesorSeleccionado?.nombre_completo }}<br>
-              <strong>Concepto:</strong> {{ egresoAPagar?.concepto }}<br>
-              <strong>Monto:</strong>
-              <span class="fw-bold text-danger">{{ egresoAPagar?.moneda }} {{ fmt(egresoAPagar?.monto) }}</span>
+          <div class="modal-body p-4">
+            <div class="alert alert-info py-2 small mb-4 border-0 shadow-none bg-primary bg-opacity-10 text-primary">
+              <div class="mb-1"><strong>Asesor:</strong> {{ asesorSeleccionado?.nombre_completo }}</div>
+              <div class="mb-1"><strong>Concepto:</strong> {{ egresoAPagar?.concepto }}</div>
+              <div><strong>Monto:</strong> <span class="fw-bold text-danger">{{ egresoAPagar?.moneda }} {{ fmt(egresoAPagar?.monto) }}</span></div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-semibold">Fecha de Pago <span class="text-danger">*</span></label>
-              <input type="date" class="form-control" v-model="formPagar.fecha" required />
+              <label class="form-label small fw-bold text-muted">Fecha de Pago *</label>
+              <input type="date" class="form-control bg-light border-0 shadow-none" v-model="formPagar.fecha" required />
             </div>
             <div class="mb-3">
-              <label class="form-label fw-semibold">Cuenta Bancaria</label>
-              <select class="form-select" v-model="formPagar.cuenta_bancaria_id">
+              <label class="form-label small fw-bold text-muted">Cuenta Bancaria</label>
+              <select class="form-select bg-light border-0 shadow-none" v-model="formPagar.cuenta_bancaria_id">
                 <option value="">— Sin especificar —</option>
                 <option v-for="c in cuentas" :key="c.id" :value="c.id">
-                  {{ c.banco }} - {{ c.numero_cuenta }}
+                  {{ c.nombre }} ({{ c.banco || c.tipo }})
                 </option>
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-semibold">N° Comprobante / Referencia</label>
-              <input type="text" class="form-control" v-model="formPagar.comprobante"
+              <label class="form-label small fw-bold text-muted">N° Comprobante / Referencia</label>
+              <input type="text" class="form-control bg-light border-0 shadow-none" v-model="formPagar.comprobante"
                      placeholder="Ej: TRF-00123" />
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Observaciones</label>
-              <textarea class="form-control" rows="2" v-model="formPagar.observaciones"></textarea>
+            <div class="mb-0">
+              <label class="form-label small fw-bold text-muted">Observaciones</label>
+              <textarea class="form-control bg-light border-0 shadow-none" rows="2" v-model="formPagar.observaciones" placeholder="Opcional..."></textarea>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="modalPagarVisible = false">Cancelar</button>
-            <button class="btn btn-success" :disabled="pagando" @click="confirmarPago">
-              <span v-if="pagando" class="spinner-border spinner-border-sm me-1"></span>
+          <div class="modal-footer border-0 bg-light p-3">
+            <button class="btn btn-secondary px-4 shadow-sm" @click="modalPagarVisible = false" :disabled="pagando">Cancelar</button>
+            <button class="btn btn-success px-4 border-0 shadow-sm" :disabled="pagando" @click="confirmarPago">
+              <span v-if="pagando" class="spinner-border spinner-border-sm me-2"></span>
               <i v-else class="bi bi-check-circle me-1"></i>
               Confirmar Pago
             </button>

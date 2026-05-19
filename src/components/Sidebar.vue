@@ -44,7 +44,7 @@ const toggleSubmenu = (menuName) => {
     <ul class="nav flex-column px-2 mt-3 gap-1 flex-grow-1 overflow-auto">
       
       <li class="nav-item">
-        <RouterLink to="/" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Dashboard' : ''">
+        <RouterLink to="/admin" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Dashboard' : ''">
           <i class="bi bi-house-door fs-5"></i>
           <span v-if="!isCompact" class="ms-3 fw-medium">Dashboard</span>
         </RouterLink>

@@ -484,7 +484,7 @@ const paginasVisibles = computed(() => {
                   <td class="fw-medium">{{ formatFecha(pago.fecha_pago) }}</td>
                   <td><span class="badge bg-secondary">{{ pago.concepto_pago }}</span></td>
                   <td>{{ pago.metodo_pago?.nombre_metodo || '-' }}</td>
-                  <td class="text-end fw-bold" style="color: #27ae60;">Bs. {{ pago.monto }}</td>
+                  <td class="text-end fw-bold text-success">Bs. {{ pago.monto }}</td>
                   <td>
                     <span v-if="pago.estado === 'Registrado'" class="badge-status badge-status-active">Registrado</span>
                     <span v-else-if="pago.estado === 'Cancelado' || pago.estado === 'Rechazado'" class="badge-status badge-status-danger">{{ pago.estado }}</span>

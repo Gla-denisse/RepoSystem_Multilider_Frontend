@@ -21,9 +21,13 @@ const totalItems    = ref(0)
 const totalesRaw    = ref([])
 
 // Filtros
+const hoy = new Date()
+const haceDosMeses = new Date()
+haceDosMeses.setMonth(haceDosMeses.getMonth() - 2)
+
 const filtros = reactive({
-  fecha_inicio: '',
-  fecha_fin:    '',
+  fecha_inicio: haceDosMeses.toISOString().split('T')[0],
+  fecha_fin:    hoy.toISOString().split('T')[0],
   categoria:    '',
   origen:       '',
   estado:       '',
@@ -69,13 +73,13 @@ const CATEGORIAS = {
 }
 
 const categoriaBadge = (cat) => ({
-  COMISION_ASESOR:      'bg-purple bg-opacity-10 text-purple border',
-  GASTO_ADMINISTRATIVO: 'bg-secondary bg-opacity-10 text-secondary border border-secondary',
-  GASTO_OPERATIVO:      'bg-warning bg-opacity-10 text-warning border border-warning',
-  GASTO_MARKETING:      'bg-info bg-opacity-10 text-info border border-info',
-  PAGO_PROPIETARIO:     'bg-primary bg-opacity-10 text-primary border border-primary',
-  OTRO:                 'bg-dark bg-opacity-10 text-dark border border-dark',
-}[cat] || 'bg-secondary bg-opacity-10 text-secondary')
+  COMISION_ASESOR:      'badge-cat-purple',
+  GASTO_ADMINISTRATIVO: 'badge-cat-secondary',
+  GASTO_OPERATIVO:      'badge-cat-warning',
+  GASTO_MARKETING:      'badge-cat-info',
+  PAGO_PROPIETARIO:     'badge-cat-primary',
+  OTRO:                 'badge-cat-dark',
+}[cat] || 'badge-cat-secondary')
 
 const estadoBadge = (est) => ({
   PENDIENTE: 'bg-warning text-dark',
@@ -132,7 +136,14 @@ onMounted(async () => {
 })
 
 const limpiarFiltros = () => {
-  Object.assign(filtros, { fecha_inicio: '', fecha_fin: '', categoria: '', origen: '', estado: '', asesor_id: '' })
+  Object.assign(filtros, {
+    fecha_inicio: haceDosMeses.toISOString().split('T')[0],
+    fecha_fin:    hoy.toISOString().split('T')[0],
+    categoria:    '',
+    origen:       '',
+    estado:       '',
+    asesor_id:    ''
+  })
   cargar(1)
 }
 
@@ -267,52 +278,52 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
     <!-- Tarjetas de totales -->
     <div class="row g-3 mb-4">
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-check-circle text-success fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-wallet2 text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Pagado (Bs)</div>
-              <div class="fw-bold fs-5 text-success">Bs {{ formatMonto(totalPagadoBs) }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Pagado (Bs)</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">Bs {{ formatMonto(totalPagadoBs) }}</div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-info bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-check-circle text-info fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-cash-stack text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Pagado ($)</div>
-              <div class="fw-bold fs-5 text-info">$ {{ formatMonto(totalPagadoUsd) }}</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Pagado ($)</div>
+              <div class="fw-bold fs-5" style="color: var(--text-main);">$ {{ formatMonto(totalPagadoUsd) }}</div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-warning bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-hourglass-split text-warning fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-clock-history text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Pendiente (Bs)</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Pendiente (Bs)</div>
               <div class="fw-bold fs-5 text-warning">Bs {{ formatMonto(totalPendBs) }}</div>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
+        <div class="card card-custom h-100">
           <div class="card-body d-flex align-items-center gap-3">
-            <div class="rounded-circle bg-danger bg-opacity-10 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
-              <i class="bi bi-hourglass-split text-danger fs-5"></i>
+            <div class="bg-light rounded-3 d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+              <i class="bi bi-exclamation-circle text-secondary fs-4"></i>
             </div>
             <div>
-              <div class="text-muted small">Pendiente ($)</div>
+              <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Pendiente ($)</div>
               <div class="fw-bold fs-5 text-danger">$ {{ formatMonto(totalPendUsd) }}</div>
             </div>
           </div>
@@ -369,8 +380,8 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
 
     <!-- Tabla -->
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center border-bottom" style="background-color:#f8f9fa;">
-        <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing:1px;">
+      <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+        <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing:1px; color: var(--text-main);">
           <i class="bi bi-table me-2"></i>Listado de Egresos
         </h6>
         <button class="btn btn-sm btn-outline-secondary" @click="cargar(currentPage)" :disabled="cargando">
@@ -419,7 +430,7 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
                   </span>
                 </td>
                 <td>
-                  <span class="badge rounded-pill" :class="categoriaBadge(egreso.categoria)">
+                  <span :class="categoriaBadge(egreso.categoria)">
                     {{ CATEGORIAS[egreso.categoria] ?? egreso.categoria }}
                   </span>
                 </td>
@@ -490,7 +501,7 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
     <!-- ─── Modal Crear / Editar ─────────────────────────────────────────── -->
     <div v-if="modalVisible" class="modal-overlay" @click.self="cerrarModal">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-3">
+        <div class="modal-content bg-white border-0 shadow-lg rounded-3">
 
           <div class="modal-header border-bottom px-4 py-3">
             <h5 class="modal-title fw-bold">
@@ -590,7 +601,7 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
     <!-- ─── Modal Pagar ──────────────────────────────────────────────────── -->
     <div v-if="modalPagarVisible" class="modal-overlay" @click.self="cerrarModalPagar">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-3" v-if="egresoAPagar">
+        <div class="modal-content bg-white border-0 shadow-lg rounded-3" v-if="egresoAPagar">
 
           <div class="modal-header border-bottom px-4 py-3 bg-success bg-opacity-10">
             <h5 class="modal-title fw-bold text-success">
@@ -659,11 +670,44 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
 <style scoped>
 .modal-overlay {
   position: fixed; inset: 0; z-index: 1050;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(0, 0, 0, 0.5); 
+  backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
   padding: 1rem;
 }
+
+[data-theme="dark"] .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+}
+
 .modal-dialog { width: 100%; max-width: 680px; margin: 0; }
+
+/* Estilos de Badges de Categoría (Formales) */
+[class^="badge-cat-"] {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.badge-cat-purple { background: rgba(124, 58, 237, 0.08); color: #7c3aed; border-color: rgba(124, 58, 237, 0.2); }
+.badge-cat-secondary { background: rgba(107, 114, 128, 0.08); color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
+.badge-cat-warning { background: rgba(245, 158, 11, 0.08); color: #d97706; border-color: rgba(245, 158, 11, 0.2); }
+.badge-cat-info { background: rgba(6, 182, 212, 0.08); color: #0891b2; border-color: rgba(6, 182, 212, 0.2); }
+.badge-cat-primary { background: rgba(11, 37, 69, 0.06); color: #0b2545; border-color: rgba(11, 37, 69, 0.15); }
+.badge-cat-dark { background: rgba(31, 41, 55, 0.08); color: #1f2937; border-color: rgba(31, 41, 55, 0.2); }
+
+[data-theme="dark"] .badge-cat-primary { background: rgba(96, 165, 250, 0.1); color: #60a5fa; border-color: rgba(96, 165, 250, 0.2); }
+[data-theme="dark"] .badge-cat-secondary { color: #9ca3af; border-color: rgba(156, 163, 175, 0.2); }
 
 /* Color morado para comisiones */
 .text-purple  { color: #7c3aed !important; }
