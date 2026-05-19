@@ -230,6 +230,33 @@ const toggleSubmenu = (menuName) => {
         </ul>
       </li>
 
+      <!-- Grupo Finanzas -->
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_ingresos') || authStore.hasPermission('acceso_egresos')">
+        <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
+           @click.prevent="toggleSubmenu('finanzas')"
+           :aria-expanded="openSubmenu === 'finanzas'"
+           :title="isCompact ? 'Finanzas' : ''">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-graph-up-arrow fs-5"></i>
+            <span v-if="!isCompact" class="ms-3 fw-medium">Finanzas</span>
+          </div>
+          <i v-if="!isCompact" class="bi transition-icon" :class="openSubmenu === 'finanzas' ? 'bi-chevron-down' : 'bi-chevron-right'"></i>
+        </a>
+
+        <ul v-show="!isCompact && openSubmenu === 'finanzas'" class="nav flex-column ms-3 mt-1 gap-1 border-start ms-4 ps-2">
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_ingresos')">
+            <RouterLink to="/ingresos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-arrow-down-circle-fill me-2 fs-6 text-success"></i> Ingresos
+            </RouterLink>
+          </li>
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_egresos')">
+            <RouterLink to="/egresos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-arrow-up-circle-fill me-2 fs-6 text-danger"></i> Egresos
+            </RouterLink>
+          </li>
+        </ul>
+      </li>
+
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_empresa')">
         <RouterLink to="/empresa" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Configuración' : ''">
           <i class="bi bi-gear fs-5"></i>
