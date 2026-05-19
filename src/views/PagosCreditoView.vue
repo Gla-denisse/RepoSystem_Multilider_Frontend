@@ -21,6 +21,7 @@ const planSeleccionado = ref(null)
 const cuotasPlan = ref([])
 const cargandoCuotas = ref(false)
 const seleccionSet = ref(new Set()) // Uso de Set para busquedas O(1)
+const tasaMoraPlan = ref(0) // % mensual del plan seleccionado
 
 // Formulario de Pago (Modal Mejorado)
 const mostrarModalPago = ref(false)
@@ -28,6 +29,21 @@ const formPago = ref({
   metodo_pago_id: '',
   cuenta_id: '',
   fecha_pago: new Date().toISOString().substr(0, 10),
+  observaciones: ''
+})
+
+// Reprogramación
+const mostrarModalReprog = ref(false)
+const procesandoReprog = ref(false)
+const planPagoId = ref(null)
+const saldoCapitalActual = ref(0)
+const formReprog = ref({
+  motivo: '',
+  fecha_reprogramacion: new Date().toISOString().substr(0, 10),
+  cuota_desde: 1,
+  nueva_tasa_interes: 0,
+  nuevo_numero_cuotas: 12,
+  nueva_fecha_inicio: new Date().toISOString().substr(0, 10),
   observaciones: ''
 })
 
@@ -73,8 +89,12 @@ const seleccionarPlan = async (plan) => {
   seleccionSet.value = new Set() // Resetear seleccion
   
   try {
-    const res = await api.get(`/ventas/${plan.id}`)
-    cuotasPlan.value = res.data.plan_pago?.cuotas || []
+    const res = await api.get(`/ventas/${plan.id}/plan-pago`)
+    cuotasPlan.value = res.data.plan_pago?.cuotas?.filter(c => c.estado !== 'Reprogramada') || []
+    planPagoId.value = res.data.plan_pago?.id || null
+    // Saldo capital viene calculado correctamente desde el backend (suma de monto_capital pendiente)
+    saldoCapitalActual.value = res.data.resumen?.saldo_capital ?? 0
+    tasaMoraPlan.value = parseFloat(res.data.plan_pago?.tasa_mora ?? 0)
   } catch (error) {
     console.error('Error al cargar cuotas:', error)
     Swal.fire('Error', 'No se pudieron cargar las cuotas del plan', 'error')
@@ -88,6 +108,7 @@ const volverAlListado = () => {
   planSeleccionado.value = null
   cuotasPlan.value = []
   seleccionSet.value = new Set()
+  tasaMoraPlan.value = 0
 }
 
 const toggleCuota = (cuota) => {
@@ -137,15 +158,53 @@ const totalAPagar = computed(() => {
 const numSeleccionados = computed(() => seleccionSet.value.size)
 
 // ==========================================
+// MORA
+// ==========================================
+const cobrarMora = ref(true)
+
+const calcularMoraCuota = (cuota, fechaPago) => {
+  if (!tasaMoraPlan.value || tasaMoraPlan.value <= 0) return 0
+  const fechaVenc = new Date(cuota.fecha_vencimiento)
+  const fechaRef  = new Date(fechaPago)
+  fechaVenc.setHours(0, 0, 0, 0)
+  fechaRef.setHours(0, 0, 0, 0)
+  if (fechaRef <= fechaVenc) return 0
+  const diasAtraso = Math.floor((fechaRef - fechaVenc) / (1000 * 60 * 60 * 24))
+  const tasaDiaria = tasaMoraPlan.value / 100 / 30
+  return Math.round(parseFloat(cuota.monto_cuota) * tasaDiaria * diasAtraso * 100) / 100
+}
+
+const moraResumen = computed(() => {
+  const fecha = formPago.value.fecha_pago || new Date().toISOString().slice(0, 10)
+  const cuotasVencidas = cuotasSeleccionadas.value.filter(c => c.estado === 'Vencida')
+  const detalle = cuotasVencidas.map(c => ({
+    cuota: c,
+    diasAtraso: (() => {
+      const fv = new Date(c.fecha_vencimiento); fv.setHours(0,0,0,0)
+      const fp = new Date(fecha); fp.setHours(0,0,0,0)
+      return fp > fv ? Math.floor((fp - fv) / 86400000) : 0
+    })(),
+    monto: calcularMoraCuota(c, fecha)
+  })).filter(d => d.monto > 0)
+  const total = detalle.reduce((s, d) => s + d.monto, 0)
+  return { detalle, total: Math.round(total * 100) / 100 }
+})
+
+const totalConMora = computed(() => {
+  if (!cobrarMora.value) return totalAPagar.value
+  return Math.round((totalAPagar.value + moraResumen.value.total) * 100) / 100
+})
+
+// ==========================================
 // 3. PROCESAR PAGO
 // ==========================================
 const abrirModalPago = () => {
   if (numSeleccionados.value === 0) return
-  
+  cobrarMora.value = true
   formPago.value = {
     metodo_pago_id: '',
     cuenta_id: '',
-    fecha_pago: new Date().toISOString().substr(0, 10),
+    fecha_pago: new Date().toISOString().slice(0, 10),
     observaciones: `Cobro cuotas: ${cuotasSeleccionadas.value.map(c => c.numero_cuota).join(', ')}`
   }
   mostrarModalPago.value = true
@@ -172,13 +231,20 @@ const confirmarPago = async () => {
 
   try {
     procesando.value = true
+    const moraDetalle = cobrarMora.value ? moraResumen.value.detalle : []
+    const moraByIdCuota = Object.fromEntries(moraDetalle.map(d => [d.cuota.id, d.monto]))
+
     const payload = {
       nota_venta_id: planSeleccionado.value.id,
       metodo_pago_id: formPago.value.metodo_pago_id,
       cuenta_id: formPago.value.cuenta_id,
       fecha_pago: formPago.value.fecha_pago,
       observaciones: formPago.value.observaciones,
-      cuotas: cuotasSeleccionadas.value.map(c => ({ id: c.id, monto: c.monto_cuota }))
+      cuotas: cuotasSeleccionadas.value.map(c => ({
+        id: c.id,
+        monto: c.monto_cuota,
+        mora_monto: moraByIdCuota[c.id] ?? 0
+      }))
     }
 
     await api.post('/pagos/bulk', payload)
@@ -202,7 +268,101 @@ const confirmarPago = async () => {
 }
 
 // ==========================================
-// 4. HELPERS
+// 4. REPROGRAMACIÓN
+// ==========================================
+const abrirModalReprog = () => {
+  const primerPendiente = cuotasPlan.value.find(c => c.estado === 'Pendiente' || c.estado === 'Vencida')
+  formReprog.value = {
+    motivo: '',
+    fecha_reprogramacion: new Date().toISOString().substr(0, 10),
+    cuota_desde: primerPendiente?.numero_cuota ?? 1,
+    nueva_tasa_interes: planSeleccionado.value.plan_pago?.tasa_interes ?? 0,
+    nuevo_numero_cuotas: 12,
+    nueva_fecha_inicio: primerPendiente?.fecha_vencimiento?.substr(0, 10) ?? new Date().toISOString().substr(0, 10),
+    observaciones: ''
+  }
+  mostrarModalReprog.value = true
+}
+
+const ejecutarReprogramacion = async () => {
+  if (!formReprog.value.motivo.trim()) {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'El motivo es obligatorio.', showConfirmButton: false, timer: 2500 })
+    return
+  }
+  try {
+    procesandoReprog.value = true
+    await api.post(`/planes-pago/${planPagoId.value}/reprogramar`, formReprog.value)
+    mostrarModalReprog.value = false
+    await seleccionarPlan(planSeleccionado.value)
+    Swal.fire({ icon: 'success', title: 'Reprogramación aplicada', timer: 2000, showConfirmButton: false })
+  } catch (err) {
+    Swal.fire('Error', err.response?.data?.message || 'No se pudo reprogramar.', 'error')
+  } finally {
+    procesandoReprog.value = false
+  }
+}
+
+// ==========================================
+// AMORTIZACIÓN EXTRAORDINARIA
+// ==========================================
+const mostrarModalAmort = ref(false)
+const procesandoAmort = ref(false)
+const formAmort = ref({
+  monto: '',
+  metodo_pago_id: '',
+  cuenta_id: '',
+  fecha_pago: new Date().toISOString().substr(0, 10),
+  observaciones: ''
+})
+
+const abrirModalAmort = () => {
+  formAmort.value = {
+    monto: '',
+    metodo_pago_id: '',
+    cuenta_id: '',
+    fecha_pago: new Date().toISOString().substr(0, 10),
+    observaciones: ''
+  }
+  mostrarModalAmort.value = true
+}
+
+const onMetodoAmortChange = async () => {
+  if (!formAmort.value.metodo_pago_id) { formAmort.value.cuenta_id = ''; return }
+  try {
+    const res = await api.get(`/mapeo-metodos-cuentas/obtener-cuenta/${formAmort.value.metodo_pago_id}`)
+    formAmort.value.cuenta_id = res.data?.id || ''
+  } catch { formAmort.value.cuenta_id = '' }
+}
+
+const ejecutarAmortizacion = async () => {
+  if (!formAmort.value.monto || parseFloat(formAmort.value.monto) <= 0) {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Ingresa un monto válido.', showConfirmButton: false, timer: 2500 })
+    return
+  }
+  if (!formAmort.value.metodo_pago_id || !formAmort.value.cuenta_id) {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'Selecciona método y cuenta de pago.', showConfirmButton: false, timer: 2500 })
+    return
+  }
+  try {
+    procesandoAmort.value = true
+    const res = await api.post(`/planes-pago/${planPagoId.value}/amortizar`, formAmort.value)
+    mostrarModalAmort.value = false
+    await seleccionarPlan(planSeleccionado.value)
+    Swal.fire({
+      icon: 'success',
+      title: 'Amortización registrada',
+      html: `Saldo anterior: <b>Bs. ${res.data.saldo_anterior}</b><br>Nuevo saldo: <b>Bs. ${res.data.saldo_nuevo}</b><br>Las cuotas fueron recalculadas.`,
+      confirmButtonText: 'Aceptar'
+    })
+  } catch (err) {
+    Swal.fire('Error', err.response?.data?.message || 'No se pudo registrar la amortización.', 'error')
+  } finally {
+    procesandoAmort.value = false
+  }
+}
+
+// ==========================================
+// 5. HELPERS
 // ==========================================
 const formatoMoneda = (valor) => {
   return parseFloat(valor || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -322,12 +482,20 @@ const getNombreCuenta = (id) => {
               </div>
             </div>
           </div>
-          <div class="col-auto">
-            <button 
-              class="btn btn-success btn-lg px-4 shadow-sm fw-bold rounded-pill" 
-              :disabled="numSeleccionados === 0" 
+          <div class="col-auto d-flex gap-2">
+            <button class="btn btn-info btn-lg px-3 shadow-sm fw-bold rounded-pill text-white"
+              @click="abrirModalAmort" title="Registrar pago extraordinario de capital">
+              <i class="bi bi-coin me-1"></i> Amortizar
+            </button>
+            <button class="btn btn-warning btn-lg px-3 shadow-sm fw-bold rounded-pill"
+              @click="abrirModalReprog" title="Reprogramar cuotas pendientes">
+              <i class="bi bi-arrow-repeat me-1"></i> Reprogramar
+            </button>
+            <button
+              class="btn btn-success btn-lg px-4 shadow-sm fw-bold rounded-pill"
+              :disabled="numSeleccionados === 0"
               @click="abrirModalPago">
-              <i class="bi bi-cash-coin me-2"></i> COBRAR SELECCIONADAS ({{ numSeleccionados }})
+              <i class="bi bi-cash-coin me-2"></i> COBRAR ({{ numSeleccionados }})
             </button>
           </div>
         </div>
@@ -353,8 +521,8 @@ const getNombreCuenta = (id) => {
                   </div>
                   <div class="col-12 mt-3">
                     <div class="p-3 bg-primary bg-opacity-10 text-primary rounded-3 border border-primary border-opacity-25">
-                      <div class="small fw-bold text-uppercase mb-1">Saldo Pendiente</div>
-                      <div class="h4 mb-0 fw-bold">Bs. {{ formatoMoneda(planSeleccionado.saldo_credito) }}</div>
+                      <div class="small fw-bold text-uppercase mb-1">Saldo Capital Pendiente</div>
+                      <div class="h4 mb-0 fw-bold">Bs. {{ formatoMoneda(saldoCapitalActual) }}</div>
                     </div>
                   </div>
                 </div>
@@ -363,8 +531,11 @@ const getNombreCuenta = (id) => {
 
             <div v-if="numSeleccionados > 0" class="card border-0 bg-success text-white shadow-sm rounded-4">
               <div class="card-body p-4 text-center">
-                <div class="small text-uppercase fw-bold opacity-75">Seleccionado</div>
+                <div class="small text-uppercase fw-bold opacity-75">{{ numSeleccionados }} cuota(s)</div>
                 <div class="h3 fw-bold my-2">Bs. {{ formatoMoneda(totalAPagar) }}</div>
+                <div v-if="tasaMoraPlan > 0 && moraResumen.total > 0" class="small opacity-75 mb-1">
+                  + mora est. Bs. {{ formatoMoneda(moraResumen.total) }}
+                </div>
                 <button class="btn btn-light w-100 fw-bold rounded-pill mt-2" @click="abrirModalPago">
                   PROCESAR PAGO
                 </button>
@@ -387,13 +558,15 @@ const getNombreCuenta = (id) => {
                       <tr>
                         <th width="60" class="text-center">#</th>
                         <th>Vencimiento</th>
-                        <th class="text-end">Monto</th>
+                        <th class="text-end">Cuota</th>
+                        <th class="text-end">Saldo capital</th>
+                        <th v-if="tasaMoraPlan > 0" class="text-end text-danger">Mora est.</th>
                         <th class="text-center">Estado</th>
                         <th width="40"></th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="cuota in cuotasPlan" :key="cuota.id" 
+                      <tr v-for="cuota in cuotasPlan" :key="cuota.id"
                           :class="{'cuota-pagada': cuota.estado === 'Pagada', 'cuota-seleccionada': seleccionSet.has(cuota.id)}"
                           @click="toggleCuota(cuota)"
                           class="cursor-pointer">
@@ -402,8 +575,18 @@ const getNombreCuenta = (id) => {
                           {{ formatearFecha(cuota.fecha_vencimiento) }}
                         </td>
                         <td class="text-end fw-bold">Bs. {{ formatoMoneda(cuota.monto_cuota) }}</td>
+                        <td class="text-end text-muted small">
+                          {{ cuota.estado === 'Pagada' ? '—' : 'Bs. ' + formatoMoneda(cuota.saldo_capital) }}
+                        </td>
+                        <td v-if="tasaMoraPlan > 0" class="text-end small">
+                          <span v-if="cuota.estado === 'Vencida'" class="text-danger fw-bold">
+                            +Bs. {{ formatoMoneda(calcularMoraCuota(cuota, new Date().toISOString().slice(0,10))) }}
+                          </span>
+                          <span v-else class="text-muted">—</span>
+                        </td>
                         <td class="text-center">
                           <span v-if="cuota.estado === 'Pagada'" class="badge-status badge-status-active">Pagada</span>
+                          <span v-else-if="cuota.estado === 'Vencida'" class="badge-status badge-status-danger">Vencida</span>
                           <span v-else class="badge-status badge-status-inactive">Pendiente</span>
                         </td>
                         <td class="text-center">
@@ -426,7 +609,136 @@ const getNombreCuenta = (id) => {
       </div>
     </transition>
 
-    <!-- MODAL -->
+    <!-- MODAL AMORTIZACIÓN -->
+    <div v-if="mostrarModalAmort" class="modal-custom-overlay" @click.self="mostrarModalAmort = false">
+      <div class="modal-custom-container shadow-lg" style="max-width: 520px;">
+        <div class="modal-custom-header" style="background: #0dcaf0;">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-white me-3" style="color: #0dcaf0;">
+              <i class="bi bi-coin fs-4"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-bold text-white">Amortizar Capital</h5>
+              <span class="small text-white opacity-75">VTA-{{ planSeleccionado?.id?.toString().padStart(5,'0') }} · Saldo: Bs. {{ formatoMoneda(saldoCapitalActual) }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" @click="mostrarModalAmort = false"></button>
+        </div>
+        <div class="modal-custom-body p-4 bg-white">
+          <div class="alert alert-info py-2 small mb-4">
+            <i class="bi bi-info-circle me-1"></i>
+            El monto pagado se descontará del saldo de capital y las cuotas restantes se recalcularán automáticamente con importes menores.
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted">Monto a amortizar (Bs) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" v-model="formAmort.monto"
+                :max="saldoCapitalActual - 0.01" min="0.01" step="0.01"
+                placeholder="Ej. 3000">
+              <div class="form-text">Debe ser menor al saldo capital: <strong>Bs. {{ formatoMoneda(saldoCapitalActual) }}</strong></div>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Método de pago <span class="text-danger">*</span></label>
+              <select class="form-select" v-model="formAmort.metodo_pago_id" @change="onMetodoAmortChange">
+                <option value="">-- Seleccionar --</option>
+                <option v-for="m in metodosPago" :key="m.id" :value="m.id">{{ m.nombre_metodo }}</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Fecha de pago <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" v-model="formAmort.fecha_pago">
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted">Cuenta destino <span class="text-danger">*</span></label>
+              <select class="form-select" v-model="formAmort.cuenta_id">
+                <option value="">-- Seleccionar --</option>
+                <option v-for="c in cuentasBancarias" :key="c.id" :value="c.id">{{ c.nombre }} ({{ c.tipo }})</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted">Observaciones</label>
+              <textarea class="form-control" v-model="formAmort.observaciones" rows="2" placeholder="Referencia de depósito, etc..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end px-4 pb-4">
+          <button class="btn btn-light border" @click="mostrarModalAmort = false" :disabled="procesandoAmort">Cancelar</button>
+          <button class="btn fw-bold text-white" style="background:#0dcaf0;" @click="ejecutarAmortizacion" :disabled="procesandoAmort">
+            <span v-if="procesandoAmort"><span class="spinner-border spinner-border-sm me-1"></span>Procesando...</span>
+            <span v-else><i class="bi bi-coin me-1"></i>Registrar Amortización</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL REPROGRAMACIÓN -->
+    <div v-if="mostrarModalReprog" class="modal-custom-overlay" @click.self="mostrarModalReprog = false">
+      <div class="modal-custom-container shadow-lg" style="max-width: 560px;">
+        <div class="modal-custom-header" style="background: #f39c12;">
+          <div class="d-flex align-items-center">
+            <div class="icon-circle bg-white me-3" style="color: #f39c12;">
+              <i class="bi bi-arrow-repeat fs-4"></i>
+            </div>
+            <div>
+              <h5 class="mb-0 fw-bold text-white">Reprogramar Plan de Pagos</h5>
+              <span class="small text-white opacity-75">VTA-{{ planSeleccionado?.id?.toString().padStart(5,'0') }}</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" @click="mostrarModalReprog = false"></button>
+        </div>
+        <div class="modal-custom-body p-4 bg-white">
+          <div class="alert alert-warning py-2 small mb-4">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Las cuotas pendientes desde la cuota indicada se marcarán como <strong>Reprogramadas</strong> y se creará un nuevo cronograma.
+          </div>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted">Motivo <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" v-model="formReprog.motivo" placeholder="Ej. Solicitud del cliente..." maxlength="255">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Fecha de reprogramación <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" v-model="formReprog.fecha_reprogramacion">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Desde cuota N° <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" v-model="formReprog.cuota_desde" min="1">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Nueva tasa anual (%) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" v-model="formReprog.nueva_tasa_interes" min="0" max="100" step="0.01">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Nuevas cuotas <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" v-model="formReprog.nuevo_numero_cuotas" min="1">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold text-muted">Nueva fecha de inicio <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" v-model="formReprog.nueva_fecha_inicio">
+            </div>
+            <div class="col-6 d-flex align-items-end">
+              <div class="p-3 bg-warning bg-opacity-10 rounded-3 border border-warning border-opacity-25 w-100">
+                <div class="small text-muted fw-bold mb-1">Saldo capital</div>
+                <div class="fw-bold" style="color: #e67e22;">Bs. {{ formatoMoneda(saldoCapitalActual) }}</div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-bold text-muted">Observaciones</label>
+              <textarea class="form-control" v-model="formReprog.observaciones" rows="2" maxlength="1000" placeholder="Notas adicionales..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end px-4 pb-4">
+          <button class="btn btn-light border" @click="mostrarModalReprog = false" :disabled="procesandoReprog">Cancelar</button>
+          <button class="btn fw-bold text-white" style="background:#f39c12;" @click="ejecutarReprogramacion" :disabled="procesandoReprog">
+            <span v-if="procesandoReprog"><span class="spinner-border spinner-border-sm me-1"></span>Procesando...</span>
+            <span v-else><i class="bi bi-arrow-repeat me-1"></i>Aplicar Reprogramación</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL PAGO -->
     <div v-if="mostrarModalPago" class="modal-custom-overlay">
       <div class="modal-custom-container shadow-lg">
         <div class="modal-custom-header bg-success text-white">
@@ -450,9 +762,47 @@ const getNombreCuenta = (id) => {
                 <div class="h5 mb-0 fw-bold text-dark">{{ numSeleccionados }} cuotas</div>
               </div>
               <div class="col-auto text-end ps-4">
-                <div class="small text-muted fw-bold mb-1">TOTAL</div>
-                <div class="h3 mb-0 fw-bold text-success">Bs. {{ formatoMoneda(totalAPagar) }}</div>
+                <div class="small text-muted fw-bold mb-1">SUBTOTAL CUOTAS</div>
+                <div class="h4 mb-0 fw-bold text-dark">Bs. {{ formatoMoneda(totalAPagar) }}</div>
               </div>
+            </div>
+
+            <!-- Sección de mora -->
+            <div v-if="tasaMoraPlan > 0 && moraResumen.detalle.length > 0" class="mt-3 pt-3 border-top">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="small fw-bold text-danger">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                  {{ moraResumen.detalle.length }} cuota(s) vencida(s) con mora
+                </div>
+                <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" v-model="cobrarMora" id="switchMora">
+                  <label class="form-check-label small fw-bold" for="switchMora" :class="cobrarMora ? 'text-danger' : 'text-muted'">
+                    {{ cobrarMora ? 'Cobrar mora' : 'Sin mora' }}
+                  </label>
+                </div>
+              </div>
+              <div v-if="cobrarMora" class="table-responsive">
+                <table class="table table-sm mb-2" style="font-size: 0.8rem;">
+                  <tbody>
+                    <tr v-for="d in moraResumen.detalle" :key="d.cuota.id">
+                      <td class="text-muted ps-0">Cuota #{{ d.cuota.numero_cuota }}</td>
+                      <td class="text-muted">{{ d.diasAtraso }} días</td>
+                      <td class="text-end text-danger fw-bold pe-0">+Bs. {{ formatoMoneda(d.monto) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-between fw-bold border-top pt-2">
+                <span class="text-muted">Total mora:</span>
+                <span :class="cobrarMora ? 'text-danger' : 'text-muted text-decoration-line-through'">
+                  Bs. {{ formatoMoneda(moraResumen.total) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between fw-bold mt-3 pt-2 border-top">
+              <span class="text-success">TOTAL A COBRAR:</span>
+              <span class="h4 mb-0 fw-bold text-success">Bs. {{ formatoMoneda(totalConMora) }}</span>
             </div>
           </div>
 

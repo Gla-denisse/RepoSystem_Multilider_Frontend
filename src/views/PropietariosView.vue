@@ -275,7 +275,7 @@ onMounted(() => cargarDatosBase())
 
               <!-- Tipo de propietario -->
               <div class="mb-4">
-                <label class="form-label text-muted fw-medium fs-6">Tipo de propietario *</label>
+                <label class="form-label fw-medium fs-6">Tipo de propietario *</label>
                 <div class="d-flex gap-3">
                   <div class="form-check form-check-inline">
                     <input class="form-check-input shadow-none" type="radio" id="tipoPersona"
@@ -298,14 +298,14 @@ onMounted(() => cargarDatosBase())
               <template v-if="propietarioForm.tipo === 'empresa'">
                 <div class="row mb-3">
                   <div class="col-md-8">
-                    <label class="form-label text-muted fw-medium fs-6">Razon Social*</label>
+                    <label class="form-label fw-medium fs-6">Razon Social*</label>
                     <input type="text" class="form-control shadow-none bg-light border-0"
                            :class="{ 'is-invalid border-danger': erroresValidacion.nombre_empresa }"
                            v-model="propietarioForm.nombre_empresa" required>
                     <div class="invalid-feedback">{{ erroresValidacion.nombre_empresa?.[0] }}</div>
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label text-muted fw-medium fs-6">NIT</label>
+                    <label class="form-label fw-medium fs-6">NIT</label>
                     <input type="text" class="form-control shadow-none bg-light border-0"
                            v-model="propietarioForm.nit" placeholder="Ej: 123456789">
                   </div>
@@ -316,14 +316,14 @@ onMounted(() => cargarDatosBase())
               <template v-else>
                 <div class="row mb-3">
                   <div class="col-md-8">
-                    <label class="form-label text-muted fw-medium fs-6">Cédula de Identidad</label>
+                    <label class="form-label fw-medium fs-6">Cédula de Identidad</label>
                     <input type="text" class="form-control shadow-none bg-light border-0"
                            :class="{ 'is-invalid border-danger': erroresValidacion.ci }"
                            v-model="propietarioForm.ci">
                     <div class="invalid-feedback">{{ erroresValidacion.ci?.[0] }}</div>
                   </div>
                   <div class="col-md-4">
-                    <label class="form-label text-muted fw-medium fs-6">Expedido en</label>
+                    <label class="form-label fw-medium fs-6">Expedido en</label>
                     <select class="form-select shadow-none bg-light border-0" v-model="propietarioForm.lugar_expedicion">
                       <option value="" disabled>Seleccione...</option>
                       <option value="SC">SC</option><option value="LP">LP</option><option value="CB">CB</option>
@@ -336,7 +336,7 @@ onMounted(() => cargarDatosBase())
 
               <!-- Nombre completo (siempre visible; para empresa es el representante) -->
               <div class="mb-3">
-                <label class="form-label text-muted fw-medium fs-6">
+                <label class="form-label fw-medium fs-6">
                   {{ propietarioForm.tipo === 'empresa' ? 'Nombre del Representante *' : 'Nombre Completo *' }}
                 </label>
                 <input type="text" class="form-control shadow-none bg-light border-0"
@@ -346,17 +346,17 @@ onMounted(() => cargarDatosBase())
 
               <div class="row mb-3">
                 <div class="col-md-6">
-                  <label class="form-label text-muted fw-medium fs-6">Teléfono / Celular</label>
+                  <label class="form-label fw-medium fs-6">Teléfono / Celular</label>
                   <input type="text" class="form-control shadow-none bg-light border-0" v-model="propietarioForm.telefono">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label text-muted fw-medium fs-6">Correo Electrónico</label>
+                  <label class="form-label fw-medium fs-6">Correo Electrónico</label>
                   <input type="email" class="form-control shadow-none bg-light border-0" v-model="propietarioForm.correo">
                 </div>
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-muted fw-medium fs-6">
+                <label class="form-label fw-medium fs-6">
                   {{ propietarioForm.tipo === 'empresa' ? 'Dirección de la Empresa' : 'Dirección de Residencia' }}
                 </label>
                 <textarea class="form-control shadow-none bg-light border-0" v-model="propietarioForm.direccion" rows="2"></textarea>

@@ -202,6 +202,12 @@
 [data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
 
 /* 2.3 Formularios e Inputs */
+[data-theme="dark"] .form-label,
+[data-theme="dark"] .col-form-label,
+[data-theme="dark"] label {
+  color: var(--text-main) !important;
+}
+
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
   background-color: #1F2937;
@@ -217,12 +223,13 @@
   box-shadow: 0 0 0 0.25rem rgba(96, 165, 250, 0.15);
 }
 
-[data-theme="dark"] .form-control::placeholder {
-  color: #6B7280;
+[data-theme="dark"] .form-control::placeholder,
+[data-theme="dark"] .form-select::placeholder {
+  color: #9CA3AF;
 }
 
 [data-theme="dark"] .input-group-text {
-  background-color: #374151;
+  background-color: #1F2937;
   border-color: #374151;
   color: #F9FAFB;
 }

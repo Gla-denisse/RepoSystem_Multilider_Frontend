@@ -674,7 +674,7 @@ onMounted(() => cargarDatosBase(1));
         <form @submit.prevent="guardar">
           <div class="row g-0">
             <div class="col-lg-6 p-4 border-end">
-              <h6 class="fw-bold mb-3 text-muted">Información General</h6>
+              <h6 class="fw-bold mb-3" style="color: var(--text-main);">Información General</h6>
               <div class="row g-3">
                 <div class="col-md-6" v-if="isEditing">
                   <label class="form-label small fw-bold">Código</label>
@@ -682,7 +682,7 @@ onMounted(() => cargarDatosBase(1));
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Tipo *</label>
-                  <select class="form-select bg-light border-0" v-model="propiedadForm.tipo">
+                  <select class="form-select" v-model="propiedadForm.tipo">
                     <option value="Lote">Lote</option>
                     <option value="Casa">Casa</option>
                   </select>
@@ -714,7 +714,7 @@ onMounted(() => cargarDatosBase(1));
 
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Nro Lote</label>
-                  <input type="text" class="form-control bg-light border-0" v-model="propiedadForm.nro_lote">
+                  <input type="text" class="form-control" v-model="propiedadForm.nro_lote">
                 </div>
 
                 <div class="col-12">
@@ -734,7 +734,7 @@ onMounted(() => cargarDatosBase(1));
                 <!-- 
                 <div class="col-md-3">
                   <label class="form-label small fw-bold">Moneda</label>
-                  <select class="form-select bg-light border-0" v-model="propiedadForm.moneda">
+                  <select class="form-select" v-model="propiedadForm.moneda">
                     <option value="USD">USD</option>
                     <option value="BOB">BOB</option>
                   </select>
@@ -749,7 +749,7 @@ onMounted(() => cargarDatosBase(1));
                 <!-- 
                 <div class="col-md-4">
                   <label class="form-label small fw-bold">Estado</label>
-                  <select class="form-select bg-light border-0" v-model="propiedadForm.estado">
+                  <select class="form-select" v-model="propiedadForm.estado">
                     <option value="Disponible">Disponible</option>
                     <option value="Reservado">Reservado</option>
                     <option value="Vendido">Vendido</option>
@@ -759,12 +759,12 @@ onMounted(() => cargarDatosBase(1));
 
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Frente (mts)</label>
-                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.frente_mts">
+                  <input type="number" step="0.01" class="form-control" v-model="propiedadForm.frente_mts">
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Fondo (mts)</label>
-                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.fondo_mts">
+                  <input type="number" step="0.01" class="form-control" v-model="propiedadForm.fondo_mts">
                 </div>
 
                 <div class="col-md-6">
@@ -775,18 +775,18 @@ onMounted(() => cargarDatosBase(1));
 
                 <div class="col-md-6" v-if="propiedadForm.tipo === 'Casa'">
                   <label class="form-label small fw-bold">Sup. Construida (m²)</label>
-                  <input type="number" step="0.01" class="form-control bg-light border-0" v-model="propiedadForm.superficie_construida_m2">
+                  <input type="number" step="0.01" class="form-control" v-model="propiedadForm.superficie_construida_m2">
                 </div>
 
                 <template v-if="propiedadForm.tipo === 'Casa'">
                   <div class="col-md-4">
                     <label class="form-label small fw-bold">Habitaciones</label>
-                    <input type="number" class="form-control bg-light border-0" v-model="propiedadForm.habitaciones">
+                    <input type="number" class="form-control" v-model="propiedadForm.habitaciones">
                   </div>
 
                   <div class="col-md-4">
                     <label class="form-label small fw-bold">Baños</label>
-                    <input type="number" class="form-control bg-light border-0" v-model="propiedadForm.banos">
+                    <input type="number" class="form-control" v-model="propiedadForm.banos">
                   </div>
                 </template>
 
@@ -800,7 +800,7 @@ onMounted(() => cargarDatosBase(1));
             </div>
 
             <div class="col-lg-6 p-4 bg-light bg-opacity-25">
-              <h6 class="fw-bold mb-3 text-muted">Ubicación y Geolocalización</h6>
+              <h6 class="fw-bold mb-3" style="color: var(--text-main);">Ubicación y Geolocalización</h6>
               <div class="mb-3">
                 <label class="form-label small fw-bold">Dirección de la Propiedad</label>
                 <input type="text" class="form-control bg-white border" v-model="propiedadForm.direccion" placeholder="Ej: Av. Principal, Zona Norte">
@@ -819,32 +819,32 @@ onMounted(() => cargarDatosBase(1));
               
               <div class="row g-2 mb-4">
                 <div class="col-md-6">
-                  <label class="smaller text-muted">Latitud</label>
-                  <input type="text" class="form-control form-control-sm bg-white" v-model="ubicacionForm.latitud" readonly>
+                  <label class="smaller" style="color: var(--text-main);">Latitud</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="ubicacionForm.latitud" readonly>
                 </div>
                 <div class="col-md-6">
-                  <label class="smaller text-muted">Longitud</label>
-                  <input type="text" class="form-control form-control-sm bg-white" v-model="ubicacionForm.longitud" readonly>
+                  <label class="smaller" style="color: var(--text-main);">Longitud</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="ubicacionForm.longitud" readonly>
                 </div>
               </div>
 
-              <h6 class="fw-bold mb-3 text-muted smaller text-uppercase">Colindancias</h6>
+              <h6 class="fw-bold mb-3 smaller text-uppercase" style="color: var(--text-main);">Colindancias</h6>
               <div class="row g-2">
                 <div class="col-md-6">
-                  <label class="smaller fw-bold text-muted">Norte</label>
-                  <input type="text" class="form-control form-control-sm" v-model="propiedadForm.colinda_norte">
+                  <label class="smaller fw-bold" style="color: var(--text-main);">Norte</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="propiedadForm.colinda_norte">
                 </div>
                 <div class="col-md-6">
-                  <label class="smaller fw-bold text-muted">Sur</label>
-                  <input type="text" class="form-control form-control-sm" v-model="propiedadForm.colinda_sur">
+                  <label class="smaller fw-bold" style="color: var(--text-main);">Sur</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="propiedadForm.colinda_sur">
                 </div>
                 <div class="col-md-6">
-                  <label class="smaller fw-bold text-muted">Este</label>
-                  <input type="text" class="form-control form-control-sm" v-model="propiedadForm.colinda_este">
+                  <label class="smaller fw-bold" style="color: var(--text-main);">Este</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="propiedadForm.colinda_este">
                 </div>
                 <div class="col-md-6">
-                  <label class="smaller fw-bold text-muted">Oeste</label>
-                  <input type="text" class="form-control form-control-sm" v-model="propiedadForm.colinda_oeste">
+                  <label class="smaller fw-bold" style="color: var(--text-main);">Oeste</label>
+                  <input type="text" class="form-control form-control-sm bg-transparent" v-model="propiedadForm.colinda_oeste">
                 </div>
               </div>
             </div>

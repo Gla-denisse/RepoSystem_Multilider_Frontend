@@ -25,6 +25,7 @@ const clientes = ref([])
 const propiedades = ref([])
 const asesores = ref([])
 const metodosPago = ref([])
+const cuentasBancarias = ref([])
 
 // Selecciones
 const clienteSeleccionadoId = ref(null)
@@ -33,9 +34,11 @@ const propiedadSeleccionadaId = ref(null)
 // Formulario de Venta
 const formVenta = ref({
   asesor_id: '',
-  fecha: new Date().toISOString().substr(0, 10),
+  fecha: new Date().toISOString().slice(0, 10),
   tipo_venta: 'CONTADO',
   metodo_pago_id: '',
+  cuenta_id: '',
+  fecha_pago: new Date().toISOString().slice(0, 10),
 
   // Contado
   descuento: 0,
@@ -44,6 +47,7 @@ const formVenta = ref({
   cuota_inicial: 0,
   numero_cuotas: 12,
   tasa_interes: 10,
+  tasa_mora: 3,
   fecha_inicio_pago: ''
 })
 
@@ -57,16 +61,18 @@ const asesorObj = computed(() => asesores.value.find(a => a.id === formVenta.val
 // ==========================================
 onMounted(async () => {
   try {
-    const [resCli, resProp, resAse, resMet] = await Promise.all([
+    const [resCli, resProp, resAse, resMet, resCuentas] = await Promise.all([
       api.get('/clientes?per_page=50'),
       api.get('/propiedades?per_page=100'),
       api.get('/asesores?per_page=100'),
-      api.get('/metodos-pago?per_page=100')
+      api.get('/metodos-pago?per_page=100'),
+      api.get('/cuentas-bancarias?per_page=100')
     ])
     clientes.value = resCli.data.data.filter(c => c.estado == 1)
     propiedades.value = resProp.data.data.filter(p => p.estado === 'Disponible' && p.activo)
     asesores.value = resAse.data.data
     metodosPago.value = resMet.data.data ?? resMet.data
+    cuentasBancarias.value = resCuentas.data.data ?? resCuentas.data
 
     if (isAsesor.value) {
       const propio = asesores.value.find(a => a.user_id === authStore.user?.id)
@@ -116,6 +122,15 @@ const buscarAsesoresRemoto = (query) => {
       asesores.value = res.data.data
     } catch { /* silent */ }
   }, 300)
+}
+
+const onMetodoPagoChange = async () => {
+  formVenta.value.cuenta_id = ''
+  if (!formVenta.value.metodo_pago_id) return
+  try {
+    const res = await api.get(`/mapeo-metodos-cuentas/obtener-cuenta/${formVenta.value.metodo_pago_id}`)
+    formVenta.value.cuenta_id = res.data?.id || ''
+  } catch { /* sin cuenta default configurada */ }
 }
 
 // ==========================================
@@ -184,7 +199,7 @@ const siguientePaso = () => {
   if (step.value === 2 && !formVenta.value.fecha_inicio_pago) {
     let fechaPago = new Date()
     fechaPago.setMonth(fechaPago.getMonth() + 1)
-    formVenta.value.fecha_inicio_pago = fechaPago.toISOString().substr(0, 10)
+    formVenta.value.fecha_inicio_pago = fechaPago.toISOString().slice(0, 10)
   }
   step.value++
 }
@@ -209,6 +224,10 @@ const registrarVenta = async () => {
     metodo_pago_id: formVenta.value.metodo_pago_id || null
   }
 
+  // Datos del pago inicial (aplica a ambos tipos)
+  if (formVenta.value.cuenta_id) payload.cuenta_id = formVenta.value.cuenta_id
+  if (formVenta.value.fecha_pago) payload.fecha_pago = formVenta.value.fecha_pago
+
   if (payload.tipo_venta === 'CONTADO') {
     payload.descuento = formVenta.value.descuento
     payload.monto_liquido = montoLiquido.value
@@ -217,6 +236,7 @@ const registrarVenta = async () => {
     payload.saldo_credito = saldoCredito.value
     payload.numero_cuotas = formVenta.value.numero_cuotas
     payload.tasa_interes = formVenta.value.tasa_interes
+    payload.tasa_mora = formVenta.value.tasa_mora
     payload.fecha_inicio_pago = formVenta.value.fecha_inicio_pago
   }
 
@@ -242,13 +262,16 @@ const resetAsistente = () => {
     : ''
   formVenta.value = {
     asesor_id: defaultAsesorId,
-    fecha: new Date().toISOString().substr(0, 10),
+    fecha: new Date().toISOString().slice(0, 10),
     tipo_venta: 'CONTADO',
     metodo_pago_id: '',
+    cuenta_id: '',
+    fecha_pago: new Date().toISOString().slice(0, 10),
     descuento: 0,
     cuota_inicial: 0,
     numero_cuotas: 12,
     tasa_interes: 10,
+    tasa_mora: 3,
     fecha_inicio_pago: ''
   }
 }
@@ -375,13 +398,24 @@ const resetAsistente = () => {
               </div>
 
               <div class="row g-3 mb-4">
-                <div class="col-md-12">
+                <div class="col-md-4">
+                  <label class="small fw-bold text-muted mb-1">Fecha de Pago</label>
+                  <input type="date" class="form-control" v-model="formVenta.fecha_pago">
+                </div>
+                <div class="col-md-4">
                   <label class="small fw-bold text-muted mb-1">Método de Pago <span class="text-muted fw-normal">(opcional)</span></label>
-                  <select class="form-select" v-model="formVenta.metodo_pago_id">
+                  <select class="form-select" v-model="formVenta.metodo_pago_id" @change="onMetodoPagoChange">
                     <option value="">— Sin especificar —</option>
                     <option v-for="m in metodosPago" :key="m.id" :value="m.id">{{ m.nombre_metodo }}</option>
                   </select>
-                  <div class="form-text">Puede quedar pendiente y definirse al registrar el pago.</div>
+                </div>
+                <div class="col-md-4">
+                  <label class="small fw-bold text-muted mb-1">Cuenta Destino <span class="text-muted fw-normal">(opcional)</span></label>
+                  <select class="form-select" v-model="formVenta.cuenta_id">
+                    <option value="">— Sin especificar —</option>
+                    <option v-for="c in cuentasBancarias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
+                  </select>
+                  <div class="form-text">Con método + cuenta + fecha el pago se confirma al instante.</div>
                 </div>
               </div>
 
@@ -428,7 +462,7 @@ const resetAsistente = () => {
                       :class="parseFloat(formVenta.cuota_inicial) <= 0 ? 'border-danger' : 'border-primary'"
                       v-model="formVenta.cuota_inicial" min="0.01" :max="montoTotal">
                     <div v-if="parseFloat(formVenta.cuota_inicial) <= 0" class="text-danger extra-small mt-1">
-                      <i class="bi bi-exclamation-triangle-fill me-1"></i>La cuota inicial es requerida y debe ser mayor a 0.
+                      La cuota inicial es requerida y debe ser mayor a 0.
                     </div>
                   </div>
                   <div class="col-md-4">
@@ -442,13 +476,18 @@ const resetAsistente = () => {
                   </div>
                 </div>
                 <div class="row g-3 mb-4">
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <label class="small fw-bold text-muted">Plazo (Meses)</label>
                     <input type="number" class="form-control" v-model="formVenta.numero_cuotas" min="1">
                   </div>
-                  <div class="col-md-6">
+                  <div class="col-md-4">
                     <label class="small fw-bold text-muted">Tasa de Interés Anual (%)</label>
                     <input type="number" step="0.01" class="form-control" v-model="formVenta.tasa_interes" min="0">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold text-muted">Tasa de Mora Mensual (%)</label>
+                    <input type="number" step="0.01" class="form-control" v-model="formVenta.tasa_mora" min="0" max="100" placeholder="Ej. 3">
+                    <div class="form-text">Se aplica sobre cuotas vencidas.</div>
                   </div>
                 </div>
 

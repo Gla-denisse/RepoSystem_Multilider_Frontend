@@ -17,7 +17,10 @@ const totalPages = ref(1)
 
 // --- VARIABLES MODALES ---
 const ventaSeleccionada = ref(null)
+const planPagoDetalle = ref(null)
+const resumenPlan = ref(null)
 const mostrarDetalle = ref(false)
+const cargandoPlan = ref(false)
 
 // --- FILTROS DE BÚSQUEDA ---
 const todosClientes = ref(true)
@@ -32,14 +35,12 @@ const filtros = ref({
 })
 
 // ==========================================
-// 1. CARGA INICIAL (Catálogos)
+// 1. CARGA INICIAL
 // ==========================================
 onMounted(async () => {
-  // Establecer fechas por defecto (Ej: Último mes)
   const hoy = new Date()
   const haceUnMes = new Date()
   haceUnMes.setMonth(hoy.getMonth() - 1)
-  
   filtros.value.fecha_fin = hoy.toISOString().substr(0, 10)
   filtros.value.fecha_inicio = haceUnMes.toISOString().substr(0, 10)
 
@@ -50,36 +51,30 @@ onMounted(async () => {
     ])
     clientes.value = resCli.data.data
     asesores.value = resAse.data.data
-    
     await cargarVentas(1)
-  } catch (error) {
+  } catch {
     Swal.fire('Error', 'No se pudieron cargar los datos base.', 'error')
   }
 })
 
 // ==========================================
-// 2. LÓGICA DE FILTROS Y VALIDACIÓN
+// 2. FILTROS
 // ==========================================
-
-// Validar que Inicio no sea mayor a Fin
 const validarFechas = () => {
   if (filtros.value.fecha_inicio && filtros.value.fecha_fin) {
     if (filtros.value.fecha_inicio > filtros.value.fecha_fin) {
       Swal.fire({ toast: true, position: 'top-end', icon: 'warning', title: 'La fecha de inicio no puede ser mayor a la fecha fin.', showConfirmButton: false, timer: 3000 })
-      filtros.value.fecha_inicio = filtros.value.fecha_fin // Ajuste automático
+      filtros.value.fecha_inicio = filtros.value.fecha_fin
     }
   }
 }
 
-// Watchers para limpiar los IDs si se selecciona "Todos"
-watch(todosClientes, (newVal) => { if (newVal) filtros.value.cliente_id = null })
-watch(todosAsesores, (newVal) => { if (newVal) filtros.value.asesor_id = null })
+watch(todosClientes, (v) => { if (v) filtros.value.cliente_id = null })
+watch(todosAsesores, (v) => { if (v) filtros.value.asesor_id = null })
 
 const cargarVentas = async (page = 1) => {
   try {
     cargando.value = true
-    
-    // Construimos los parámetros para el backend
     const params = new URLSearchParams({ page })
     if (filtros.value.fecha_inicio) params.append('fecha_inicio', filtros.value.fecha_inicio)
     if (filtros.value.fecha_fin) params.append('fecha_fin', filtros.value.fecha_fin)
@@ -91,9 +86,8 @@ const cargarVentas = async (page = 1) => {
     ventas.value = res.data.data
     currentPage.value = res.data.current_page
     totalPages.value = res.data.last_page
-
-  } catch (error) {
-    console.error("Error al cargar historial:", error)
+  } catch (e) {
+    console.error('Error al cargar historial:', e)
   } finally {
     cargando.value = false
   }
@@ -102,7 +96,7 @@ const cargarVentas = async (page = 1) => {
 const buscar = () => cargarVentas(1)
 
 // ==========================================
-// 3. ACCIONES Y MODALES
+// 3. DETALLE DE VENTA
 // ==========================================
 const verVenta = async (venta) => {
   try {
@@ -111,16 +105,47 @@ const verVenta = async (venta) => {
     ventaSeleccionada.value = res.data
     mostrarDetalle.value = true
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  } catch (error) {
+
+    if (res.data.tipo_venta === 'CREDITO') {
+      await cargarPlanDetalle(venta.id)
+    }
+  } catch {
     Swal.fire('Error', 'No se pudo obtener el detalle de la venta', 'error')
   } finally {
     idCargando.value = null
   }
 }
 
+const cargarPlanDetalle = async (ventaId) => {
+  try {
+    cargandoPlan.value = true
+    const res = await api.get(`/ventas/${ventaId}/plan-pago`)
+    planPagoDetalle.value = res.data.plan_pago
+    resumenPlan.value = res.data.resumen
+  } catch (e) {
+    console.error('Error al cargar plan de pago:', e)
+  } finally {
+    cargandoPlan.value = false
+  }
+}
+
 const volverListado = () => {
   mostrarDetalle.value = false
   ventaSeleccionada.value = null
+  planPagoDetalle.value = null
+  resumenPlan.value = null
+}
+
+// ==========================================
+// 4. HELPERS
+// ==========================================
+const formatFecha = (valor) => {
+  if (!valor) return '-'
+  // Toma solo la parte de fecha (YYYY-MM-DD) antes de parsear para evitar
+  // desfases de zona horaria al construir Date desde una cadena ISO completa.
+  const solo = String(valor).slice(0, 10)
+  const [y, m, d] = solo.split('-')
+  return `${d}/${m}/${y}`
 }
 
 const paginasVisibles = computed(() => {
@@ -135,9 +160,10 @@ const paginasVisibles = computed(() => {
 
 <template>
   <div class="container-fluid py-4 pb-5">
-    
+
+    <!-- ============================== LISTADO ============================== -->
     <div v-if="!mostrarDetalle" class="animate-fade">
-      
+
       <div class="mb-4">
         <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Historial de Ventas</h2>
         <p class="text-muted small mb-0">Auditoría, filtros y consultas de contratos</p>
@@ -218,7 +244,7 @@ const paginasVisibles = computed(() => {
               <template v-else>
                 <tr v-for="venta in ventas" :key="venta.id">
                   <td class="ps-4">
-                    <div class="fw-bold text-dark">{{ venta.fecha }}</div>
+                    <div class="fw-bold text-dark">{{ formatFecha(venta.fecha) }}</div>
                     <div class="text-muted smaller">VTA-{{ venta.id.toString().padStart(5, '0') }}</div>
                   </td>
                   <td>
@@ -246,20 +272,12 @@ const paginasVisibles = computed(() => {
                     <span v-else class="badge-status badge-status-danger">{{ venta.estado }}</span>
                   </td>
                   <td class="text-end pe-4">
-                    <button 
-                      class="btn btn-sm btn-light border shadow-sm" 
-                      style="color: var(--primary-color); min-width: 110px;" 
-                      @click="verVenta(venta)" 
-                      :disabled="idCargando === venta.id"
-                      title="Ver Detalles"
-                    >
+                    <button class="btn btn-sm btn-light border shadow-sm" style="color: var(--primary-color); min-width: 110px;"
+                      @click="verVenta(venta)" :disabled="idCargando === venta.id">
                       <span v-if="idCargando === venta.id">
-                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                        Cargando...
+                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>Cargando...
                       </span>
-                      <span v-else>
-                        <i class="bi bi-eye"></i> Ver detalles
-                      </span>
+                      <span v-else><i class="bi bi-eye"></i> Ver detalles</span>
                     </button>
                   </td>
                 </tr>
@@ -268,42 +286,41 @@ const paginasVisibles = computed(() => {
           </table>
         </div>
       </div>
-      
+
       <nav v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
         <small class="text-muted">Página {{ currentPage }} de {{ totalPages }}</small>
         <ul class="pagination pagination-sm mb-0 shadow-sm">
           <li class="page-item" :class="{ disabled: currentPage === 1 }"><button class="page-link text-secondary shadow-none" @click="cargarVentas(currentPage - 1)"><i class="bi bi-chevron-left"></i></button></li>
-          <li class="page-item" v-for="page in paginasVisibles" :key="page" :class="{ active: currentPage === page }"><button class="page-link shadow-none" :style="currentPage === page ? 'background-color: #2c3e50; border-color: #2c3e50; color: white;' : 'color: #333;'" @click="cargarVentas(page)">{{ page }}</button></li>
+          <li class="page-item" v-for="page in paginasVisibles" :key="page" :class="{ active: currentPage === page }">
+            <button class="page-link shadow-none" :style="currentPage === page ? 'background-color: #2c3e50; border-color: #2c3e50; color: white;' : 'color: #333;'" @click="cargarVentas(page)">{{ page }}</button>
+          </li>
           <li class="page-item" :class="{ disabled: currentPage === totalPages }"><button class="page-link text-secondary shadow-none" @click="cargarVentas(currentPage + 1)"><i class="bi bi-chevron-right"></i></button></li>
         </ul>
       </nav>
-
     </div>
 
-    <div v-else class="animate-fade" v-if="ventaSeleccionada">
-      
+    <!-- ============================== DETALLE ============================== -->
+    <div v-else class="animate-fade">
+
       <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
         <div class="d-flex align-items-center gap-3">
-          <button class="btn btn-light border shadow-sm" @click="volverListado" title="Volver al Listado">
-            <i class="bi bi-arrow-left"></i>
-          </button>
+          <button class="btn btn-light border shadow-sm" @click="volverListado"><i class="bi bi-arrow-left"></i></button>
           <div>
             <h3 class="fw-bold mb-0" style="color: #2c3e50;">
               Expediente VTA-{{ ventaSeleccionada.id.toString().padStart(5, '0') }}
             </h3>
-            <div class="text-muted small mt-1">
-              Fecha de Registro: {{ ventaSeleccionada.fecha }}
-            </div>
+            <div class="text-muted small mt-1">Fecha de Registro: {{ formatFecha(ventaSeleccionada.fecha) }}</div>
           </div>
         </div>
         <div class="text-end">
-          <span class="badge fs-6 rounded-pill px-4 py-2 border" 
-                :class="ventaSeleccionada.estado === 'Completada' ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-danger bg-opacity-10 text-danger border-danger'">
+          <span class="badge fs-6 rounded-pill px-4 py-2 border"
+            :class="ventaSeleccionada.estado === 'Completada' ? 'bg-success bg-opacity-10 text-success border-success' : 'bg-danger bg-opacity-10 text-danger border-danger'">
             Estado: {{ ventaSeleccionada.estado }}
           </span>
         </div>
       </div>
 
+      <!-- Datos del comprador y propiedad -->
       <div class="row g-4 mb-4">
         <div class="col-md-6">
           <div class="card h-100 border-0 shadow-sm rounded-3">
@@ -359,8 +376,9 @@ const paginasVisibles = computed(() => {
         </div>
       </div>
 
+      <!-- Resumen Financiero -->
       <h5 class="fw-bold mb-3" style="color: #2c3e50;"><i class="bi bi-cash-coin me-2"></i>Resumen Financiero</h5>
-      
+
       <div class="card border-0 shadow-sm mb-4 rounded-3 overflow-hidden">
         <div class="card-body p-0">
           <div class="row g-0">
@@ -385,22 +403,22 @@ const paginasVisibles = computed(() => {
 
             <template v-else>
               <div class="col-md-3 p-4 border-end bg-white d-flex flex-column justify-content-center">
-                <span class="small text-muted fw-bold text-uppercase mb-1">Cuota Inicial Pagada</span>
+                <span class="small text-muted fw-bold text-uppercase mb-1">Cuota Inicial</span>
                 <span class="fs-5 text-dark fw-medium">Bs. {{ ventaSeleccionada.cuota_inicial }}</span>
               </div>
               <div class="col-md-3 p-4 border-end bg-white d-flex flex-column justify-content-center">
-                <span class="small text-muted fw-bold text-uppercase mb-1">Capital a Financiar</span>
+                <span class="small text-muted fw-bold text-uppercase mb-1">Capital Financiado</span>
                 <span class="fs-5 fw-bold" style="color: #c0392b;">Bs. {{ ventaSeleccionada.saldo_credito }}</span>
               </div>
               <div class="col-md-3 p-4 bg-light d-flex flex-column justify-content-center">
                 <span class="small text-muted fw-bold text-uppercase mb-2">Condiciones del Crédito</span>
                 <div class="d-flex justify-content-between small border-bottom pb-1 mb-1">
                   <span class="text-muted">Plazo:</span>
-                  <span class="fw-bold text-dark">{{ ventaSeleccionada.plan_pago?.numero_cuotas }} Meses</span>
+                  <span class="fw-bold text-dark">{{ planPagoDetalle?.numero_cuotas ?? ventaSeleccionada.plan_pago?.numero_cuotas }} Meses</span>
                 </div>
                 <div class="d-flex justify-content-between small">
                   <span class="text-muted">Tasa Anual:</span>
-                  <span class="fw-bold text-dark">{{ ventaSeleccionada.plan_pago?.tasa_interes }}%</span>
+                  <span class="fw-bold text-dark">{{ planPagoDetalle?.tasa_interes ?? ventaSeleccionada.plan_pago?.tasa_interes }}%</span>
                 </div>
               </div>
             </template>
@@ -408,46 +426,44 @@ const paginasVisibles = computed(() => {
         </div>
       </div>
 
-      <div v-if="ventaSeleccionada.tipo_venta === 'CREDITO'" class="card border-0 shadow-sm rounded-3 overflow-hidden mb-5">
-        <div class="card-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center" style="background-color: #ecf0f1;">
-          <h6 class="mb-0 fw-bold text-uppercase" style="color: #2c3e50; letter-spacing: 1px;"><i class="bi bi-calendar-check me-2"></i>Tabla de Amortización</h6>
-          <span class="small text-muted fw-medium">Cuota Fija (Sistema Francés)</span>
+      <!-- ====== SECCIÓN CRÉDITO: RESUMEN DEL PLAN ====== -->
+      <template v-if="ventaSeleccionada.tipo_venta === 'CREDITO'">
+
+        <div v-if="cargandoPlan" class="text-center py-4">
+          <div class="spinner-border" style="color: var(--primary-color);" role="status"></div>
         </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0 text-center align-middle" style="font-size: 0.9rem;">
-              <thead>
-                <tr>
-                  <th>Nro</th>
-                  <th>Vencimiento</th>
-                  <th>Cuota Total (Bs)</th>
-                  <th>Capital (Bs)</th>
-                  <th>Interés (Bs)</th>
-                  <th>Saldo Restante (Bs)</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="cuota in ventaSeleccionada.plan_pago?.cuotas" :key="cuota.id">
-                  <td class="fw-bold text-muted">{{ cuota.numero_cuota }}</td>
-                  <td>{{ cuota.fecha_vencimiento }}</td>
-                  <td class="fw-bold" style="color: #2980b9;">{{ cuota.monto_cuota }}</td>
-                  <td>{{ cuota.monto_capital }}</td>
-                  <td style="color: #e74c3c;">{{ cuota.monto_interes }}</td>
-                  <td class="fw-medium text-dark">{{ cuota.saldo_capital }}</td>
-                  <td>
-                    <span v-if="cuota.estado === 'Pagada'" class="badge-status badge-status-active">Pagada</span>
-                    <span v-else-if="cuota.estado === 'Vencida'" class="badge-status badge-status-danger">Vencida</span>
-                    <span v-else class="badge-status badge-status-inactive">Pendiente</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+        <div v-else-if="resumenPlan" class="row g-3 mb-4">
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3 text-center p-3">
+              <div class="small text-muted fw-bold text-uppercase mb-1">Cuotas Pagadas</div>
+              <div class="fs-3 fw-bold text-success">{{ resumenPlan.cuotas_pagadas }}</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3 text-center p-3">
+              <div class="small text-muted fw-bold text-uppercase mb-1">Cuotas Pendientes</div>
+              <div class="fs-3 fw-bold text-warning">{{ resumenPlan.cuotas_pendientes }}</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3 text-center p-3">
+              <div class="small text-muted fw-bold text-uppercase mb-1">Total Cobrado</div>
+              <div class="fs-5 fw-bold text-success">Bs. {{ resumenPlan.total_pagado }}</div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-3 text-center p-3">
+              <div class="small text-muted fw-bold text-uppercase mb-1">Saldo Capital</div>
+              <div class="fs-5 fw-bold" style="color: #c0392b;">Bs. {{ resumenPlan.saldo_capital }}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="ventaSeleccionada.pagos && ventaSeleccionada.pagos.length > 0" class="card border-0 shadow-sm rounded-3 overflow-hidden mb-5">
+      </template>
+
+      <!-- Pagos registrados -->
+      <div v-if="ventaSeleccionada.pagos?.length" class="card border-0 shadow-sm rounded-3 overflow-hidden mb-5">
         <div class="card-header border-bottom py-3 px-4" style="background-color: #ecf0f1;">
           <h6 class="mb-0 fw-bold text-uppercase" style="color: #2c3e50; letter-spacing: 1px;"><i class="bi bi-cash-coin me-2"></i>Pagos Registrados</h6>
         </div>
@@ -465,7 +481,7 @@ const paginasVisibles = computed(() => {
               </thead>
               <tbody>
                 <tr v-for="pago in ventaSeleccionada.pagos" :key="pago.id">
-                  <td class="fw-medium">{{ pago.fecha_pago }}</td>
+                  <td class="fw-medium">{{ formatFecha(pago.fecha_pago) }}</td>
                   <td><span class="badge bg-secondary">{{ pago.concepto_pago }}</span></td>
                   <td>{{ pago.metodo_pago?.nombre_metodo || '-' }}</td>
                   <td class="text-end fw-bold" style="color: #27ae60;">Bs. {{ pago.monto }}</td>
@@ -487,15 +503,65 @@ const paginasVisibles = computed(() => {
 </template>
 
 <style scoped>
-/* Animación suave al cambiar de vistas */
 .animate-fade {
   animation: fadeIn 0.3s ease-in-out;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .smaller { font-size: 0.75rem; }
+
+/* Estado badge extra */
+:global(.badge-status-reprog) {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-card {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+
+.modal-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-card-body {
+  padding: 1.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
 </style>
