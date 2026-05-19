@@ -306,7 +306,7 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
 
     <!-- Tabla -->
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center border-bottom" style="background-color: #f8f9fa;">
+      <div class="card-header py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
         <h6 class="mb-0 fw-bold text-uppercase" style="letter-spacing:1px;">
           <i class="bi bi-table me-2"></i>Listado de Ingresos
         </h6>
@@ -510,9 +510,14 @@ const formatFecha = (f) => f ? f.substr(0, 10) : '-'
 <style scoped>
 .modal-overlay {
   position: fixed; inset: 0; z-index: 1050;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(11, 37, 69, 0.4); /* Navy overlay con transparencia */
+  backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
   padding: 1rem;
 }
 .modal-dialog { width: 100%; max-width: 700px; margin: 0; }
+.modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+}
 </style>

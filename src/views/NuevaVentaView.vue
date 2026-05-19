@@ -24,6 +24,7 @@ const isAsesor = computed(() => {
 const clientes = ref([])
 const propiedades = ref([])
 const asesores = ref([])
+const metodosPago = ref([])
 
 // Selecciones
 const clienteSeleccionadoId = ref(null)
@@ -34,6 +35,7 @@ const formVenta = ref({
   asesor_id: '',
   fecha: new Date().toISOString().substr(0, 10),
   tipo_venta: 'CONTADO',
+  metodo_pago_id: '',
 
   // Contado
   descuento: 0,
@@ -55,14 +57,16 @@ const asesorObj = computed(() => asesores.value.find(a => a.id === formVenta.val
 // ==========================================
 onMounted(async () => {
   try {
-    const [resCli, resProp, resAse] = await Promise.all([
+    const [resCli, resProp, resAse, resMet] = await Promise.all([
       api.get('/clientes?per_page=50'),
       api.get('/propiedades?per_page=100'),
-      api.get('/asesores?per_page=100')
+      api.get('/asesores?per_page=100'),
+      api.get('/metodos-pago?per_page=100')
     ])
     clientes.value = resCli.data.data.filter(c => c.estado == 1)
     propiedades.value = resProp.data.data.filter(p => p.estado === 'Disponible' && p.activo)
     asesores.value = resAse.data.data
+    metodosPago.value = resMet.data.data ?? resMet.data
 
     if (isAsesor.value) {
       const propio = asesores.value.find(a => a.user_id === authStore.user?.id)
@@ -189,6 +193,9 @@ const registrarVenta = async () => {
   if (!isAsesor.value && !formVenta.value.asesor_id) {
     return Swal.fire('Atención', 'Debe seleccionar un asesor responsable.', 'warning')
   }
+  if (formVenta.value.tipo_venta === 'CREDITO' && parseFloat(formVenta.value.cuota_inicial) <= 0) {
+    return Swal.fire('Atención', 'La cuota inicial debe ser mayor a 0 para ventas a crédito.', 'warning')
+  }
   guardando.value = true
 
   const payload = {
@@ -198,7 +205,8 @@ const registrarVenta = async () => {
     fecha: formVenta.value.fecha,
     moneda: monedaPropiedad.value,
     monto_total: montoTotal.value,
-    tipo_venta: formVenta.value.tipo_venta
+    tipo_venta: formVenta.value.tipo_venta,
+    metodo_pago_id: formVenta.value.metodo_pago_id || null
   }
 
   if (payload.tipo_venta === 'CONTADO') {
@@ -236,6 +244,7 @@ const resetAsistente = () => {
     asesor_id: defaultAsesorId,
     fecha: new Date().toISOString().substr(0, 10),
     tipo_venta: 'CONTADO',
+    metodo_pago_id: '',
     descuento: 0,
     cuota_inicial: 0,
     numero_cuotas: 12,
@@ -365,6 +374,17 @@ const resetAsistente = () => {
                 </div>
               </div>
 
+              <div class="row g-3 mb-4">
+                <div class="col-md-12">
+                  <label class="small fw-bold text-muted mb-1">Método de Pago <span class="text-muted fw-normal">(opcional)</span></label>
+                  <select class="form-select" v-model="formVenta.metodo_pago_id">
+                    <option value="">— Sin especificar —</option>
+                    <option v-for="m in metodosPago" :key="m.id" :value="m.id">{{ m.nombre_metodo }}</option>
+                  </select>
+                  <div class="form-text">Puede quedar pendiente y definirse al registrar el pago.</div>
+                </div>
+              </div>
+
               <div class="bg-light p-3 rounded-3 mb-4">
                 <h6 class="fw-bold mb-3 small text-uppercase text-muted">Modalidad de Pago</h6>
                 <div class="d-flex gap-4">
@@ -403,8 +423,13 @@ const resetAsistente = () => {
               <div v-if="formVenta.tipo_venta === 'CREDITO'" class="animate-fade">
                 <div class="row g-3 mb-3">
                   <div class="col-md-4">
-                    <label class="small fw-bold text-primary">Cuota Inicial ({{ monedaPropiedad }})</label>
-                    <input type="number" step="0.01" class="form-control border-primary" v-model="formVenta.cuota_inicial" min="0" :max="montoTotal">
+                    <label class="small fw-bold text-primary">Cuota Inicial ({{ monedaPropiedad }}) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" class="form-control"
+                      :class="parseFloat(formVenta.cuota_inicial) <= 0 ? 'border-danger' : 'border-primary'"
+                      v-model="formVenta.cuota_inicial" min="0.01" :max="montoTotal">
+                    <div v-if="parseFloat(formVenta.cuota_inicial) <= 0" class="text-danger extra-small mt-1">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i>La cuota inicial es requerida y debe ser mayor a 0.
+                    </div>
                   </div>
                   <div class="col-md-4">
                     <label class="small fw-bold text-muted">Inicio de Pagos</label>
@@ -474,6 +499,7 @@ const resetAsistente = () => {
             <button v-if="step === 3" class="btn btn-success px-5 rounded-3 shadow-lg fw-bold" @click="registrarVenta"
               :disabled="guardando
                 || (formVenta.tipo_venta === 'CREDITO' && saldoCredito <= 0)
+                || (formVenta.tipo_venta === 'CREDITO' && parseFloat(formVenta.cuota_inicial) <= 0)
                 || (formVenta.tipo_venta === 'CONTADO' && montoLiquido < 0)">
               <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
               {{ guardando ? 'Procesando...' : 'Confirmar Venta' }} <i class="bi bi-check-circle ms-2"></i>
@@ -555,6 +581,11 @@ const resetAsistente = () => {
                 <div v-if="formVenta.tipo_venta === 'CREDITO'" class="mt-3 p-2 bg-light rounded text-center">
                   <div class="extra-small text-muted text-uppercase">Plazo Estimado</div>
                   <div class="fw-bold">{{ formVenta.numero_cuotas }} meses a {{ formVenta.tasa_interes }}% int.</div>
+                </div>
+
+                <div v-if="formVenta.metodo_pago_id" class="mt-3 d-flex justify-content-between align-items-center">
+                  <span class="small text-muted"><i class="bi bi-credit-card me-1"></i>Método:</span>
+                  <span class="small fw-bold">{{ metodosPago.find(m => m.id === formVenta.metodo_pago_id)?.nombre_metodo }}</span>
                 </div>
               </div>
 

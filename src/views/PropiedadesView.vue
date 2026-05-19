@@ -72,55 +72,149 @@ const ubicacionForm = ref({
   id: null, referencia: '', url_maps: '', latitud: '', longitud: ''
 })
 
-// --- CONFIGURACIÓN GOOGLE MAPS ---
+// --- CONFIGURACIÓN DEL MAPA (Google Maps o Leaflet según .env) ---
+const MAP_PROVIDER        = import.meta.env.VITE_MAP_PROVIDER || 'leaflet'
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCaAjmxE-Aub9ty9q_-jcN1RULUSDa9XXY'
+const DEF_LAT = -17.3411
+const DEF_LNG = -63.2514
+
 const mapDiv = ref(null)
-let map = null
+let map    = null
 let marker = null
+let googleMapsLoaded = false
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCaAjmxE-Aub9ty9q_-jcN1RULUSDa9XXY' 
+// ── Leaflet (lazy import) ──────────────────────────────────────────────────────
+let L = null
+const loadLeaflet = async () => {
+  if (L) return
+  const mod = await import('leaflet')
+  await import('leaflet/dist/leaflet.css')
+  L = mod.default ?? mod
+  // Corrige el problema de íconos de Leaflet en Vite
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  })
+}
 
-const initMap = async (lat = -17.3411, lng = -63.2514) => {
+// ── Inicializar mapa ─────────────────────────────────────────────────────────
+const initMap = async (lat = DEF_LAT, lng = DEF_LNG) => {
+  if (!mapDiv.value) return
+  const lat_num = parseFloat(lat) || DEF_LAT
+  const lng_num = parseFloat(lng) || DEF_LNG
+  MAP_PROVIDER === 'google'
+    ? await _initGoogle(lat_num, lng_num)
+    : await _initLeaflet(lat_num, lng_num)
+}
+
+const _initGoogle = async (lat_num, lng_num) => {
   try {
-    if (!mapDiv.value) return;
+    if (!googleMapsLoaded) {
+      setOptions({ apiKey: GOOGLE_MAPS_API_KEY, version: 'weekly' })
+      await importLibrary('maps')
+      googleMapsLoaded = true
+    }
+    const center = { lat: lat_num, lng: lng_num }
+    if (map && marker) {
+      map.setCenter(center); marker.setPosition(center); return
+    }
+    map = new window.google.maps.Map(mapDiv.value, { center, zoom: 16, mapTypeControl: false })
+    marker = new window.google.maps.Marker({ position: center, map, draggable: true, title: 'Ubicación' })
+    marker.addListener('dragend', () => {
+      const p = marker.getPosition(); updateCoordsInputs(p.lat(), p.lng())
+    })
+    map.addListener('click', (e) => {
+      marker.setPosition(e.latLng); updateCoordsInputs(e.latLng.lat(), e.latLng.lng())
+    })
+  } catch (e) { console.error('Error Google Maps:', e) }
+}
 
-    setOptions({ apiKey: GOOGLE_MAPS_API_KEY, version: "weekly" });
-    const { Map } = await importLibrary("maps");
-    const { Marker } = await importLibrary("marker");
-
-    const lat_num = parseFloat(lat) || -17.3411;
-    const lng_num = parseFloat(lng) || -63.2514;
-    const center = { lat: lat_num, lng: lng_num };
-
-    map = new Map(mapDiv.value, {
-      center, zoom: 16, disableDefaultUI: false, mapTypeControl: false, mapId: "PROPIEDAD_MAP_ID"
-    });
-
-    marker = new Marker({
-      position: center, map: map, draggable: true, title: "Ubicación"
-    });
-
-    marker.addListener("dragend", () => {
-      const pos = marker.getPosition();
-      updateCoordsInputs(pos.lat, pos.lng);
-    });
-
-    map.addListener("click", (e) => {
-      marker.setPosition(e.latLng);
-      updateCoordsInputs(e.latLng.lat(), e.latLng.lng());
-    });
-
-  } catch (error) {
-    console.error("Error Google Maps:", error);
-  }
+const _initLeaflet = async (lat_num, lng_num) => {
+  try {
+    await loadLeaflet()
+    if (map && marker) {
+      map.setView([lat_num, lng_num]); marker.setLatLng([lat_num, lng_num]); return
+    }
+    map = L.map(mapDiv.value).setView([lat_num, lng_num], 16)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map)
+    marker = L.marker([lat_num, lng_num], { draggable: true }).addTo(map)
+    marker.on('dragend', () => {
+      const p = marker.getLatLng(); updateCoordsInputs(p.lat, p.lng)
+    })
+    map.on('click', (e) => {
+      marker.setLatLng(e.latlng); updateCoordsInputs(e.latlng.lat, e.latlng.lng)
+    })
+  } catch (e) { console.error('Error Leaflet:', e) }
 }
 
 const updateCoordsInputs = (lat, lng) => {
-  const latitude = Number(lat).toFixed(14);
-  const longitude = Number(lng).toFixed(14);
-  
-  ubicacionForm.value.latitud = latitude;
-  ubicacionForm.value.longitud = longitude;
-  ubicacionForm.value.url_maps = `https://www.google.com/maps/search/?api=1&query=$${latitude},${longitude}`;
+  const latitude  = Number(lat).toFixed(7)
+  const longitude = Number(lng).toFixed(7)
+  ubicacionForm.value.latitud  = latitude
+  ubicacionForm.value.longitud = longitude
+  ubicacionForm.value.url_maps = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+}
+
+// ── Modal: cargar desde URL de Google Maps ────────────────────────────────────
+const modalUrlVisible = ref(false)
+const urlMapsInput    = ref('')
+const urlMapsError    = ref('')
+
+const parsearUrlGoogleMaps = (url) => {
+  const atMatch    = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+  if (atMatch)    return { lat: parseFloat(atMatch[1]),    lng: parseFloat(atMatch[2]) }
+  const qrMatch   = url.match(/[?&]query=(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+  if (qrMatch)    return { lat: parseFloat(qrMatch[1]),    lng: parseFloat(qrMatch[2]) }
+  const qMatch    = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+  if (qMatch)     return { lat: parseFloat(qMatch[1]),     lng: parseFloat(qMatch[2]) }
+  const llMatch   = url.match(/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+  if (llMatch)    return { lat: parseFloat(llMatch[1]),    lng: parseFloat(llMatch[2]) }
+  return null
+}
+
+const resolviendoUrl = ref(false)
+
+const abrirModalUrl = () => { urlMapsInput.value = ''; urlMapsError.value = ''; modalUrlVisible.value = true }
+
+const _aplicarCoordenadas = (lat, lng) => {
+  updateCoordsInputs(lat, lng)
+  if (map && marker) {
+    if (MAP_PROVIDER === 'leaflet') {
+      map.setView([lat, lng], 17)
+      marker.setLatLng([lat, lng])
+    } else {
+      const c = { lat, lng }
+      map.setCenter(c); map.setZoom(17); marker.setPosition(c)
+    }
+  }
+  modalUrlVisible.value = false
+}
+
+const procesarUrlMaps = async () => {
+  urlMapsError.value = ''
+  const url = urlMapsInput.value.trim()
+  if (!url) return
+
+  // Intentar parseo directo primero (URL completa del navegador)
+  const coords = parsearUrlGoogleMaps(url)
+  if (coords) { _aplicarCoordenadas(coords.lat, coords.lng); return }
+
+  // URL acortada → resolver en el backend
+  resolviendoUrl.value = true
+  try {
+    const res = await api.get('/resolver-url-mapa', { params: { url } })
+    _aplicarCoordenadas(res.data.lat, res.data.lng)
+  } catch (e) {
+    urlMapsError.value = e.response?.data?.error
+      || 'No se pudo resolver la URL. Intentá pegar la URL completa del navegador.'
+  } finally {
+    resolviendoUrl.value = false
+  }
 }
 
 // ==========================================
@@ -333,9 +427,12 @@ const guardarCaracteristicas = async () => {
 }
 
 const volverListado = () => {
-  viewMode.value = 'list';
-  propiedadSeleccionada.value = null;
-  resetPropiedadForm();
+  viewMode.value = 'list'
+  propiedadSeleccionada.value = null
+  resetPropiedadForm()
+  if (map && MAP_PROVIDER === 'leaflet') map.remove()
+  map = null
+  marker = null
 }
 
 const resetPropiedadForm = () => {
@@ -579,9 +676,9 @@ onMounted(() => cargarDatosBase(1));
             <div class="col-lg-6 p-4 border-end">
               <h6 class="fw-bold mb-3 text-muted">Información General</h6>
               <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label small fw-bold">Código *</label>
-                  <input type="text" class="form-control bg-light border-0 text-uppercase" v-model="propiedadForm.codigo" :class="{'is-invalid': erroresValidacion.codigo}" required>
+                <div class="col-md-6" v-if="isEditing">
+                  <label class="form-label small fw-bold">Código</label>
+                  <input type="text" class="form-control bg-light border-0 text-uppercase" v-model="propiedadForm.codigo" :class="{'is-invalid': erroresValidacion.codigo}">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small fw-bold">Tipo *</label>
@@ -707,6 +804,13 @@ onMounted(() => cargarDatosBase(1));
               <div class="mb-3">
                 <label class="form-label small fw-bold">Dirección de la Propiedad</label>
                 <input type="text" class="form-control bg-white border" v-model="propiedadForm.direccion" placeholder="Ej: Av. Principal, Zona Norte">
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-muted">Haz clic en el mapa o arrastra el marcador para fijar la ubicación.</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" @click="abrirModalUrl">
+                  <i class="bi bi-link-45deg me-1"></i>Cargar desde URL
+                </button>
               </div>
 
               <div class="map-container shadow-sm rounded overflow-hidden mb-3 border">
@@ -988,6 +1092,53 @@ onMounted(() => cargarDatosBase(1));
     </div>
 
   </div>
+
+  <!-- ═══ Modal: Cargar ubicación desde URL de Google Maps ═══ -->
+  <div v-if="modalUrlVisible" class="modal d-block" style="background:rgba(0,0,0,0.5); z-index:1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header" style="background-color:var(--primary-color)">
+          <h5 class="modal-title text-white fw-bold">
+            <i class="bi bi-geo-alt-fill me-2"></i>Cargar ubicación desde Google Maps
+          </h5>
+          <button type="button" class="btn-close btn-close-white" @click="modalUrlVisible = false"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">
+            Abre Google Maps, busca la ubicación, copia la URL y pégala aquí.
+            Funciona tanto con URLs completas del navegador como con enlaces acortados
+            (<code>maps.app.goo.gl</code>).
+          </p>
+          <label class="form-label fw-semibold">URL de Google Maps</label>
+          <textarea
+            class="form-control"
+            :class="{ 'is-invalid': urlMapsError }"
+            v-model="urlMapsInput"
+            rows="3"
+            placeholder="https://www.google.com/maps/@-17.3411,-63.2514,17z"
+            @keydown.enter.prevent="procesarUrlMaps"
+          ></textarea>
+          <div v-if="urlMapsError" class="invalid-feedback d-block mt-1">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ urlMapsError }}
+          </div>
+          <div class="alert alert-info py-2 mt-3 mb-0 small">
+            <i class="bi bi-info-circle me-1"></i>
+            Los enlaces acortados se resuelven automáticamente a través del servidor.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" :disabled="resolviendoUrl" @click="modalUrlVisible = false">Cancelar</button>
+          <button type="button" class="btn btn-primary border-0" style="background-color:var(--primary-color)"
+                  :disabled="resolviendoUrl" @click="procesarUrlMaps">
+            <span v-if="resolviendoUrl" class="spinner-border spinner-border-sm me-1"></span>
+            <i v-else class="bi bi-map me-1"></i>
+            {{ resolviendoUrl ? 'Resolviendo...' : 'Procesar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <style scoped>

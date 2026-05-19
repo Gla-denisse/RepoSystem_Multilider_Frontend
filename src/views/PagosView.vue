@@ -1,253 +1,349 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import api from '../api/axios'
 import Swal from 'sweetalert2'
 
-// Estados
-const pagosPendientes = ref([])
-const metodosPago = ref([])
-const cuentasBancarias = ref([])
-const cargando = ref(true)
-const procesando = ref(false)
+// ── Catálogos ──
+const metodosPago       = ref([])
+const cuentasBancarias  = ref([])
 
-// Modal de pago
-const mostrarModalPago = ref(false)
-const pagoProcesando = ref(null)
-const formPago = ref({
+// ── Tab activo ──
+const tabActivo = ref('pendientes')
+
+// ── Tab Pendientes ──
+const pagosPendientes      = ref([])
+const cargandoPendientes   = ref(false)
+const filtrosPend          = ref({ fecha_inicio: '', fecha_fin: '', search: '' })
+const paginaPend           = ref(1)
+const totalPaginasPend     = ref(1)
+const totalPend            = ref(0)
+let   searchPendTimeout    = null
+
+// ── Tab Pagados ──
+const pagosPagados         = ref([])
+const cargandoPagados      = ref(false)
+const filtrosPag           = ref({ fecha_inicio: '', fecha_fin: '', search: '' })
+const paginaPag            = ref(1)
+const totalPaginasPag      = ref(1)
+const totalPag             = ref(0)
+let   searchPagTimeout     = null
+
+// ── Modal Procesar Pago ──
+const mostrarModalPago  = ref(false)
+const pagoProcesando    = ref(null)
+const procesando        = ref(false)
+const formPago          = ref({
   metodo_pago_id: '',
-  cuenta_id: '',
-  fecha_pago: new Date().toISOString().substr(0, 10),
-  observaciones: ''
+  cuenta_id:      '',
+  fecha_pago:     new Date().toISOString().slice(0, 10),
+  observaciones:  ''
 })
 
-// Paginación
-const currentPage = ref(1)
-const totalPages = ref(1)
-const perPage = ref(10)
-const totalItems = ref(0)
+// ── Descarga comprobante ──
+const descargandoId = ref(null)
 
 // ==========================================
-// 1. CARGAR DATOS INICIALES
+onMounted(async () => {
+  const [resM, resC] = await Promise.all([
+    api.get('/metodos-pago?per_page=100'),
+    api.get('/cuentas-bancarias?per_page=100')
+  ])
+  metodosPago.value      = resM.data.data ?? resM.data
+  cuentasBancarias.value = resC.data.data ?? resC.data
+  cargarPendientes()
+})
+
+watch(tabActivo, (tab) => {
+  if (tab === 'pagados' && pagosPagados.value.length === 0) cargarPagados()
+})
+
 // ==========================================
-const cargarDatos = async (page = 1) => {
+// CARGAR DATOS
+// ==========================================
+const cargarPendientes = async (page = 1) => {
   try {
-    cargando.value = true
-    currentPage.value = page
-
-    // Cargamos catálogos solo una vez
-    if (metodosPago.value.length === 0) {
-      const [resMetodos, resCuentas] = await Promise.all([
-        api.get('/metodos-pago?per_page=100'),
-        api.get('/cuentas-bancarias?per_page=100')
-      ])
-      
-      // Extraer los datos del array 'data' si el backend responde con paginación
-      // o usar el objeto directamente si es una lista simple.
-      metodosPago.value = Array.isArray(resMetodos.data.data) ? resMetodos.data.data : (Array.isArray(resMetodos.data) ? resMetodos.data : [])
-      cuentasBancarias.value = Array.isArray(resCuentas.data.data) ? resCuentas.data.data : (Array.isArray(resCuentas.data) ? resCuentas.data : [])
-    }
-
-    // Cargamos pagos con paginación - Filtrado solo para VENTAS AL CONTADO
-    const resPagos = await api.get(`/pagos/pendientes/listar?page=${page}&per_page=${perPage.value}&concepto_pago=VENTA_CONTADO`)
-    
-    if (resPagos.data && resPagos.data.data) {
-      pagosPendientes.value = resPagos.data.data
-      totalPages.value = resPagos.data.last_page
-      totalItems.value = resPagos.data.total
-    } else {
-      pagosPendientes.value = Array.isArray(resPagos.data) ? resPagos.data : []
-      totalItems.value = pagosPendientes.value.length
-      totalPages.value = 1
-    }
-  } catch (error) {
-    console.error('Error al cargar datos:', error)
-    Swal.fire('Error', 'No se pudieron cargar los datos', 'error')
+    cargandoPendientes.value = true
+    paginaPend.value = page
+    const params = new URLSearchParams({ page, per_page: 10 })
+    if (filtrosPend.value.fecha_inicio) params.append('fecha_inicio', filtrosPend.value.fecha_inicio)
+    if (filtrosPend.value.fecha_fin)    params.append('fecha_fin',    filtrosPend.value.fecha_fin)
+    if (filtrosPend.value.search)       params.append('search',       filtrosPend.value.search)
+    const res = await api.get(`/pagos/pendientes/listar?${params}`)
+    pagosPendientes.value   = res.data.data
+    totalPaginasPend.value  = res.data.last_page
+    totalPend.value         = res.data.total
+  } catch {
+    Swal.fire('Error', 'No se pudieron cargar los pagos pendientes', 'error')
   } finally {
-    cargando.value = false
+    cargandoPendientes.value = false
   }
 }
 
-onMounted(() => {
-  cargarDatos()
-})
+const cargarPagados = async (page = 1) => {
+  try {
+    cargandoPagados.value = true
+    paginaPag.value = page
+    const params = new URLSearchParams({ page, per_page: 10, estado: 'PAGADO' })
+    if (filtrosPag.value.fecha_inicio) params.append('fecha_inicio', filtrosPag.value.fecha_inicio)
+    if (filtrosPag.value.fecha_fin)    params.append('fecha_fin',    filtrosPag.value.fecha_fin)
+    if (filtrosPag.value.search)       params.append('search',       filtrosPag.value.search)
+    const res = await api.get(`/pagos?${params}`)
+    pagosPagados.value      = res.data.data
+    totalPaginasPag.value   = res.data.last_page
+    totalPag.value          = res.data.total
+  } catch {
+    Swal.fire('Error', 'No se pudieron cargar los pagos', 'error')
+  } finally {
+    cargandoPagados.value = false
+  }
+}
+
+const onSearchPend = () => {
+  clearTimeout(searchPendTimeout)
+  searchPendTimeout = setTimeout(() => cargarPendientes(1), 350)
+}
+
+const onSearchPag = () => {
+  clearTimeout(searchPagTimeout)
+  searchPagTimeout = setTimeout(() => cargarPagados(1), 350)
+}
 
 // ==========================================
-// 2. LÓGICA DE PAGO
+// MODAL PROCESAR
 // ==========================================
-
 const abrirModalPago = (pago) => {
   pagoProcesando.value = { ...pago }
   formPago.value = {
-    metodo_pago_id: '',
-    cuenta_id: '',
-    fecha_pago: new Date().toISOString().substr(0, 10),
-    observaciones: pago.observaciones || ''
+    metodo_pago_id: pago.metodo_pago_id || '',
+    cuenta_id:      '',
+    fecha_pago:     new Date().toISOString().slice(0, 10),
+    observaciones:  pago.observaciones || ''
   }
+  if (pago.metodo_pago_id) onMetodoChange()
   mostrarModalPago.value = true
 }
 
-const cerrarModalPago = () => {
-  mostrarModalPago.value = false
-}
+const cerrarModalPago = () => { mostrarModalPago.value = false }
 
 const onMetodoChange = async () => {
-  if (!formPago.value.metodo_pago_id) {
-    formPago.value.cuenta_id = ''
-    return
-  }
-
+  if (!formPago.value.metodo_pago_id) { formPago.value.cuenta_id = ''; return }
   try {
     const res = await api.get(`/mapeo-metodos-cuentas/obtener-cuenta/${formPago.value.metodo_pago_id}`)
-    if (res.data && res.data.id) {
-      formPago.value.cuenta_id = res.data.id
-    } else {
-      formPago.value.cuenta_id = ''
-    }
-  } catch (error) {
+    formPago.value.cuenta_id = res.data?.id || ''
+  } catch {
     formPago.value.cuenta_id = ''
   }
 }
 
 const procesarPago = async () => {
-  if (!formPago.value.metodo_pago_id || !formPago.value.cuenta_id || !formPago.value.fecha_pago) {
-    Swal.fire('Validación', 'Completa todos los campos requeridos', 'warning')
-    return
+  if (!formPago.value.metodo_pago_id || !formPago.value.fecha_pago) {
+    return Swal.fire('Validación', 'Completa todos los campos requeridos', 'warning')
   }
-
+  if (!formPago.value.cuenta_id) {
+    return Swal.fire('Atención', 'No se pudo determinar la cuenta destino. Verifica el mapeo de método de pago.', 'warning')
+  }
   try {
     procesando.value = true
-
-    await api.post(`/pagos/${pagoProcesando.value.id}/procesar`, {
-      metodo_pago_id: formPago.value.metodo_pago_id,
-      cuenta_id: formPago.value.cuenta_id,
-      fecha_pago: formPago.value.fecha_pago,
-      observaciones: formPago.value.observaciones
-    })
-
+    await api.post(`/pagos/${pagoProcesando.value.id}/procesar`, formPago.value)
     Swal.fire('Éxito', 'Pago procesado correctamente', 'success')
-    cargarDatos(currentPage.value)
+    cargarPendientes(paginaPend.value)
     cerrarModalPago()
-  } catch (error) {
-    console.error('Error al procesar pago:', error)
-    Swal.fire('Error', error.response?.data?.message || 'No se pudo procesar el pago', 'error')
+  } catch (e) {
+    Swal.fire('Error', e.response?.data?.message || 'No se pudo procesar el pago', 'error')
   } finally {
     procesando.value = false
   }
 }
 
 // ==========================================
-// 3. HELPERS
+// ANULAR
 // ==========================================
-
-const getNombreCuenta = (id) => {
-  return cuentasBancarias.value.find(c => c.id === id)?.nombre || '-'
-}
-
-const formatoMoneda = (valor) => {
-  return parseFloat(valor || 0).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
-const tipoVentaBadge = (tipo) => {
-  return tipo === 'CONTADO'
-    ? 'border-success text-success bg-success bg-opacity-10'
-    : 'border-primary text-primary bg-primary bg-opacity-10'
-}
-
-const conceptoPagoBadge = (concepto) => {
-  const mapeo = {
-    'VENTA_CONTADO': { bg: 'bg-info', text: 'text-info', border: 'border-info' },
-    'CUOTA_INICIAL': { bg: 'bg-warning', text: 'text-warning', border: 'border-warning' },
-    'CUOTA': { bg: 'bg-secondary', text: 'text-secondary', border: 'border-secondary' },
-    'OTRO': { bg: 'bg-dark', text: 'text-dark', border: 'border-dark' }
+const anularPago = async (pago) => {
+  const { isConfirmed } = await Swal.fire({
+    title: '¿Anular pago?',
+    html: `Se anulará el pago de <strong>Bs. ${formatoMoneda(pago.monto)}</strong> de <strong>${pago.nota_venta?.cliente?.nombre_completo ?? ''}</strong>.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, anular',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#e74c3c'
+  })
+  if (!isConfirmed) return
+  try {
+    await api.put(`/pagos/${pago.id}/cancelar`)
+    Swal.fire('Anulado', 'El pago ha sido anulado correctamente.', 'success')
+    cargarPagados(paginaPag.value)
+  } catch (e) {
+    Swal.fire('Error', e.response?.data?.message || 'No se pudo anular el pago', 'error')
   }
-  const estilos = mapeo[concepto] || mapeo['OTRO']
-  return `${estilos.bg} ${estilos.text} bg-opacity-10 border ${estilos.border}`
 }
+
+// ==========================================
+// COMPROBANTE
+// ==========================================
+const descargarComprobante = async (pago) => {
+  try {
+    descargandoId.value = pago.id
+    const res = await api.get(`/pagos/${pago.id}/comprobante`, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const a   = document.createElement('a')
+    a.href    = url
+    a.download = `comprobante-pago-${String(pago.id).padStart(5, '0')}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    Swal.fire('Error', 'No se pudo generar el comprobante', 'error')
+  } finally {
+    descargandoId.value = null
+  }
+}
+
+// ==========================================
+// HELPERS
+// ==========================================
+const esEfectivo = (pago) =>
+  pago.metodo_pago?.nombre_metodo?.toLowerCase().includes('efectivo')
+
+const formatoMoneda = (v) =>
+  parseFloat(v || 0).toLocaleString('es-BO', { minimumFractionDigits: 2 })
+
+const formatoFecha = (f) => f ? new Date(f).toLocaleDateString('es-BO') : '-'
+
+const conceptoBadge = (concepto) => {
+  const map = {
+    VENTA_CONTADO: 'bg-info bg-opacity-10 border border-info text-info',
+    CUOTA_INICIAL: 'bg-warning bg-opacity-10 border border-warning text-warning',
+    CUOTA:         'bg-secondary bg-opacity-10 border border-secondary text-secondary',
+  }
+  return map[concepto] ?? 'bg-dark bg-opacity-10 border border-dark text-dark'
+}
+
+const conceptoLabel = (c) => ({
+  VENTA_CONTADO: 'Venta Contado',
+  CUOTA_INICIAL: 'Cuota Inicial',
+  CUOTA:         'Cuota',
+  OTRO:          'Otro',
+}[c] ?? c)
+
 </script>
 
 <template>
   <div class="container-fluid py-4 pb-5">
+
+    <!-- Cabecera -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="h4 fw-bold mb-0" style="color: #2c3e50;">Pagos al Contado</h2>
-        <p class="text-muted small mb-0">Gestión de pagos pendientes para ventas al contado</p>
+        <h2 class="h4 fw-bold mb-0" style="color:var(--text-main);">Gestión de Pagos</h2>
+        <p class="text-muted small mb-0">Administra pagos pendientes y procesados</p>
       </div>
-      <div>
-        <span class="badge bg-danger fs-6">{{ totalItems }} Pendientes</span>
-      </div>
-    </div>
-
-    <!-- Información de Ayuda -->
-    <div class="alert alert-info border-0 rounded-3 mb-4" style="background-color: #e8f4f8;">
-      <div class="d-flex">
-        <i class="bi bi-info-circle me-3 mt-1" style="color: #0c5460; font-size: 1.2rem;"></i>
-        <div>
-          <strong style="color: #0c5460;">¿Cómo funciona?</strong>
-          <p class="mb-0 small" style="color: #0c5460;">Aquí se muestran únicamente los pagos pendientes de ventas realizadas bajo la modalidad <strong>AL CONTADO</strong>. Selecciona el método de pago y la cuenta de destino para formalizar el ingreso.</p>
-        </div>
+      <div class="d-flex gap-2">
+        <span class="badge bg-danger fs-6">{{ totalPend }} Pendientes</span>
+        <span class="badge bg-success fs-6">{{ totalPag }} Procesados</span>
       </div>
     </div>
 
-    <!-- Tabla de Pagos Pendientes -->
-    <div class="card card-custom border-0 shadow-sm rounded-3 overflow-hidden">
-      <div class="card-header border-bottom py-3 px-4 d-flex justify-content-between align-items-center" style="background-color: #ecf0f1;">
-        <h6 class="mb-0 fw-bold text-uppercase" style="color: #2c3e50; letter-spacing: 1px;"><i class="bi bi-clock-history me-2"></i>Pagos Pendientes de Procesamiento</h6>
-        <button class="btn btn-sm btn-outline-secondary" @click="cargarDatos(currentPage)" :disabled="cargando">
-          <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-0" style="border-bottom: 2px solid #dee2e6;">
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" :class="{ active: tabActivo === 'pendientes' }" @click="tabActivo = 'pendientes'">
+          <i class="bi bi-clock-history me-2 text-danger"></i>Pendientes
+          <span class="badge bg-danger ms-2 rounded-pill">{{ totalPend }}</span>
         </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fw-semibold" :class="{ active: tabActivo === 'pagados' }" @click="tabActivo = 'pagados'">
+          <i class="bi bi-check-circle me-2 text-success"></i>Procesados
+          <span class="badge bg-success ms-2 rounded-pill">{{ totalPag }}</span>
+        </button>
+      </li>
+    </ul>
+
+    <!-- ─────────────────────────────────────────── -->
+    <!-- TAB PENDIENTES -->
+    <!-- ─────────────────────────────────────────── -->
+    <div v-show="tabActivo === 'pendientes'" class="card border-0 shadow-sm rounded-bottom-3 rounded-top-0">
+
+      <!-- Filtros -->
+      <div class="card-header bg-white border-bottom py-3 px-4">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1">Desde</label>
+            <input type="date" class="form-control form-control-sm" v-model="filtrosPend.fecha_inicio" @change="cargarPendientes(1)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
+            <input type="date" class="form-control form-control-sm" v-model="filtrosPend.fecha_fin" @change="cargarPendientes(1)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted mb-1">Buscar cliente (nombre o CI)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0" placeholder="Buscar..." v-model="filtrosPend.search" @input="onSearchPend">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-sm btn-outline-secondary w-100" @click="cargarPendientes(1)" :disabled="cargandoPendientes">
+              <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+            </button>
+          </div>
+        </div>
       </div>
 
+      <!-- Tabla -->
       <div class="card-body p-0">
-        <div v-if="cargando" class="text-center py-5">
-          <div class="spinner-border" style="color: #2c3e50;" role="status"></div>
+        <div v-if="cargandoPendientes" class="text-center py-5">
+          <div class="spinner-border text-secondary" role="status"></div>
         </div>
-
         <div v-else-if="pagosPendientes.length === 0" class="text-center py-5 text-muted">
-          <i class="bi bi-check-circle fs-2 d-block mb-2" style="color: #27ae60;"></i>
-          <p class="mb-0">¡Todos los pagos están procesados!</p>
+          <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
+          <p class="mb-0">¡Sin pagos pendientes!</p>
         </div>
-
         <div v-else class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead>
+          <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+            <thead class="table-light">
               <tr>
                 <th class="ps-4">Venta</th>
                 <th>Cliente</th>
                 <th>Concepto</th>
-                <th>Modalidad</th>
-                <th class="text-end">Monto (Bs)</th>
+                <th>Método</th>
+                <th class="text-end pe-3">Monto</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="pago in pagosPendientes" :key="pago.id">
-                <td class="fw-bold text-dark">
-                  <span class="d-block">VTA-{{ (pago.nota_venta_id || 0).toString().padStart(5, '0') }}</span>
-                  <span class="small text-muted">{{ pago.created_at ? pago.created_at.substr(0, 10) : '-' }}</span>
+                <td class="ps-4">
+                  <span class="fw-bold d-block">VTA-{{ String(pago.nota_venta_id || 0).padStart(5,'0') }}</span>
+                  <span class="extra-small text-muted">{{ pago.created_at?.substr(0,10) ?? '-' }}</span>
                 </td>
                 <td>
-                  <div class="fw-medium">{{ pago.nota_venta?.cliente?.nombre_completo || 'Cliente no definido' }}</div>
-                  <div class="small text-muted">{{ pago.nota_venta?.cliente?.ci || '-' }}</div>
+                  <div class="fw-medium">{{ pago.nota_venta?.cliente?.nombre_completo ?? 'Sin cliente' }}</div>
+                  <div class="extra-small text-muted">CI: {{ pago.nota_venta?.cliente?.ci ?? '-' }}</div>
                 </td>
                 <td>
-                  <span class="badge rounded-pill" :class="conceptoPagoBadge(pago.concepto_pago)">
-                    {{ (pago.concepto_pago || '').replace('_', ' ') }}
+                  <span class="badge rounded-pill" :class="conceptoBadge(pago.concepto_pago)">
+                    {{ conceptoLabel(pago.concepto_pago) }}
                   </span>
                 </td>
                 <td>
-                  <span class="badge rounded-pill border" :class="tipoVentaBadge(pago.nota_venta?.tipo_venta)">
-                    {{ pago.nota_venta?.tipo_venta || '-' }}
+                  <span v-if="pago.metodo_pago" class="badge bg-light border text-dark">
+                    <i class="bi bi-credit-card me-1"></i>{{ pago.metodo_pago.nombre_metodo }}
                   </span>
+                  <span v-else class="extra-small text-muted fst-italic">Sin definir</span>
                 </td>
-                <td class="text-end fw-bold" style="color: #2980b9;">Bs. {{ formatoMoneda(pago.monto) }}</td>
+                <td class="text-end pe-3 fw-bold text-primary">Bs. {{ formatoMoneda(pago.monto) }}</td>
                 <td class="text-center">
                   <button
+                    v-if="esEfectivo(pago)"
                     class="btn btn-sm btn-success"
                     @click="abrirModalPago(pago)"
-                    title="Procesar Pago"
+                    title="Procesar cobro en efectivo"
                   >
-                    <i class="bi bi-check-lg me-1"></i> Procesar
+                    <i class="bi bi-cash-coin me-1"></i> Cobrar
                   </button>
+                  <span v-else class="extra-small text-muted fst-italic">
+                    <i class="bi bi-info-circle me-1"></i>Procesar desde pagos
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -255,157 +351,233 @@ const conceptoPagoBadge = (concepto) => {
         </div>
       </div>
 
-      <!-- Paginación -->
-      <div v-if="totalPages > 1" class="card-footer bg-white border-top py-3">
-        <nav aria-label="Navegación de pagos">
+      <!-- Paginación Pendientes -->
+      <div v-if="totalPaginasPend > 1" class="card-footer bg-white border-top py-3">
+        <nav>
           <ul class="pagination pagination-sm justify-content-center mb-0">
-            <li class="page-item" :class="{ disabled: currentPage === 1 }">
-              <button class="page-link" @click="cargarDatos(currentPage - 1)">Anterior</button>
+            <li class="page-item" :class="{ disabled: paginaPend === 1 }">
+              <button class="page-link" @click="cargarPendientes(paginaPend - 1)">‹</button>
             </li>
-            <li v-for="page in totalPages" :key="page" class="page-item" :class="{ active: currentPage === page }">
-              <button class="page-link" @click="cargarDatos(page)">{{ page }}</button>
+            <li v-for="p in totalPaginasPend" :key="p" class="page-item" :class="{ active: paginaPend === p }">
+              <button class="page-link" @click="cargarPendientes(p)">{{ p }}</button>
             </li>
-            <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-              <button class="page-link" @click="cargarDatos(currentPage + 1)">Siguiente</button>
+            <li class="page-item" :class="{ disabled: paginaPend === totalPaginasPend }">
+              <button class="page-link" @click="cargarPendientes(paginaPend + 1)">›</button>
             </li>
           </ul>
         </nav>
       </div>
     </div>
 
-    <!-- Modal para Procesar Pago -->
-    <div v-if="mostrarModalPago" class="modal d-block" style="background-color: rgba(0, 0, 0, 0.5);">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 rounded-3 shadow-lg" v-if="pagoProcesando">
-          <div class="modal-header border-bottom py-3 px-4" style="background-color: #ecf0f1;">
-            <h5 class="modal-title fw-bold" style="color: #2c3e50;">
-              <i class="bi bi-credit-card me-2"></i>Procesar Pago
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              @click="cerrarModalPago"
-              :disabled="procesando"
-            ></button>
-          </div>
+    <!-- ─────────────────────────────────────────── -->
+    <!-- TAB PAGADOS -->
+    <!-- ─────────────────────────────────────────── -->
+    <div v-show="tabActivo === 'pagados'" class="card border-0 shadow-sm rounded-bottom-3 rounded-top-0">
 
-          <div class="modal-body p-4">
-            <!-- Resumen del Pago -->
-            <div class="alert alert-light border rounded-3 mb-4" style="background-color: #f8f9fa;">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <div class="small text-muted fw-bold text-uppercase mb-1">Venta</div>
-                  <div class="fw-bold text-dark">VTA-{{ (pagoProcesando.nota_venta_id || 0).toString().padStart(5, '0') }}</div>
+      <!-- Filtros -->
+      <div class="card-header bg-white border-bottom py-3 px-4">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1">Desde</label>
+            <input type="date" class="form-control form-control-sm" v-model="filtrosPag.fecha_inicio" @change="cargarPagados(1)">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1">Hasta</label>
+            <input type="date" class="form-control form-control-sm" v-model="filtrosPag.fecha_fin" @change="cargarPagados(1)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted mb-1">Buscar cliente (nombre o CI)</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+              <input type="text" class="form-control border-start-0" placeholder="Buscar..." v-model="filtrosPag.search" @input="onSearchPag">
+            </div>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-sm btn-outline-secondary w-100" @click="cargarPagados(1)" :disabled="cargandoPagados">
+              <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card-body p-0">
+        <div v-if="cargandoPagados" class="text-center py-5">
+          <div class="spinner-border text-secondary" role="status"></div>
+        </div>
+        <div v-else-if="pagosPagados.length === 0" class="text-center py-5 text-muted">
+          <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+          <p class="mb-0">No se encontraron pagos.</p>
+        </div>
+        <div v-else class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">Venta</th>
+                <th>Cliente</th>
+                <th>Concepto</th>
+                <th>Método</th>
+                <th>Fecha Pago</th>
+                <th class="text-end pe-3">Monto</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="pago in pagosPagados" :key="pago.id">
+                <td class="ps-4">
+                  <span class="fw-bold d-block">VTA-{{ String(pago.nota_venta_id || 0).padStart(5,'0') }}</span>
+                  <span class="extra-small text-muted">ID: {{ pago.id }}</span>
+                </td>
+                <td>
+                  <div class="fw-medium">{{ pago.nota_venta?.cliente?.nombre_completo ?? 'Sin cliente' }}</div>
+                  <div class="extra-small text-muted">CI: {{ pago.nota_venta?.cliente?.ci ?? '-' }}</div>
+                </td>
+                <td>
+                  <span class="badge rounded-pill" :class="conceptoBadge(pago.concepto_pago)">
+                    {{ conceptoLabel(pago.concepto_pago) }}
+                  </span>
+                </td>
+                <td>
+                  <span v-if="pago.metodo_pago" class="badge bg-light border text-dark">
+                    <i class="bi bi-credit-card me-1"></i>{{ pago.metodo_pago.nombre_metodo }}
+                  </span>
+                  <span v-else class="extra-small text-muted fst-italic">-</span>
+                </td>
+                <td class="text-muted">{{ formatoFecha(pago.fecha_pago) }}</td>
+                <td class="text-end pe-3 fw-bold text-success">Bs. {{ formatoMoneda(pago.monto) }}</td>
+                <td class="text-center">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      @click="anularPago(pago)"
+                      title="Anular pago"
+                    >
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      @click="descargarComprobante(pago)"
+                      :disabled="descargandoId === pago.id"
+                      title="Descargar comprobante"
+                    >
+                      <span v-if="descargandoId === pago.id" class="spinner-border spinner-border-sm"></span>
+                      <i v-else class="bi bi-file-earmark-pdf"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Paginación Pagados -->
+      <div v-if="totalPaginasPag > 1" class="card-footer bg-white border-top py-3">
+        <nav>
+          <ul class="pagination pagination-sm justify-content-center mb-0">
+            <li class="page-item" :class="{ disabled: paginaPag === 1 }">
+              <button class="page-link" @click="cargarPagados(paginaPag - 1)">‹</button>
+            </li>
+            <li v-for="p in totalPaginasPag" :key="p" class="page-item" :class="{ active: paginaPag === p }">
+              <button class="page-link" @click="cargarPagados(p)">{{ p }}</button>
+            </li>
+            <li class="page-item" :class="{ disabled: paginaPag === totalPaginasPag }">
+              <button class="page-link" @click="cargarPagados(paginaPag + 1)">›</button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- MODAL PROCESAR PAGO -->
+  <!-- ─────────────────────────────────────────── -->
+  <div v-if="mostrarModalPago" class="modal-overlay" @click.self="cerrarModalPago">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="margin:auto;">
+      <div class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" v-if="pagoProcesando">
+        <div class="modal-header border-bottom py-3 px-4">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-cash-stack me-2 text-success"></i>Procesar Cobro
+          </h5>
+          <button type="button" class="btn-close shadow-none" @click="cerrarModalPago" :disabled="procesando"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Resumen de Pago Mejorado -->
+          <div class="payment-summary-card mb-4 p-3 rounded-4 border">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <div class="summary-label">Nota de Venta</div>
+                <div class="summary-value text-technical">VTA-{{ String(pagoProcesando.nota_venta_id||0).padStart(5,'0') }}</div>
+              </div>
+              <div class="col-md-4">
+                <div class="summary-label">Cliente Pagador</div>
+                <div class="summary-value text-truncate" :title="pagoProcesando.nota_venta?.cliente?.nombre_completo">
+                  {{ pagoProcesando.nota_venta?.cliente?.nombre_completo ?? 'N/A' }}
                 </div>
-                <div class="col-md-6">
-                  <div class="small text-muted fw-bold text-uppercase mb-1">Cliente</div>
-                  <div class="fw-bold text-dark">{{ pagoProcesando.nota_venta?.cliente?.nombre_completo || 'N/A' }}</div>
-                </div>
-                <div class="col-md-6">
-                  <div class="small text-muted fw-bold text-uppercase mb-1">Concepto</div>
-                  <div class="fw-bold text-dark">{{ (pagoProcesando.concepto_pago || '').replace('_', ' ') }}</div>
-                </div>
-                <div class="col-md-6">
-                  <div class="small text-muted fw-bold text-uppercase mb-1">Monto</div>
-                  <div class="fw-bold" style="color: #27ae60; font-size: 1.2rem;">Bs. {{ formatoMoneda(pagoProcesando.monto) }}</div>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <div class="summary-label">Monto a Cobrar</div>
+                <div class="summary-value text-success h4 mb-0 fw-bold">
+                  <span class="small me-1">Bs.</span>{{ formatoMoneda(pagoProcesando.monto) }}
                 </div>
               </div>
             </div>
-
-            <!-- Formulario de Pago -->
-            <form @submit.prevent="procesarPago" class="needs-validation">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">
-                    <i class="bi bi-credit-card me-2"></i>Método de Pago *
-                  </label>
-                  <select
-                    v-model="formPago.metodo_pago_id"
-                    @change="onMetodoChange"
-                    class="form-select form-select-sm"
-                    :disabled="procesando"
-                    required
-                  >
-                    <option value="">-- Selecciona un método --</option>
-                    <option v-for="metodo in metodosPago" :key="metodo.id" :value="metodo.id">
-                      {{ metodo.nombre_metodo }}
-                    </option>
-                  </select>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">
-                    <i class="bi bi-bank me-2"></i>Cuenta Bancaria *
-                  </label>
-                  <select
-                    v-model="formPago.cuenta_id"
-                    class="form-select form-select-sm"
-                    :disabled="procesando"
-                    required
-                  >
-                    <option value="">-- Selecciona una cuenta --</option>
-                    <option v-for="cuenta in cuentasBancarias" :key="cuenta.id" :value="cuenta.id">
-                      {{ cuenta.nombre }} ({{ cuenta.tipo }})
-                    </option>
-                  </select>
-                  <small class="text-muted d-block mt-1" v-if="formPago.cuenta_id">
-                    <i class="bi bi-check-circle me-1" style="color: #27ae60;"></i>
-                    {{ getNombreCuenta(formPago.cuenta_id) }}
-                  </small>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">
-                    <i class="bi bi-calendar-event me-2"></i>Fecha de Pago *
-                  </label>
-                  <input
-                    v-model="formPago.fecha_pago"
-                    type="date"
-                    class="form-control form-control-sm"
-                    :disabled="procesando"
-                    required
-                  />
-                </div>
-
-                <div class="col-md-12 mb-4">
-                  <label class="form-label fw-bold" style="color: #2c3e50;">
-                    <i class="bi bi-chat-left-text me-2"></i>Observaciones
-                  </label>
-                  <textarea
-                    v-model="formPago.observaciones"
-                    class="form-control form-control-sm"
-                    rows="2"
-                    placeholder="Notas adicionales sobre el pago..."
-                    :disabled="procesando"
-                  ></textarea>
-                </div>
-              </div>
-
-              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-light border"
-                  @click="cerrarModalPago"
-                  :disabled="procesando"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  class="btn btn-sm btn-success"
-                  :disabled="procesando"
-                >
-                  <span v-if="procesando">
-                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Procesando...
-                  </span>
-                  <span v-else>
-                    <i class="bi bi-check-lg me-1"></i>Procesar Pago
-                  </span>
-                </button>
-              </div>
-            </form>
           </div>
+
+          <form @submit.prevent="procesarPago">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2">Método de Pago</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-light border-0"><i class="bi bi-cash-coin text-success"></i></span>
+                  <input
+                    type="text"
+                    class="form-control border-0 bg-light fw-semibold text-success"
+                    :value="pagoProcesando?.metodo_pago?.nombre_metodo ?? 'Efectivo'"
+                    disabled
+                  >
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2">Cuenta Destino</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-light border-0"><i class="bi bi-bank text-primary"></i></span>
+                  <input
+                    type="text"
+                    class="form-control border-0 bg-light fw-semibold text-primary"
+                    :value="cuentasBancarias.find(c => c.id === formPago.cuenta_id)?.nombre ?? 'Cargando...'"
+                    disabled
+                  >
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2">Fecha de Pago <span class="text-danger">*</span></label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-light border-0"><i class="bi bi-calendar-event"></i></span>
+                  <input v-model="formPago.fecha_pago" type="date" class="form-control border-0 bg-light" :disabled="procesando" required>
+                </div>
+              </div>
+              <div class="col-md-12">
+                <label class="form-label fw-bold small text-muted text-uppercase mb-2">Observaciones Internas</label>
+                <textarea v-model="formPago.observaciones" class="form-control border-0 bg-light" rows="3" 
+                  placeholder="Añade notas adicionales sobre este cobro..." :disabled="procesando"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-5">
+              <button type="button" class="btn btn-light px-4 rounded-3 border-0" @click="cerrarModalPago" :disabled="procesando">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-success px-4 rounded-3 shadow-sm d-flex align-items-center" :disabled="procesando">
+                <span v-if="procesando" class="spinner-border spinner-border-sm me-2"></span>
+                <i v-else class="bi bi-check-circle-fill me-2"></i>
+                {{ procesando ? 'Registrando...' : 'Confirmar Cobro' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -413,21 +585,69 @@ const conceptoPagoBadge = (concepto) => {
 </template>
 
 <style scoped>
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1050;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.extra-small { font-size: 0.75rem; }
+
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1050;
+  background: rgba(11, 37, 69, 0.4); /* Navy overlay con transparencia */
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
 }
 
-.table-responsive {
-  max-height: 500px;
-  overflow-y: auto;
+.modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-main);
 }
+
+.payment-summary-card {
+  background-color: var(--bg-body);
+  border-color: var(--border-color) !important;
+}
+
+.summary-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.nav-tabs .nav-link {
+  color: var(--text-muted);
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 0.75rem 1.5rem;
+  transition: all .2s;
+  font-weight: 600;
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  background: transparent;
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+  color: var(--info-color);
+  border-bottom-color: var(--info-color);
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+  color: var(--text-main);
+  border-bottom-color: var(--border-color);
+}
+
+.card.rounded-top-0 { border-top-left-radius: 0 !important; border-top-right-radius: 0 !important; }
+
+/* Custom Scrollbar for better UX */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
 </style>

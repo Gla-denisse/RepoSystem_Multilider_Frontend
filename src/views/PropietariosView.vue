@@ -192,8 +192,8 @@ onMounted(() => cargarDatosBase())
               </tr>
               <tr v-for="prop in propietarios" :key="prop.id">
                 <td class="ps-4">
-                  <span class="badge rounded-pill"
-                        :class="prop.tipo === 'empresa' ? 'bg-info bg-opacity-15 text-info border border-info border-opacity-25' : 'bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25'">
+                  <span class="badge rounded-pill px-3 py-2"
+                        :class="prop.tipo === 'empresa' ? 'badge-empresa' : 'badge-persona'">
                     <i class="bi me-1" :class="prop.tipo === 'empresa' ? 'bi-building' : 'bi-person'"></i>
                     {{ prop.tipo === 'empresa' ? 'Empresa' : 'Persona' }}
                   </span>
@@ -211,10 +211,8 @@ onMounted(() => cargarDatosBase())
                   <div class="small text-muted">{{ prop.telefono || 'Sin teléfono' }}</div>
                 </td>
                 <td class="text-center">
-                  <span v-if="prop.estado == 1"
-                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill">Activo</span>
-                  <span v-else
-                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill">Inactivo</span>
+                  <span v-if="prop.estado == 1" class="badge badge-activo rounded-pill">Activo</span>
+                  <span v-else class="badge badge-inactivo rounded-pill">Inactivo</span>
                 </td>
                 <td class="text-end pe-4">
                   <button class="btn btn-sm btn-light me-2 custom-action-btn"
@@ -300,7 +298,7 @@ onMounted(() => cargarDatosBase())
               <template v-if="propietarioForm.tipo === 'empresa'">
                 <div class="row mb-3">
                   <div class="col-md-8">
-                    <label class="form-label text-muted fw-medium fs-6">Nombre de la Empresa *</label>
+                    <label class="form-label text-muted fw-medium fs-6">Razon Social*</label>
                     <input type="text" class="form-control shadow-none bg-light border-0"
                            :class="{ 'is-invalid border-danger': erroresValidacion.nombre_empresa }"
                            v-model="propietarioForm.nombre_empresa" required>
@@ -393,17 +391,19 @@ onMounted(() => cargarDatosBase())
             <!-- Avatar + nombre principal -->
             <div class="text-center mb-4">
               <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
-                   :class="propietarioSeleccionado.tipo === 'empresa' ? 'bg-info bg-opacity-15 text-info' : 'bg-primary bg-opacity-10 text-primary'"
+                   :class="propietarioSeleccionado.tipo === 'empresa' ? 'badge-empresa' : 'badge-persona'"
                    style="width:70px;height:70px">
                 <i class="fs-1" :class="propietarioSeleccionado.tipo === 'empresa' ? 'bi bi-building' : 'bi bi-person-fill'"></i>
               </div>
-              <h5 class="fw-bold mb-1">{{ nombreMostrado(propietarioSeleccionado) }}</h5>
-              <span class="badge me-1"
-                    :class="propietarioSeleccionado.tipo === 'empresa' ? 'bg-info text-dark' : 'bg-secondary'">
-                {{ propietarioSeleccionado.tipo === 'empresa' ? 'Empresa' : 'Persona Natural' }}
-              </span>
-              <span v-if="propietarioSeleccionado.estado == 1" class="badge bg-success rounded-pill">Activo</span>
-              <span v-else class="badge bg-danger rounded-pill">Inactivo</span>
+              <h5 class="fw-bold mb-1" style="color:var(--text-main)">{{ nombreMostrado(propietarioSeleccionado) }}</h5>
+              <div class="d-flex justify-content-center gap-2 mt-2">
+                <span class="badge rounded-pill px-3 py-2"
+                      :class="propietarioSeleccionado.tipo === 'empresa' ? 'badge-empresa' : 'badge-persona'">
+                  {{ propietarioSeleccionado.tipo === 'empresa' ? 'Empresa' : 'Persona Natural' }}
+                </span>
+                <span v-if="propietarioSeleccionado.estado == 1" class="badge badge-activo rounded-pill px-3 py-2">Activo</span>
+                <span v-else class="badge badge-inactivo rounded-pill px-3 py-2">Inactivo</span>
+              </div>
             </div>
 
             <div class="card bg-light border-0 shadow-none mb-3">
@@ -481,4 +481,31 @@ onMounted(() => cargarDatosBase())
   color: white !important;
 }
 .custom-page-btn { color: var(--text-main); font-weight: 500; }
+
+/* Badges personalizados para Propietarios (Tono Formal) */
+.badge-empresa {
+  background-color: #0B2545 !important; /* Deep Navy */
+  color: #ffffff !important;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge-persona {
+  background-color: #475569 !important; /* Slate */
+  color: #ffffff !important;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.badge-activo {
+  background-color: #15803d !important; /* Dark Green */
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+.badge-inactivo {
+  background-color: #b91c1c !important; /* Dark Red */
+  color: #ffffff !important;
+  font-weight: 600;
+}
 </style>
