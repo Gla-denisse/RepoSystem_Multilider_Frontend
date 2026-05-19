@@ -5,10 +5,20 @@ import api from '../api/axios'
 import Swal from 'sweetalert2'
 import LiveSearchSelect from '../components/LiveSearchSelect.vue'
 import ClienteModal from '../components/ClienteModal.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const step = ref(1)
 const guardando = ref(false)
+
+const isAsesor = computed(() => {
+  const asignaciones = authStore.user?.roles_permisos || authStore.user?.rolesPermisos || []
+  return asignaciones.some(item => {
+    const rol = item.rol_permiso?.rol || item.rolPermiso?.rol
+    return rol?.nombre === 'Asesor de Ventas'
+  })
+})
 
 // Data de catálogos
 const clientes = ref([])
@@ -54,7 +64,10 @@ onMounted(async () => {
     propiedades.value = resProp.data.data.filter(p => p.estado === 'Disponible' && p.activo)
     asesores.value = resAse.data.data
 
-    if (asesores.value.length > 0) formVenta.value.asesor_id = asesores.value[0].id
+    if (isAsesor.value) {
+      const propio = asesores.value.find(a => a.user_id === authStore.user?.id)
+      if (propio) formVenta.value.asesor_id = propio.id
+    }
 
   } catch (error) {
     Swal.fire('Error', 'No se pudieron cargar los catálogos.', 'error')
@@ -66,6 +79,7 @@ onMounted(async () => {
 // ==========================================
 let searchClienteTimeout = null
 let searchPropiedadTimeout = null
+let searchAsesorTimeout = null
 
 const buscarClientesRemoto = (query) => {
   clearTimeout(searchClienteTimeout)
@@ -85,6 +99,17 @@ const buscarPropiedadesRemoto = (query) => {
     try {
       const res = await api.get(`/propiedades?search=${query}&per_page=30`)
       propiedades.value = res.data.data.filter(p => p.estado === 'Disponible' && p.activo)
+    } catch { /* silent */ }
+  }, 300)
+}
+
+const buscarAsesoresRemoto = (query) => {
+  clearTimeout(searchAsesorTimeout)
+  if (!query || query.length < 2) return
+  searchAsesorTimeout = setTimeout(async () => {
+    try {
+      const res = await api.get(`/asesores?search=${query}&per_page=30`)
+      asesores.value = res.data.data
     } catch { /* silent */ }
   }, 300)
 }
@@ -161,6 +186,9 @@ const siguientePaso = () => {
 }
 
 const registrarVenta = async () => {
+  if (!isAsesor.value && !formVenta.value.asesor_id) {
+    return Swal.fire('Atención', 'Debe seleccionar un asesor responsable.', 'warning')
+  }
   guardando.value = true
 
   const payload = {
@@ -201,8 +229,11 @@ const resetAsistente = () => {
   step.value = 1
   clienteSeleccionadoId.value = null
   propiedadSeleccionadaId.value = null
+  const defaultAsesorId = isAsesor.value
+    ? (asesores.value.find(a => a.user_id === authStore.user?.id)?.id || '')
+    : ''
   formVenta.value = {
-    asesor_id: asesores.value.length > 0 ? asesores.value[0].id : '',
+    asesor_id: defaultAsesorId,
     fecha: new Date().toISOString().substr(0, 10),
     tipo_venta: 'CONTADO',
     descuento: 0,
@@ -311,15 +342,18 @@ const resetAsistente = () => {
           <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-text me-2"></i>Términos Comerciales</h5>
 
           <div class="row bg-light border rounded p-3 mb-4 g-3">
-            <div class="col-md-6">
+            <div :class="isAsesor ? 'col-md-12' : 'col-md-6'">
               <label class="small fw-bold text-muted">Fecha del Contrato</label>
               <input type="date" class="form-control border-0" v-model="formVenta.fecha">
             </div>
-            <div class="col-md-6">
+            <div v-if="!isAsesor" class="col-md-6">
               <label class="small fw-bold text-muted">Asesor Responsable</label>
-              <select class="form-select border-0" v-model="formVenta.asesor_id">
-                <option v-for="a in asesores" :key="a.id" :value="a.id">{{ a.nombre_completo }}</option>
-              </select>
+              <LiveSearchSelect
+                v-model="formVenta.asesor_id"
+                :options="asesores" displayKey="nombre_completo" subKey="correo" valueKey="id"
+                placeholder="Busca por nombre o correo..."
+                @search="buscarAsesoresRemoto"
+              />
             </div>
           </div>
 
