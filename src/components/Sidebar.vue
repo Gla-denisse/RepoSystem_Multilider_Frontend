@@ -254,6 +254,11 @@ const toggleSubmenu = (menuName) => {
               <i class="bi bi-arrow-up-circle-fill me-2 fs-6 text-danger"></i> Egresos
             </RouterLink>
           </li>
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_egresos')">
+            <RouterLink to="/comisiones-asesores" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-cash-coin me-2 fs-6 text-warning"></i> Comisiones
+            </RouterLink>
+          </li>
         </ul>
       </li>
 

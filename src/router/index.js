@@ -162,6 +162,12 @@ const router = createRouter({
       meta: { requiresAuth: true, permission: 'acceso_egresos', layout: 'admin' }
     },
     {
+      path: '/comisiones-asesores',
+      name: 'ComisionesAsesores',
+      component: () => import('../views/ComisionesAsesoresView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_egresos', layout: 'admin' }
+    },
+    {
       path: '/perfil',
       name: 'Perfil',
       component: () => import('../views/PerfilView.vue'),
