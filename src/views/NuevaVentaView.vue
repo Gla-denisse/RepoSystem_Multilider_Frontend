@@ -246,228 +246,324 @@ const resetAsistente = () => {
 </script>
 
 <template>
-  <div class="container py-4 pb-5" style="max-width: 900px;">
+  <div class="container-xl py-4 pb-5">
 
-    <div class="text-center mb-5">
-      <h2 class="fw-bold mb-2" style="color: var(--text-main);">Registro de Nueva Venta</h2>
-      <p class="text-muted">Asistente paso a paso para generación de contratos</p>
-
-      <div class="d-flex justify-content-center mt-4">
-        <div class="step-indicator" :class="{'active': step >= 1}">1. Cliente</div>
-        <div class="step-line" :class="{'active': step >= 2}"></div>
-        <div class="step-indicator" :class="{'active': step >= 2}">2. Propiedad</div>
-        <div class="step-line" :class="{'active': step >= 3}"></div>
-        <div class="step-indicator" :class="{'active': step >= 3}">3. Contrato y Pagos</div>
+    <div class="row mb-4">
+      <div class="col-12 text-center text-lg-start">
+        <h2 class="fw-bold mb-1" style="color: var(--text-main);">Registro de Nueva Venta</h2>
+        <p class="text-muted">Asistente paso a paso para generación de contratos</p>
       </div>
     </div>
 
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="card-body p-0">
-
-        <!-- PASO 1: CLIENTE -->
-        <div v-show="step === 1" class="p-5 animate-fade">
-          <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-person-check me-2"></i>Selección del Comprador</h5>
-
-          <div class="d-flex gap-3 mb-4">
-            <div class="flex-grow-1">
-              <label class="form-label small fw-bold text-muted">Buscar Cliente Registrado</label>
-              <LiveSearchSelect
-                v-model="clienteSeleccionadoId"
-                :options="clientes" displayKey="nombre_completo" subKey="ci" valueKey="id"
-                placeholder="Busca por Nombre o CI..."
-                @search="buscarClientesRemoto"
-              />
-            </div>
-            <div class="pt-4 mt-1">
-              <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
-                <i class="bi bi-plus-lg"></i> Nuevo
-              </button>
-            </div>
-          </div>
-
-          <div v-if="clienteObj" class="alert bg-light border p-4 rounded-3 d-flex align-items-center">
-            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-4" style="width: 60px; height: 60px;">
-              <i class="bi bi-person-fill fs-3"></i>
-            </div>
-            <div>
-              <h5 class="fw-bold mb-1">{{ clienteObj.nombre_completo }}</h5>
-              <div class="text-muted small">
-                <i class="bi bi-card-text me-1"></i> CI: {{ clienteObj.ci }} {{ clienteObj.lugar_expedicion }} |
-                <i class="bi bi-telephone me-1 ms-2"></i> {{ clienteObj.telefono || 'Sin Teléfono' }}
+    <div class="row g-4">
+      <!-- COLUMNA IZQUIERDA: ASISTENTE -->
+      <div class="col-lg-8">
+        
+        <!-- INDICADOR DE PASOS RE-DISEÑADO -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body py-3">
+            <div class="d-flex justify-content-around align-items-center">
+              <div class="step-item" :class="{'active': step >= 1}">
+                <div class="step-number">1</div>
+                <div class="step-label d-none d-md-block">Cliente</div>
+              </div>
+              <div class="step-connector" :class="{'active': step >= 2}"></div>
+              <div class="step-item" :class="{'active': step >= 2}">
+                <div class="step-number">2</div>
+                <div class="step-label d-none d-md-block">Propiedad</div>
+              </div>
+              <div class="step-connector" :class="{'active': step >= 3}"></div>
+              <div class="step-item" :class="{'active': step >= 3}">
+                <div class="step-number">3</div>
+                <div class="step-label d-none d-md-block">Contrato y Pagos</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- PASO 2: PROPIEDAD -->
-        <div v-show="step === 2" class="p-5 animate-fade">
-          <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-house-door me-2"></i>Propiedad a Vender</h5>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="card-body p-0">
 
-          <div class="mb-4">
-            <label class="form-label small fw-bold text-muted">Seleccionar Propiedad Disponible</label>
-            <LiveSearchSelect
-              v-model="propiedadSeleccionadaId"
-              :options="propiedades" displayKey="codigo" subKey="tipo" valueKey="id"
-              placeholder="Busca por Código de Propiedad..."
-              @search="buscarPropiedadesRemoto"
-            />
-          </div>
-
-          <div v-if="propiedadObj" class="alert bg-light border p-4 rounded-3">
-            <div class="row">
-              <div class="col-md-6 border-end">
-                <h3 class="fw-bold text-success mb-0">{{ propiedadObj.moneda }} {{ propiedadObj.precio_venta }}</h3>
-                <div class="text-muted small mb-3">Valor Oficial de Venta</div>
-                <div class="fw-bold">{{ propiedadObj.tipo }} - {{ propiedadObj.codigo }}</div>
-                <div class="small text-muted">Superficie: {{ propiedadObj.superficie_m2 }} m²</div>
+            <!-- PASO 1: CLIENTE -->
+            <div v-show="step === 1" class="p-4 animate-fade">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0 text-primary"><i class="bi bi-person-check me-2"></i>Selección del Comprador</h5>
               </div>
-              <div class="col-md-6 ps-4">
-                <div class="small fw-bold text-muted mb-1">Ubicación</div>
-                <!-- Punto 3: mostrar sector urbano y ciudad -->
-                <div v-if="propiedadObj.sector_urbano?.nombre" class="fw-medium">
-                  <i class="bi bi-geo-alt-fill text-danger me-1"></i>
-                  {{ propiedadObj.sector_urbano.nombre }}{{ propiedadObj.sector_urbano?.distrito?.ciudad?.nombre ? ', ' + propiedadObj.sector_urbano.distrito.ciudad.nombre : '' }}
+
+              <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-9">
+                  <label class="form-label small fw-bold text-muted">Buscar Cliente Registrado</label>
+                  <LiveSearchSelect
+                    v-model="clienteSeleccionadoId"
+                    :options="clientes" displayKey="nombre_completo" subKey="ci" valueKey="id"
+                    placeholder="Busca por Nombre o CI..."
+                    @search="buscarClientesRemoto"
+                  />
                 </div>
-                <div class="small mt-2 text-muted">Lote: {{ propiedadObj.nro_lote || '-' }}</div>
-                <div class="small mt-1 text-muted" v-if="propiedadObj.direccion">
-                  <i class="bi bi-signpost me-1"></i> {{ propiedadObj.direccion }}
+                <div class="col-md-3">
+                  <button class="btn btn-outline-primary w-100 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCrearCliente">
+                    <i class="bi bi-plus-lg"></i> Nuevo
+                  </button>
+                </div>
+              </div>
+
+              <div class="alert bg-primary bg-opacity-10 border-0 p-3 rounded-3" v-if="!clienteSeleccionadoId">
+                <i class="bi bi-info-circle-fill me-2"></i> Busque y seleccione un cliente para continuar.
+              </div>
+              <div v-else class="alert bg-success bg-opacity-10 border-0 p-3 rounded-3 d-flex align-items-center animate-fade">
+                <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+                <div>
+                  <div class="fw-bold text-success">Cliente Seleccionado</div>
+                  <div class="small text-muted">{{ clienteObj?.nombre_completo }}</div>
                 </div>
               </div>
             </div>
+
+            <!-- PASO 2: PROPIEDAD -->
+            <div v-show="step === 2" class="p-4 animate-fade">
+              <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-house-door me-2"></i>Propiedad a Vender</h5>
+
+              <div class="mb-4">
+                <label class="form-label small fw-bold text-muted">Seleccionar Propiedad Disponible</label>
+                <LiveSearchSelect
+                  v-model="propiedadSeleccionadaId"
+                  :options="propiedades" displayKey="codigo" subKey="tipo" valueKey="id"
+                  placeholder="Busca por Código de Propiedad..."
+                  @search="buscarPropiedadesRemoto"
+                />
+              </div>
+
+              <div class="alert bg-primary bg-opacity-10 border-0 p-3 rounded-3" v-if="!propiedadSeleccionadaId">
+                <i class="bi bi-info-circle-fill me-2"></i> Seleccione una propiedad de la lista para ver sus detalles.
+              </div>
+              <div v-else class="alert bg-success bg-opacity-10 border-0 p-3 rounded-3 d-flex align-items-center animate-fade">
+                <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+                <div>
+                  <div class="fw-bold text-success">Propiedad Seleccionada</div>
+                  <div class="small text-muted">{{ propiedadObj?.codigo }} - {{ propiedadObj?.tipo }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PASO 3: CONTRATO Y PAGOS -->
+            <div v-show="step === 3" class="p-4 animate-fade">
+              <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-text me-2"></i>Términos Comerciales</h5>
+
+              <div class="row g-3 mb-4">
+                <div :class="isAsesor ? 'col-md-12' : 'col-md-6'">
+                  <label class="small fw-bold text-muted mb-1">Fecha del Contrato</label>
+                  <input type="date" class="form-control" v-model="formVenta.fecha">
+                </div>
+                <div v-if="!isAsesor" class="col-md-6">
+                  <label class="small fw-bold text-muted mb-1">Asesor Responsable</label>
+                  <LiveSearchSelect
+                    v-model="formVenta.asesor_id"
+                    :options="asesores" displayKey="nombre_completo" subKey="correo" valueKey="id"
+                    placeholder="Busca por nombre o correo..."
+                    @search="buscarAsesoresRemoto"
+                  />
+                </div>
+              </div>
+
+              <div class="bg-light p-3 rounded-3 mb-4">
+                <h6 class="fw-bold mb-3 small text-uppercase text-muted">Modalidad de Pago</h6>
+                <div class="d-flex gap-4">
+                  <div class="form-check custom-radio">
+                    <input class="form-check-input" type="radio" v-model="formVenta.tipo_venta" value="CONTADO" id="pagoContado">
+                    <label class="form-check-label fw-bold" for="pagoContado">Al Contado</label>
+                  </div>
+                  <div class="form-check custom-radio">
+                    <input class="form-check-input" type="radio" v-model="formVenta.tipo_venta" value="CREDITO" id="pagoCredito">
+                    <label class="form-check-label fw-bold" for="pagoCredito">Crédito Directo</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CONTADO -->
+              <div v-if="formVenta.tipo_venta === 'CONTADO'" class="row g-3 animate-fade">
+                <div class="col-md-6">
+                  <label class="small fw-bold text-muted">Descuento Especial ({{ monedaPropiedad }})</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-tag"></i></span>
+                    <input type="number" step="0.01" class="form-control border-start-0" v-model="formVenta.descuento" min="0" :max="montoTotal">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="small fw-bold" :class="montoLiquido < 0 ? 'text-danger' : 'text-success'">Monto Final a Pagar</label>
+                  <input type="text" class="form-control fw-bold"
+                    :class="montoLiquido < 0 ? 'bg-danger bg-opacity-10 text-danger border-danger' : 'bg-success bg-opacity-10 text-success border-success'"
+                    :value="monedaPropiedad + ' ' + montoLiquido.toLocaleString('en-US', {minimumFractionDigits: 2})" disabled>
+                  <div v-if="montoLiquido < 0" class="text-danger extra-small mt-1">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>El descuento supera el monto total.
+                  </div>
+                </div>
+              </div>
+
+              <!-- CRÉDITO -->
+              <div v-if="formVenta.tipo_venta === 'CREDITO'" class="animate-fade">
+                <div class="row g-3 mb-3">
+                  <div class="col-md-4">
+                    <label class="small fw-bold text-primary">Cuota Inicial ({{ monedaPropiedad }})</label>
+                    <input type="number" step="0.01" class="form-control border-primary" v-model="formVenta.cuota_inicial" min="0" :max="montoTotal">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold text-muted">Inicio de Pagos</label>
+                    <input type="date" class="form-control" v-model="formVenta.fecha_inicio_pago">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="small fw-bold text-danger">Saldo a Financiar</label>
+                    <input type="text" class="form-control bg-danger bg-opacity-10 text-danger fw-bold border-danger" 
+                      :value="monedaPropiedad + ' ' + saldoCredito.toLocaleString('en-US', {minimumFractionDigits: 2})" disabled>
+                  </div>
+                </div>
+                <div class="row g-3 mb-4">
+                  <div class="col-md-6">
+                    <label class="small fw-bold text-muted">Plazo (Meses)</label>
+                    <input type="number" class="form-control" v-model="formVenta.numero_cuotas" min="1">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="small fw-bold text-muted">Tasa de Interés Anual (%)</label>
+                    <input type="number" step="0.01" class="form-control" v-model="formVenta.tasa_interes" min="0">
+                  </div>
+                </div>
+
+                <div v-if="planPagosPreview.length > 0" class="mt-4 border rounded-4 overflow-hidden shadow-sm">
+                  <div class="bg-dark text-white p-2 text-center fw-bold small">PREVISUALIZACIÓN PLAN DE PAGOS (Sistema Francés)</div>
+                  <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-hover mb-0 text-center" style="font-size: 0.8rem;">
+                      <thead class="sticky-top bg-white">
+                        <tr><th>Nro</th><th>Cuota</th><th>Capital</th><th>Interés</th><th>Saldo</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="c in planPagosPreview" :key="c.nro">
+                          <td>{{ c.nro }}</td>
+                          <td class="fw-bold text-primary">{{ monedaPropiedad }} {{ c.cuota }}</td>
+                          <td>{{ monedaPropiedad }} {{ c.capital }}</td>
+                          <td class="text-danger">{{ monedaPropiedad }} {{ c.interes }}</td>
+                          <td>{{ monedaPropiedad }} {{ c.saldo }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Info de comisión -->
+              <div v-if="asesorObj && montoTotal > 0" class="alert alert-info d-flex align-items-center gap-2 py-2 mt-4 mb-0 border-0">
+                <i class="bi bi-percent fs-5"></i>
+                <small>
+                  Comisión del asesor <strong>{{ asesorObj.nombre_completo }}</strong>
+                  ({{ asesorObj.porcentaje_comision }}%):
+                  <strong>{{ monedaPropiedad }} {{ montoComisionPreview }}</strong>
+                </small>
+              </div>
+
+            </div>
+
+          </div>
+          <div class="card-footer bg-white p-4 border-top d-flex justify-content-between">
+            <button v-if="step > 1" class="btn btn-outline-secondary px-4 rounded-3" @click="step--">
+              <i class="bi bi-chevron-left me-2"></i> Atrás
+            </button>
+            <div v-else></div>
+            
+            <button v-if="step < 3" class="btn btn-primary px-5 rounded-3 shadow" @click="siguientePaso">
+              Siguiente <i class="bi bi-chevron-right ms-2"></i>
+            </button>
+            
+            <button v-if="step === 3" class="btn btn-success px-5 rounded-3 shadow-lg fw-bold" @click="registrarVenta"
+              :disabled="guardando
+                || (formVenta.tipo_venta === 'CREDITO' && saldoCredito <= 0)
+                || (formVenta.tipo_venta === 'CONTADO' && montoLiquido < 0)">
+              <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
+              {{ guardando ? 'Procesando...' : 'Confirmar Venta' }} <i class="bi bi-check-circle ms-2"></i>
+            </button>
           </div>
         </div>
+      </div>
 
-        <!-- PASO 3: CONTRATO Y PAGOS -->
-        <div v-show="step === 3" class="p-5 animate-fade">
-          <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-file-earmark-text me-2"></i>Términos Comerciales</h5>
-
-          <div class="row bg-light border rounded p-3 mb-4 g-3">
-            <div :class="isAsesor ? 'col-md-12' : 'col-md-6'">
-              <label class="small fw-bold text-muted">Fecha del Contrato</label>
-              <input type="date" class="form-control border-0" v-model="formVenta.fecha">
+      <!-- COLUMNA DERECHA: RESUMEN (SIDEBAR) -->
+      <div class="col-lg-4">
+        <div class="sticky-top" style="top: 20px; z-index: 10;">
+          <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-dark text-white py-3">
+              <h6 class="mb-0 fw-bold"><i class="bi bi-journal-text me-2"></i>Resumen de la Venta</h6>
             </div>
-            <div v-if="!isAsesor" class="col-md-6">
-              <label class="small fw-bold text-muted">Asesor Responsable</label>
-              <LiveSearchSelect
-                v-model="formVenta.asesor_id"
-                :options="asesores" displayKey="nombre_completo" subKey="correo" valueKey="id"
-                placeholder="Busca por nombre o correo..."
-                @search="buscarAsesoresRemoto"
-              />
+            <div class="card-body p-0">
+              
+              <!-- CLIENTE EN RESUMEN -->
+              <div class="p-3 border-bottom">
+                <div class="small text-muted fw-bold text-uppercase mb-2">Comprador</div>
+                <div v-if="clienteObj" class="d-flex align-items-center">
+                  <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 me-3">
+                    <i class="bi bi-person-fill fs-5"></i>
+                  </div>
+                  <div>
+                    <div class="fw-bold lh-1 mb-1">{{ clienteObj.nombre_completo }}</div>
+                    <div class="extra-small text-muted">CI: {{ clienteObj.ci }} | Telf: {{ clienteObj.telefono || '-' }}</div>
+                  </div>
+                </div>
+                <div v-else class="text-muted small italic">Ningún cliente seleccionado</div>
+              </div>
+
+              <!-- PROPIEDAD EN RESUMEN -->
+              <div class="p-3 border-bottom bg-light bg-opacity-50">
+                <div class="small text-muted fw-bold text-uppercase mb-2">Inmueble</div>
+                <div v-if="propiedadObj">
+                  <div class="fw-bold text-primary mb-1">{{ propiedadObj.codigo }} - {{ propiedadObj.tipo }}</div>
+                  <div class="extra-small text-muted mb-2">
+                    <i class="bi bi-geo-alt-fill text-danger"></i> 
+                    {{ propiedadObj.sector_urbano?.nombre }}{{ propiedadObj.sector_urbano?.distrito?.ciudad?.nombre ? ', ' + propiedadObj.sector_urbano.distrito.ciudad.nombre : '' }}
+                  </div>
+                  <div class="row g-0 extra-small">
+                    <div class="col-6"><strong>Superficie:</strong> {{ propiedadObj.superficie_m2 }} m²</div>
+                    <div class="col-6"><strong>Lote:</strong> {{ propiedadObj.nro_lote || '-' }}</div>
+                  </div>
+                </div>
+                <div v-else class="text-muted small italic">Ninguna propiedad seleccionada</div>
+              </div>
+
+              <!-- TOTALES EN RESUMEN -->
+              <div class="p-3 bg-white">
+                <div class="small text-muted fw-bold text-uppercase mb-3">Detalles Financieros</div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="small">Precio de Lista:</span>
+                  <span class="fw-bold">{{ monedaPropiedad }} {{ montoTotal.toLocaleString('en-US', {minimumFractionDigits: 2}) }}</span>
+                </div>
+
+                <div v-if="formVenta.tipo_venta === 'CONTADO' && formVenta.descuento > 0" class="d-flex justify-content-between mb-2 text-danger">
+                  <span class="small">Descuento:</span>
+                  <span class="fw-bold">- {{ monedaPropiedad }} {{ parseFloat(formVenta.descuento).toLocaleString('en-US', {minimumFractionDigits: 2}) }}</span>
+                </div>
+
+                <div v-if="formVenta.tipo_venta === 'CREDITO' && formVenta.cuota_inicial > 0" class="d-flex justify-content-between mb-2 text-success">
+                  <span class="small">Cuota Inicial:</span>
+                  <span class="fw-bold">- {{ monedaPropiedad }} {{ parseFloat(formVenta.cuota_inicial).toLocaleString('en-US', {minimumFractionDigits: 2}) }}</span>
+                </div>
+
+                <hr class="my-2">
+
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="fw-bold" v-if="formVenta.tipo_venta === 'CONTADO'">Monto Final:</span>
+                  <span class="fw-bold" v-else>Saldo a Financiar:</span>
+                  <h4 class="fw-bold mb-0" :class="formVenta.tipo_venta === 'CONTADO' ? 'text-success' : 'text-danger'">
+                    {{ monedaPropiedad }} {{ (formVenta.tipo_venta === 'CONTADO' ? montoLiquido : saldoCredito).toLocaleString('en-US', {minimumFractionDigits: 2}) }}
+                  </h4>
+                </div>
+
+                <div v-if="formVenta.tipo_venta === 'CREDITO'" class="mt-3 p-2 bg-light rounded text-center">
+                  <div class="extra-small text-muted text-uppercase">Plazo Estimado</div>
+                  <div class="fw-bold">{{ formVenta.numero_cuotas }} meses a {{ formVenta.tasa_interes }}% int.</div>
+                </div>
+              </div>
+
             </div>
           </div>
-
-          <!-- Info de comisión calculada (solo lectura) -->
-          <div v-if="asesorObj && montoTotal > 0" class="alert alert-info d-flex align-items-center gap-2 py-2 mb-4">
-            <i class="bi bi-percent"></i>
-            <small>
-              Comisión del asesor <strong>{{ asesorObj.nombre_completo }}</strong>
-              ({{ asesorObj.porcentaje_comision }}%):
-              <strong>{{ monedaPropiedad }} {{ montoComisionPreview }}</strong>
-              — se registrará automáticamente.
-            </small>
+          
+          <div class="alert alert-warning border-0 shadow-sm rounded-4 small py-3" v-if="step < 3">
+            <i class="bi bi-lightbulb-fill me-2"></i> Complete la selección de cliente y propiedad para configurar los términos de pago.
           </div>
-
-          <h6 class="fw-bold border-bottom pb-2">Modalidad de Pago</h6>
-          <div class="d-flex gap-4 mb-4">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" v-model="formVenta.tipo_venta" value="CONTADO" id="pagoContado">
-              <label class="form-check-label fw-bold" for="pagoContado">Al Contado</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" v-model="formVenta.tipo_venta" value="CREDITO" id="pagoCredito">
-              <label class="form-check-label fw-bold" for="pagoCredito">Crédito Directo</label>
-            </div>
-          </div>
-
-          <div v-if="formVenta.tipo_venta === 'CONTADO'" class="row g-3 animate-fade">
-            <div class="col-md-4">
-              <label class="small fw-bold text-muted">Monto Total</label>
-              <input type="text" class="form-control bg-light" :value="monedaPropiedad + ' ' + montoTotal" disabled>
-            </div>
-            <div class="col-md-4">
-              <label class="small fw-bold text-muted">Descuento Especial ({{ monedaPropiedad }})</label>
-              <input type="number" step="0.01" class="form-control" v-model="formVenta.descuento" min="0" :max="montoTotal">
-            </div>
-            <div class="col-md-4">
-              <label class="small fw-bold" :class="montoLiquido < 0 ? 'text-danger' : 'text-success'">Monto Final a Pagar</label>
-              <!-- Punto 2: color rojo si el descuento genera valor negativo -->
-              <input type="text" class="form-control fw-bold"
-                :class="montoLiquido < 0 ? 'bg-danger bg-opacity-10 text-danger' : 'bg-success bg-opacity-10 text-success'"
-                :value="monedaPropiedad + ' ' + montoLiquido" disabled>
-              <div v-if="montoLiquido < 0" class="text-danger small mt-1">
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>El descuento supera el monto total.
-              </div>
-            </div>
-          </div>
-
-          <div v-if="formVenta.tipo_venta === 'CREDITO'" class="animate-fade">
-            <div class="row g-3 mb-4">
-              <div class="col-md-3">
-                <label class="small fw-bold text-muted">Valor Total ({{ monedaPropiedad }})</label>
-                <input type="text" class="form-control bg-light" :value="monedaPropiedad + ' ' + montoTotal" disabled>
-              </div>
-              <div class="col-md-3">
-                <label class="small fw-bold text-primary">Cuota Inicial ({{ monedaPropiedad }})</label>
-                <input type="number" step="0.01" class="form-control border-primary" v-model="formVenta.cuota_inicial" min="0" :max="montoTotal">
-              </div>
-              <div class="col-md-3">
-                <label class="small fw-bold text-danger">Saldo a Financiar</label>
-                <input type="text" class="form-control bg-danger bg-opacity-10 text-danger fw-bold" :value="monedaPropiedad + ' ' + saldoCredito" disabled>
-              </div>
-              <div class="col-md-3">
-                <label class="small fw-bold text-muted">Inicio de Pagos</label>
-                <input type="date" class="form-control" v-model="formVenta.fecha_inicio_pago">
-              </div>
-            </div>
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="small fw-bold text-muted">Plazo (Meses)</label>
-                <input type="number" class="form-control" v-model="formVenta.numero_cuotas" min="1">
-              </div>
-              <div class="col-md-6">
-                <label class="small fw-bold text-muted">Tasa de Interés Anual (%)</label>
-                <input type="number" step="0.01" class="form-control" v-model="formVenta.tasa_interes" min="0">
-              </div>
-            </div>
-
-            <div v-if="planPagosPreview.length > 0" class="mt-4 border rounded overflow-hidden">
-              <div class="bg-dark text-white p-2 text-center fw-bold small">PREVISUALIZACIÓN PLAN DE PAGOS (Ref. Sistema Francés)</div>
-              <div style="max-height: 200px; overflow-y: auto;">
-                <table class="table table-hover mb-0 text-center" style="font-size: 0.8rem;">
-                  <thead>
-                    <tr><th>Nro</th><th>Cuota Mensual</th><th>Capital</th><th>Interés</th><th>Saldo Restante</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="c in planPagosPreview" :key="c.nro">
-                      <td>{{ c.nro }}</td>
-                      <td class="fw-bold text-primary">{{ monedaPropiedad }} {{ c.cuota }}</td>
-                      <td>{{ monedaPropiedad }} {{ c.capital }}</td>
-                      <td class="text-danger">{{ monedaPropiedad }} {{ c.interes }}</td>
-                      <td>{{ monedaPropiedad }} {{ c.saldo }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="card-footer bg-white p-4 border-top d-flex justify-content-between">
-          <button v-if="step > 1" class="btn btn-light px-4 shadow-sm" @click="step--">Atrás</button>
-          <div v-else></div>
-          <button v-if="step < 3" class="btn btn-primary px-5 shadow" style="background-color: var(--primary-color); border:none;" @click="siguientePaso">
-            Siguiente <i class="bi bi-arrow-right ms-2"></i>
-          </button>
-          <!-- Punto 2: deshabilitar también si descuento supera monto en CONTADO -->
-          <button v-if="step === 3" class="btn btn-success px-5 shadow-lg fw-bold" @click="registrarVenta"
-            :disabled="guardando
-              || (formVenta.tipo_venta === 'CREDITO' && saldoCredito <= 0)
-              || (formVenta.tipo_venta === 'CONTADO' && montoLiquido < 0)">
-            <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
-            {{ guardando ? 'Procesando...' : 'Confirmar Venta' }} <i class="bi bi-check-circle ms-2"></i>
-          </button>
         </div>
       </div>
     </div>
@@ -480,18 +576,43 @@ const resetAsistente = () => {
 .animate-fade { animation: fadeIn 0.4s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.step-indicator {
-  width: 120px; text-align: center; font-size: 0.85rem; font-weight: bold; color: #adb5bd;
-  transition: color 0.3s;
-}
-.step-indicator.active { color: var(--primary-color); }
+.extra-small { font-size: 0.75rem; }
 
-.step-line {
-  height: 4px; width: 60px; background-color: #e9ecef; margin: 8px 10px 0; border-radius: 2px;
-  transition: background-color 0.3s;
+/* Indicador de pasos moderno */
+.step-item {
+  display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2;
+  color: #adb5bd; transition: all 0.3s ease;
 }
-.step-line.active { background-color: var(--primary-color); }
+.step-item.active { color: var(--primary-color); }
+.step-item.active .step-number { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
 
+.step-number {
+  width: 35px; height: 35px; border-radius: 50%; border: 2px solid #e9ecef;
+  display: flex; align-items: center; justify-content: center; font-weight: bold;
+  background-color: white; margin-bottom: 5px; transition: all 0.3s ease;
+}
+
+.step-label { font-size: 0.75rem; font-weight: 700; text-uppercase: uppercase; }
+
+.step-connector {
+  flex-grow: 1; height: 3px; background-color: #e9ecef; margin: 0 10px; margin-bottom: 20px;
+  border-radius: 2px; transition: all 0.3s ease;
+}
+.step-connector.active { background-color: var(--primary-color); opacity: 0.5; }
+
+/* Custom Radio */
+.custom-radio .form-check-input:checked {
+  background-color: var(--primary-color); border-color: var(--primary-color);
+}
+.custom-radio .form-check-label { cursor: pointer; }
+
+/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 10px; }
+
+.sticky-top { transition: all 0.3s ease; }
+
+@media (max-width: 991.98px) {
+  .sticky-top { position: relative !important; top: 0 !important; }
+}
 </style>
