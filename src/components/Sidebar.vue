@@ -262,6 +262,14 @@ const toggleSubmenu = (menuName) => {
         </ul>
       </li>
 
+      <!-- Correo Masivo -->
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_correo_masivo')">
+        <RouterLink to="/correo-masivo" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Correo Masivo' : ''">
+          <i class="bi bi-envelope-paper fs-5"></i>
+          <span v-if="!isCompact" class="ms-3 fw-medium">Correo Masivo</span>
+        </RouterLink>
+      </li>
+
       <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_empresa')">
         <RouterLink to="/empresa" class="nav-link custom-link d-flex align-items-center" active-class="active" :title="isCompact ? 'Configuración' : ''">
           <i class="bi bi-gear fs-5"></i>

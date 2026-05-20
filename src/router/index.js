@@ -179,6 +179,12 @@ const router = createRouter({
       component: () => import('../views/PerfilView.vue'),
       meta: { requiresAuth: true, layout: 'admin' }
     },
+    {
+      path: '/correo-masivo',
+      name: 'CorreoMasivo',
+      component: () => import('../views/CorreoMasivoView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_correo_masivo', layout: 'admin' }
+    },
   ]
 })
 
