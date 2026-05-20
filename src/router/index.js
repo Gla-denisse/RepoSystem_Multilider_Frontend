@@ -168,6 +168,12 @@ const router = createRouter({
       meta: { requiresAuth: true, permission: 'acceso_egresos', layout: 'admin' }
     },
     {
+      path: '/reportes',
+      name: 'Reportes',
+      component: () => import('../views/ReportesView.vue'),
+      meta: { requiresAuth: true, layout: 'admin' }
+    },
+    {
       path: '/perfil',
       name: 'Perfil',
       component: () => import('../views/PerfilView.vue'),

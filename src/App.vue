@@ -67,6 +67,45 @@ onMounted(() => {
         </div>
 
         <div class="d-flex align-items-center gap-3">
+          <!-- Reportes Dropdown -->
+          <div class="dropdown me-1">
+            <div class="reports-dropdown-label d-flex align-items-center px-3 py-1 rounded-pill cursor-pointer border" 
+                 data-bs-toggle="dropdown" 
+                 aria-expanded="false">
+              <i class="bi bi-file-earmark-bar-graph me-2"></i>
+              <span class="d-none d-sm-inline fw-medium small">Reportes</span>
+              <i class="bi bi-chevron-down ms-2 small opacity-75"></i>
+            </div>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" style="min-width: 240px;">
+              <li class="dropdown-header text-uppercase fw-bold small opacity-50 px-3 py-2">Generar Reportes</li>
+              <li>
+                <RouterLink class="dropdown-item rounded-2 py-2" :to="{ name: 'Reportes', query: { r: 'ventas-cobros' } }">
+                  <i class="bi bi-graph-up-arrow me-2 text-success"></i> Ventas y Cobros
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item rounded-2 py-2" :to="{ name: 'Reportes', query: { r: 'cartera-mora' } }">
+                  <i class="bi bi-exclamation-triangle me-2 text-danger"></i> Cartera y Mora
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item rounded-2 py-2" :to="{ name: 'Reportes', query: { r: 'comisiones' } }">
+                  <i class="bi bi-cash-coin me-2 text-warning"></i> Comisiones
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item rounded-2 py-2" :to="{ name: 'Reportes', query: { r: 'desempeno-asesores' } }">
+                  <i class="bi bi-person-badge me-2 text-primary"></i> Desempeño Asesores
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink class="dropdown-item rounded-2 py-2" :to="{ name: 'Reportes', query: { r: 'inventario' } }">
+                  <i class="bi bi-houses me-2 text-info"></i> Inventario Propiedades
+                </RouterLink>
+              </li>
+            </ul>
+          </div>
+
           <button @click="toggleTheme" class="btn btn-link p-0 text-decoration-none text-muted">
             <i class="fs-4" :class="isDark ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill'"></i>
           </button>
@@ -134,6 +173,22 @@ onMounted(() => {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.reports-dropdown-label {
+  background-color: var(--bg-body);
+  border-color: var(--border-color) !important;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.reports-dropdown-label:hover {
+  background-color: var(--border-color);
+}
+
+.dropdown-item:hover {
+  background-color: var(--border-color);
+  color: var(--text-main);
 }
 
 @media (max-width: 768px) {
