@@ -15,7 +15,7 @@ const filteredProperties = computed(() => {
 </script>
 
 <template>
-  <section id="catalogo" class="section-padding bg-light-landing">
+  <section id="catalogo" class="section-padding pp-catalog-bg">
     <div class="container">
       <div class="row align-items-end mb-5 g-4">
         <div class="col-lg-7">
@@ -23,7 +23,7 @@ const filteredProperties = computed(() => {
           <p class="text-muted mb-0">Explora nuestras últimas adquisiciones y encuentra la oportunidad perfecta.</p>
         </div>
         <div class="col-lg-5 d-flex justify-content-lg-end">
-          <div class="nav nav-pills bg-white p-1 rounded-3 shadow-sm border">
+          <div class="nav nav-pills pp-tabs p-1 rounded-3 shadow-sm border">
             <button
               v-for="tab in ['Todos', 'Lote', 'Casa']"
               :key="tab"
@@ -39,7 +39,7 @@ const filteredProperties = computed(() => {
       <!-- Skeletons -->
       <div v-if="companyStore.loading" class="row g-4">
         <div v-for="i in 3" :key="i" class="col-md-6 col-lg-4">
-          <div class="bg-white rounded-4 overflow-hidden shadow-sm">
+          <div class="bg-card-theme rounded-4 overflow-hidden shadow-sm border-theme">
             <div class="skeleton-box w-100" style="height:230px"></div>
             <div class="p-4">
               <div class="skeleton-box w-25 mb-2" style="height:12px"></div>
@@ -73,3 +73,19 @@ const filteredProperties = computed(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.pp-catalog-bg {
+  background-color: var(--bg-body);
+}
+.pp-tabs {
+  background-color: var(--bg-card);
+  border-color: var(--border-color) !important;
+}
+.bg-card-theme {
+  background-color: var(--bg-card);
+}
+.border-theme {
+  border: 1px solid var(--border-color);
+}
+</style>

@@ -339,14 +339,14 @@ const resetAsistente = () => {
                 </div>
               </div>
 
-              <div class="alert bg-primary bg-opacity-10 border-0 p-3 rounded-3" v-if="!clienteSeleccionadoId">
+              <div class="alert alert-info p-3 rounded-3" v-if="!clienteSeleccionadoId">
                 <i class="bi bi-info-circle-fill me-2"></i> Busque y seleccione un cliente para continuar.
               </div>
-              <div v-else class="alert bg-success bg-opacity-10 border-0 p-3 rounded-3 d-flex align-items-center animate-fade">
-                <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+              <div v-else class="alert alert-success p-3 rounded-3 d-flex align-items-center animate-fade">
+                <i class="bi bi-check-circle-fill fs-4 me-3"></i>
                 <div>
-                  <div class="fw-bold text-success">Cliente Seleccionado</div>
-                  <div class="small text-muted">{{ clienteObj?.nombre_completo }}</div>
+                  <div class="fw-bold">Cliente Seleccionado</div>
+                  <div class="small opacity-75">{{ clienteObj?.nombre_completo }}</div>
                 </div>
               </div>
             </div>
@@ -365,14 +365,14 @@ const resetAsistente = () => {
                 />
               </div>
 
-              <div class="alert bg-primary bg-opacity-10 border-0 p-3 rounded-3" v-if="!propiedadSeleccionadaId">
+              <div class="alert alert-info p-3 rounded-3" v-if="!propiedadSeleccionadaId">
                 <i class="bi bi-info-circle-fill me-2"></i> Seleccione una propiedad de la lista para ver sus detalles.
               </div>
-              <div v-else class="alert bg-success bg-opacity-10 border-0 p-3 rounded-3 d-flex align-items-center animate-fade">
-                <i class="bi bi-check-circle-fill text-success fs-4 me-3"></i>
+              <div v-else class="alert alert-success p-3 rounded-3 d-flex align-items-center animate-fade">
+                <i class="bi bi-check-circle-fill fs-4 me-3"></i>
                 <div>
-                  <div class="fw-bold text-success">Propiedad Seleccionada</div>
-                  <div class="small text-muted">{{ propiedadObj?.codigo }} - {{ propiedadObj?.tipo }}</div>
+                  <div class="fw-bold">Propiedad Seleccionada</div>
+                  <div class="small opacity-75">{{ propiedadObj?.codigo }} - {{ propiedadObj?.tipo }}</div>
                 </div>
               </div>
             </div>

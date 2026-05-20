@@ -310,6 +310,11 @@ onMounted(() => {
   letter-spacing: 0.5px;
 }
 
+/* Forzar color de etiquetas en modo oscuro para que no se pierdan sobre el card blanco */
+[data-theme="dark"] .search-label {
+  color: #0B2545 !important; /* Navy fijo */
+}
+
 .search-select {
   width: 100%;
   border: none;
@@ -320,6 +325,11 @@ onMounted(() => {
   outline: none;
   cursor: pointer;
   appearance: none;
+}
+
+/* Forzar color de texto del select en modo oscuro para que se vea sobre el fondo blanco del card */
+[data-theme="dark"] .search-select {
+  color: #0f172a !important;
 }
 
 /* Estilo para las opciones del select */

@@ -30,12 +30,12 @@ const features = [
 </script>
 
 <template>
-  <section class="section-padding bg-white">
+  <section class="section-padding pp-features-bg">
     <div class="container text-center">
       <div class="row justify-content-center mb-5">
         <div class="col-lg-8">
-          <h2 class="section-title text-dark">¿Por qué elegirnos?</h2>
-          <p class="section-subtitle text-muted">
+          <h2 class="section-title">¿Por qué elegirnos?</h2>
+          <p class="section-subtitle">
             Nos enfocamos en brindar la mejor experiencia de compra, asegurando que tu patrimonio esté en las mejores manos.
           </p>
         </div>
@@ -47,7 +47,7 @@ const features = [
             <div :class="['d-inline-flex p-3 rounded-4 mb-4 shadow-sm', feature.color]">
               <component :is="feature.icon" :size="32" />
             </div>
-            <h4 class="fw-bold mb-3">{{ feature.title }}</h4>
+            <h4 class="fw-bold mb-3 text-main-theme">{{ feature.title }}</h4>
             <p class="text-muted small mb-0">{{ feature.desc }}</p>
           </div>
         </div>
@@ -57,11 +57,27 @@ const features = [
 </template>
 
 <style scoped>
-.landing-card {
-  border: 1px solid #f1f5f9;
+.pp-features-bg {
+  background-color: var(--bg-body);
 }
+
+.landing-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.text-main-theme {
+  color: var(--text-main);
+}
+
 .landing-card:hover {
-  border-color: var(--landing-primary);
-  background-color: #f8fafc;
+  border-color: var(--primary-color);
+  background-color: var(--bg-body);
+  transform: translateY(-10px);
+}
+
+[data-theme="dark"] .landing-card {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { RouterView, RouterLink, useRoute } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
 import { useAuthStore } from './stores/auth'
@@ -13,27 +13,57 @@ const toggleCompact = () => { isCompact.value = !isCompact.value }
 const toggleMobile = () => { isOpenMobile.value = !isOpenMobile.value }
 const closeMobile = () => { isOpenMobile.value = false }
 
-// Lógica del Tema (Dashboard)
+// Lógica del Tema — automático por horario local (19:00–06:00 = oscuro)
 const isDark = ref(false)
+const isAutoMode = ref(true)
+let themeTimer = null
+
+function isDarkHour() {
+  const h = new Date().getHours()
+  return h >= 19 || h < 6
+}
+
+function applyTheme(dark) {
+  isDark.value = dark
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+}
 
 const toggleTheme = () => {
-  isDark.value = !isDark.value
-  const theme = isDark.value ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-theme', theme)
-  localStorage.setItem('app-theme', theme)
+  if (isAutoMode.value) {
+    isAutoMode.value = false
+    applyTheme(!isDark.value)
+    localStorage.setItem('theme-override', isDark.value ? 'dark' : 'light')
+  } else {
+    isAutoMode.value = true
+    localStorage.removeItem('theme-override')
+    applyTheme(isDarkHour())
+  }
 }
 
 const layout = computed(() => route.meta.layout || 'public')
 
 onMounted(() => {
-  const savedTheme = localStorage.getItem('app-theme') || 'light'
-  isDark.value = savedTheme === 'dark'
-  if (layout.value === 'admin') {
-    document.documentElement.setAttribute('data-theme', savedTheme)
+  const saved = localStorage.getItem('theme-override')
+  if (saved) {
+    isAutoMode.value = false
+    applyTheme(saved === 'dark')
   } else {
-    document.documentElement.removeAttribute('data-theme')
+    applyTheme(isDarkHour())
   }
+
+  // Cada 60 s: si hay override manual lo respeta; si está en auto, ajusta por hora
+  themeTimer = setInterval(() => {
+    const override = localStorage.getItem('theme-override')
+    if (override) {
+      isAutoMode.value = false
+      if (isDark.value !== (override === 'dark')) applyTheme(override === 'dark')
+    } else if (isAutoMode.value) {
+      applyTheme(isDarkHour())
+    }
+  }, 60_000)
 })
+
+onUnmounted(() => clearInterval(themeTimer))
 </script>
 
 <template>
@@ -106,9 +136,12 @@ onMounted(() => {
             </ul>
           </div>
 
-          <button @click="toggleTheme" class="btn btn-link p-0 text-decoration-none text-muted">
-            <i class="fs-4" :class="isDark ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill'"></i>
-          </button>
+          <div class="position-relative theme-toggle-wrap" :title="isAutoMode ? 'Automático por horario (clic para control manual)' : 'Manual (clic para volver a automático)'">
+            <button @click="toggleTheme" class="btn btn-link p-0 text-decoration-none text-muted">
+              <i class="fs-4" :class="isDark ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill'"></i>
+            </button>
+            <span v-if="isAutoMode" class="auto-badge">auto</span>
+          </div>
 
           <div class="dropdown">
             <div class="d-flex align-items-center ms-2 border-start ps-3 cursor-pointer" data-bs-toggle="dropdown" style="border-color: var(--border-color) !important;">
@@ -173,6 +206,27 @@ onMounted(() => {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.theme-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.auto-badge {
+  position: absolute;
+  top: -4px;
+  right: -10px;
+  font-size: 0.45rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: #22c55e;
+  color: #fff;
+  border-radius: 20px;
+  padding: 1px 4px;
+  line-height: 1.4;
+  pointer-events: none;
 }
 
 .reports-dropdown-label {

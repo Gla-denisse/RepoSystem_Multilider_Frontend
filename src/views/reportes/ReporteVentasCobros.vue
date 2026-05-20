@@ -376,8 +376,8 @@ const paginas = computed(() => {
                   <span v-else>-</span>
                 </td>
                 <td>
-                  <span class="badge rounded-pill"
-                    :class="n.tipo_venta === 'Contado' ? 'text-bg-success' : 'text-bg-warning'">
+                  <span class="badge rounded-pill px-2 py-1"
+                    :class="n.tipo_venta === 'Contado' ? 'badge-contado' : 'badge-credito'">
                     {{ n.tipo_venta }}
                   </span>
                 </td>
@@ -385,8 +385,8 @@ const paginas = computed(() => {
                 <td class="text-end text-success text-nowrap">{{ fmt(n.cobrado) }}</td>
                 <td class="text-end text-danger text-nowrap">{{ fmt(n.saldo_credito) }}</td>
                 <td class="text-center">
-                  <span class="badge rounded-pill"
-                    :class="n.estado === 'Anulada' ? 'text-bg-danger' : 'text-bg-success'">
+                  <span class="badge rounded-pill px-2 py-1"
+                    :class="n.estado === 'Anulada' ? 'badge-anulada' : 'badge-activa'">
                     {{ n.estado }}
                   </span>
                 </td>
@@ -493,5 +493,36 @@ const paginas = computed(() => {
 .table td {
   font-size: 0.875rem;
   color: var(--text-main, #374151);
+}
+
+/* Badges con Estilo "Soft" (Mejor contraste y sobriedad) */
+.badge-contado {
+  background-color: rgba(16, 185, 129, 0.12) !important; /* Verde Esmeralda Soft */
+  color: #065f46 !important;
+  font-weight: 700;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  text-transform: uppercase;
+}
+
+.badge-credito {
+  background-color: rgba(11, 37, 69, 0.08) !important; /* Navy Soft */
+  color: #0B2545 !important;
+  font-weight: 700;
+  border: 1px solid rgba(11, 37, 69, 0.25) !important;
+  text-transform: uppercase;
+}
+
+.badge-activa {
+  background-color: rgba(100, 116, 139, 0.1) !important; /* Slate Soft */
+  color: #334155 !important;
+  font-weight: 700;
+  border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+.badge-anulada {
+  background-color: rgba(185, 28, 28, 0.1) !important; /* Rojo Soft */
+  color: #991b1b !important;
+  font-weight: 700;
+  border: 1px solid rgba(185, 28, 28, 0.2) !important;
 }
 </style>

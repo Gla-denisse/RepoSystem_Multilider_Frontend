@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ReporteVentasCobros        from './reportes/ReporteVentasCobros.vue'
 import ReporteCarteraMora          from './reportes/ReporteCarteraMora.vue'
@@ -67,8 +67,8 @@ function seleccionar(key) {
   router.replace({ query: { r: key } })
 }
 
-onMounted(() => {
-  if (route.query.r) reporteActivo.value = route.query.r
+watch(() => route.query.r, (val) => {
+  if (val) reporteActivo.value = val
 })
 </script>
 
@@ -76,7 +76,7 @@ onMounted(() => {
   <div class="reportes-wrapper d-flex gap-0">
 
     <!-- Sidebar de navegación -->
-    <aside class="reportes-sidebar me-4">
+    <aside class="reportes-sidebar me-4" style="display:none;">
       <div class="sidebar-title text-uppercase fw-bold small opacity-50 mb-3 px-2">
         <i class="bi bi-file-earmark-bar-graph me-2"></i> Reportes
       </div>
