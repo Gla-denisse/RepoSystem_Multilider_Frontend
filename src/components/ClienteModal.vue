@@ -46,8 +46,16 @@ const guardar = async () => {
               <div class="col-4">
                 <label class="small fw-bold text-muted">Exp. *</label>
                 <select class="form-select bg-light border-0" v-model="form.lugar_expedicion" :class="{'is-invalid': errores.lugar_expedicion}" required>
-                  <option value="" disabled>...</option>
-                  <option value="SC">SC</option><option value="LP">LP</option><option value="CB">CB</option>
+                  <option value="" disabled>Seleccione...</option>
+                  <option value="SC">Santa Cruz (SC)</option>
+                  <option value="LP">La Paz (LP)</option>
+                  <option value="CB">Cochabamba (CB)</option>
+                  <option value="OR">Oruro (OR)</option>
+                  <option value="PT">Potosí (PT)</option>
+                  <option value="TJ">Tarija (TJ)</option>
+                  <option value="CH">Chuquisaca (CH)</option>
+                  <option value="BE">Beni (BE)</option>
+                  <option value="PD">Pando (PD)</option>
                 </select>
               </div>
               <div class="col-12">

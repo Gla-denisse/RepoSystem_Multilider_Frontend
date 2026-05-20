@@ -37,8 +37,6 @@ const formVenta = ref({
   fecha: new Date().toISOString().slice(0, 10),
   tipo_venta: 'CONTADO',
   metodo_pago_id: '',
-  cuenta_id: '',
-  fecha_pago: new Date().toISOString().slice(0, 10),
 
   // Contado
   descuento: 0,
@@ -71,7 +69,7 @@ onMounted(async () => {
     clientes.value = resCli.data.data.filter(c => c.estado == 1)
     propiedades.value = resProp.data.data.filter(p => p.estado === 'Disponible' && p.activo)
     asesores.value = resAse.data.data
-    metodosPago.value = resMet.data.data ?? resMet.data
+    metodosPago.value = (resMet.data.data ?? resMet.data).filter(m => m.nombre_metodo !== 'Pasarela de Pago')
     cuentasBancarias.value = resCuentas.data.data ?? resCuentas.data
 
     if (isAsesor.value) {
@@ -124,14 +122,6 @@ const buscarAsesoresRemoto = (query) => {
   }, 300)
 }
 
-const onMetodoPagoChange = async () => {
-  formVenta.value.cuenta_id = ''
-  if (!formVenta.value.metodo_pago_id) return
-  try {
-    const res = await api.get(`/mapeo-metodos-cuentas/obtener-cuenta/${formVenta.value.metodo_pago_id}`)
-    formVenta.value.cuenta_id = res.data?.id || ''
-  } catch { /* sin cuenta default configurada */ }
-}
 
 // ==========================================
 // 3. LÓGICA FINANCIERA
@@ -224,10 +214,6 @@ const registrarVenta = async () => {
     metodo_pago_id: formVenta.value.metodo_pago_id || null
   }
 
-  // Datos del pago inicial (aplica a ambos tipos)
-  if (formVenta.value.cuenta_id) payload.cuenta_id = formVenta.value.cuenta_id
-  if (formVenta.value.fecha_pago) payload.fecha_pago = formVenta.value.fecha_pago
-
   if (payload.tipo_venta === 'CONTADO') {
     payload.descuento = formVenta.value.descuento
     payload.monto_liquido = montoLiquido.value
@@ -265,8 +251,6 @@ const resetAsistente = () => {
     fecha: new Date().toISOString().slice(0, 10),
     tipo_venta: 'CONTADO',
     metodo_pago_id: '',
-    cuenta_id: '',
-    fecha_pago: new Date().toISOString().slice(0, 10),
     descuento: 0,
     cuota_inicial: 0,
     numero_cuotas: 12,
@@ -398,24 +382,13 @@ const resetAsistente = () => {
               </div>
 
               <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                  <label class="small fw-bold text-muted mb-1">Fecha de Pago</label>
-                  <input type="date" class="form-control" v-model="formVenta.fecha_pago">
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label class="small fw-bold text-muted mb-1">Método de Pago <span class="text-muted fw-normal">(opcional)</span></label>
-                  <select class="form-select" v-model="formVenta.metodo_pago_id" @change="onMetodoPagoChange">
+                  <select class="form-select" v-model="formVenta.metodo_pago_id">
                     <option value="">— Sin especificar —</option>
                     <option v-for="m in metodosPago" :key="m.id" :value="m.id">{{ m.nombre_metodo }}</option>
                   </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="small fw-bold text-muted mb-1">Cuenta Destino <span class="text-muted fw-normal">(opcional)</span></label>
-                  <select class="form-select" v-model="formVenta.cuenta_id">
-                    <option value="">— Sin especificar —</option>
-                    <option v-for="c in cuentasBancarias" :key="c.id" :value="c.id">{{ c.nombre }}</option>
-                  </select>
-                  <div class="form-text">Con método + cuenta + fecha el pago se confirma al instante.</div>
+                  <div class="form-text"><i class="bi bi-info-circle me-1"></i>El pago quedará pendiente de confirmación.</div>
                 </div>
               </div>
 

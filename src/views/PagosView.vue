@@ -48,7 +48,7 @@ onMounted(async () => {
     api.get('/metodos-pago?per_page=100'),
     api.get('/cuentas-bancarias?per_page=100')
   ])
-  metodosPago.value      = resM.data.data ?? resM.data
+  metodosPago.value      = (resM.data.data ?? resM.data).filter(m => m.nombre_metodo !== 'Pasarela de Pago')
   cuentasBancarias.value = resC.data.data ?? resC.data
   cargarPendientes()
 })

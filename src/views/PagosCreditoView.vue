@@ -60,7 +60,7 @@ const cargarPlanes = async (page = 1) => {
         api.get('/metodos-pago?per_page=100'),
         api.get('/cuentas-bancarias?per_page=100')
       ])
-      metodosPago.value = resMetodos.data.data || resMetodos.data || []
+      metodosPago.value = (resMetodos.data.data || resMetodos.data || []).filter(m => m.nombre_metodo !== 'Pasarela de Pago')
       cuentasBancarias.value = resCuentas.data.data || resCuentas.data || []
     }
 
