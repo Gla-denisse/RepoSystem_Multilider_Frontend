@@ -633,55 +633,57 @@ const formatMonto = (m) => new Intl.NumberFormat('es-BO').format(m)
                   </div>
                 </template>
 
-                <!-- ── Separador + QR (modos 1 y 2) ── -->
-                <div class="d-flex align-items-center gap-3 mx-auto mb-4" style="max-width:400px">
-                  <hr class="flex-grow-1 opacity-25">
-                  <span class="text-muted small">o escanea con tu app bancaria</span>
-                  <hr class="flex-grow-1 opacity-25">
-                </div>
-
-                <div v-if="qrUrl" class="pp-qr-container mx-auto mb-3">
-                  <div class="pp-qr-box shadow-sm">
-                    <img :src="qrUrl" alt="Código QR de pago">
-                    <div class="qr-corner top-left"></div>
-                    <div class="qr-corner top-right"></div>
-                    <div class="qr-corner bottom-left"></div>
-                    <div class="qr-corner bottom-right"></div>
+                <!-- ── Separador + QR (solo modos 1 y 2) ── -->
+                <template v-if="companyStore.libelulaEnabled !== 0">
+                  <div class="d-flex align-items-center gap-3 mx-auto mb-4" style="max-width:400px">
+                    <hr class="flex-grow-1 opacity-25">
+                    <span class="text-muted small">o escanea con tu app bancaria</span>
+                    <hr class="flex-grow-1 opacity-25">
                   </div>
-                </div>
 
-                <p class="text-muted mb-4" style="font-size:.78rem">
-                  <i class="bi bi-info-circle me-1"></i>
-                  Al escanear el QR con tu app bancaria, esta pantalla se actualizará automáticamente cuando el pago sea procesado.
-                </p>
+                  <div v-if="qrUrl" class="pp-qr-container mx-auto mb-3">
+                    <div class="pp-qr-box shadow-sm">
+                      <img :src="qrUrl" alt="Código QR de pago">
+                      <div class="qr-corner top-left"></div>
+                      <div class="qr-corner top-right"></div>
+                      <div class="qr-corner bottom-left"></div>
+                      <div class="qr-corner bottom-right"></div>
+                    </div>
+                  </div>
 
-                <div class="pp-waiting mb-3">
-                  <div class="spinner-border spinner-border-sm text-primary me-2"></div>
-                  <span class="text-muted small">Verificando automáticamente cada 3 segundos…</span>
-                </div>
-
-                <!-- Verificación manual para pagos por QR (app bancaria) -->
-                <div class="pp-verify-box mx-auto mb-4">
-                  <p class="small text-muted mb-2">
-                    <i class="bi bi-phone me-1"></i>
-                    ¿Pagaste con tu app bancaria escaneando el QR?
+                  <p class="text-muted mb-4" style="font-size:.78rem">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Al escanear el QR con tu app bancaria, esta pantalla se actualizará automáticamente cuando el pago sea procesado.
                   </p>
-                  <button
-                    class="btn btn-outline-success fw-semibold px-4"
-                    @click="verificarPago"
-                    :disabled="verificandoPago"
-                  >
-                    <span v-if="verificandoPago" class="spinner-border spinner-border-sm me-2"></span>
-                    <i v-else class="bi bi-patch-check me-2"></i>
-                    {{ verificandoPago ? 'Verificando…' : 'Ya pagué — Verificar ahora' }}
-                  </button>
-                  <div v-if="mensajeVerificacion" class="mt-2">
-                    <span :class="tipoMensaje === 'ok' ? 'text-success' : 'text-danger'" class="small">
-                      <i :class="tipoMensaje === 'ok' ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'" class="me-1"></i>
-                      {{ mensajeVerificacion }}
-                    </span>
+
+                  <div class="pp-waiting mb-3">
+                    <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                    <span class="text-muted small">Verificando automáticamente cada 3 segundos…</span>
                   </div>
-                </div>
+
+                  <!-- Verificación manual para pagos por QR (app bancaria) -->
+                  <div class="pp-verify-box mx-auto mb-4">
+                    <p class="small text-muted mb-2">
+                      <i class="bi bi-phone me-1"></i>
+                      ¿Pagaste con tu app bancaria escaneando el QR?
+                    </p>
+                    <button
+                      class="btn btn-outline-success fw-semibold px-4"
+                      @click="verificarPago"
+                      :disabled="verificandoPago"
+                    >
+                      <span v-if="verificandoPago" class="spinner-border spinner-border-sm me-2"></span>
+                      <i v-else class="bi bi-patch-check me-2"></i>
+                      {{ verificandoPago ? 'Verificando…' : 'Ya pagué — Verificar ahora' }}
+                    </button>
+                    <div v-if="mensajeVerificacion" class="mt-2">
+                      <span :class="tipoMensaje === 'ok' ? 'text-success' : 'text-danger'" class="small">
+                        <i :class="tipoMensaje === 'ok' ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'" class="me-1"></i>
+                        {{ mensajeVerificacion }}
+                      </span>
+                    </div>
+                  </div>
+                </template>
 
                 <button class="btn btn-link text-muted small" @click="nuevoPago">
                   <i class="bi bi-arrow-left me-1"></i>Cancelar y volver al inicio

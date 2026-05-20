@@ -37,7 +37,7 @@ export const useCompanyStore = defineStore('company', {
         const data = response.data
         
         this.company = data.empresa
-        this.libelulaEnabled = data.libelula_enabled ?? true
+        this.libelulaEnabled = data.libelula_enabled ?? 1
         this.featuredProperties = data.propiedades_destacadas
         this.latestProperties = data.ultimas_propiedades
         this.advisors = data.asesores
