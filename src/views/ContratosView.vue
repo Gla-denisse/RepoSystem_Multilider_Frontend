@@ -154,7 +154,7 @@ const anularContrato = async (contrato) => {
 }
 
 // ==========================================
-// DESCARGAR PDF
+// DESCARGAR PDF (documento subido)
 // ==========================================
 const descargarContrato = async (contrato) => {
   if (!contrato.url_doc) {
@@ -176,6 +176,30 @@ const descargarContrato = async (contrato) => {
     Swal.fire('Error', 'No se pudo descargar el documento.', 'error')
   } finally {
     idCargando.value = null
+  }
+}
+
+// ==========================================
+// GENERAR CONTRATO PDF (desde datos del sistema)
+// ==========================================
+const generandoId = ref(null)
+
+const generarContrato = async (contrato) => {
+  generandoId.value = contrato.id
+  try {
+    const res = await api.get(`/contratos/${contrato.id}/generar-pdf`, { responseType: 'blob' })
+    const url  = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href  = url
+    link.setAttribute('download', `${contrato.codigo_contrato}_contrato.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch {
+    Swal.fire('Error', 'No se pudo generar el contrato.', 'error')
+  } finally {
+    generandoId.value = null
   }
 }
 
@@ -308,18 +332,29 @@ const formatFecha = (fecha) => {
                       v-if="c.estado !== 'Anulado'"
                       class="btn btn-sm btn-outline-primary"
                       title="Gestionar contrato"
-                      :disabled="idCargando === c.id"
+                      :disabled="idCargando === c.id || generandoId === c.id"
                       @click="abrirModal(c)"
                     >
                       <i class="bi bi-file-earmark-arrow-up"></i>
                     </button>
 
-                    <!-- Descargar PDF -->
+                    <!-- Generar contrato (desde datos del sistema) -->
+                    <button
+                      class="btn btn-sm btn-outline-info"
+                      title="Generar contrato"
+                      :disabled="idCargando === c.id || generandoId === c.id"
+                      @click="generarContrato(c)"
+                    >
+                      <span v-if="generandoId === c.id" class="spinner-border spinner-border-sm"></span>
+                      <i v-else class="bi bi-file-earmark-text"></i>
+                    </button>
+
+                    <!-- Descargar PDF subido -->
                     <button
                       class="btn btn-sm"
                       :class="c.url_doc ? 'btn-outline-success' : 'btn-outline-secondary'"
                       :title="c.url_doc ? 'Descargar contrato PDF' : 'Sin documento'"
-                      :disabled="idCargando === c.id"
+                      :disabled="idCargando === c.id || generandoId === c.id"
                       @click="descargarContrato(c)"
                     >
                       <span v-if="idCargando === c.id" class="spinner-border spinner-border-sm"></span>
@@ -331,7 +366,7 @@ const formatFecha = (fecha) => {
                       v-if="c.estado !== 'Anulado'"
                       class="btn btn-sm btn-outline-danger"
                       title="Anular contrato"
-                      :disabled="idCargando === c.id"
+                      :disabled="idCargando === c.id || generandoId === c.id"
                       @click="anularContrato(c)"
                     >
                       <i class="bi bi-x-circle"></i>
@@ -382,7 +417,7 @@ const formatFecha = (fecha) => {
           <!-- Header -->
           <div class="modal-header border-bottom-0 pb-0 px-4 pt-4">
             <h5 class="modal-title fw-bold mb-0" style="color: var(--text-main);">
-              <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+              <!-- <i class="bi bi-file-earmark-text me-2 text-primary"></i> -->
               Gestionar Contrato
             </h5>
             <button type="button" class="btn-close shadow-none" @click="cerrarModal"></button>
