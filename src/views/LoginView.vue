@@ -59,7 +59,13 @@ const iniciarSesion = async () => {
     const respuesta = await api.post('/login', formulario.value)
 
     authStore.setAuth(respuesta.data.access_token, respuesta.data.user)
-    router.push('/admin')
+
+    const asignaciones = respuesta.data.user.roles_permisos || respuesta.data.user.rolesPermisos || []
+    const esCliente = asignaciones.some(item => {
+      const rol = item.rol_permiso?.rol || item.rolPermiso?.rol
+      return rol?.nombre === 'Cliente'
+    })
+    router.push(esCliente ? '/mi-cartera' : '/admin')
 
   } catch (error) {
     if (error.response) {

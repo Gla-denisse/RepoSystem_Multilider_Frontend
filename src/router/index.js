@@ -185,6 +185,12 @@ const router = createRouter({
       component: () => import('../views/CorreoMasivoView.vue'),
       meta: { requiresAuth: true, permission: 'acceso_correo_masivo', layout: 'admin' }
     },
+    {
+      path: '/mi-cartera',
+      name: 'MiCartera',
+      component: () => import('../views/ClientePortalView.vue'),
+      meta: { requiresAuth: true, requiresCliente: true, layout: 'cliente' }
+    },
   ]
 })
 
@@ -192,21 +198,32 @@ const router = createRouter({
 router.beforeEach((to) => {
   const authStore = useAuthStore()
   const isAuthenticated = !!authStore.token
+  const esCliente = authStore.isCliente
 
   // 1. Si requiere autenticación y NO está logueado
   if (to.meta.requiresAuth && !isAuthenticated) {
     return { name: 'login' }
-  } 
-  
-  // 2. Si es una ruta para "invitados" (como el login) y YA está logueado
-  if (to.meta.requiresGuest && isAuthenticated) {
-    return { name: 'Dashboard' }
-  } 
+  }
 
-  // 3. SEGURIDAD DE PERMISOS
+  // 2. Si es una ruta para "invitados" (login) y YA está logueado
+  if (to.meta.requiresGuest && isAuthenticated) {
+    return esCliente ? { name: 'MiCartera' } : { name: 'Dashboard' }
+  }
+
+  // 3. Clientes solo pueden ver su portal
+  if (isAuthenticated && esCliente && to.meta.layout === 'admin') {
+    return { name: 'MiCartera' }
+  }
+
+  // 4. No clientes no pueden acceder al portal de cliente
+  if (isAuthenticated && !esCliente && to.meta.requiresCliente) {
+    return { name: 'Dashboard' }
+  }
+
+  // 5. SEGURIDAD DE PERMISOS
   if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
-    alert("Acceso denegado: No tienes los permisos necesarios para ver este módulo.");
-    return { name: 'Dashboard' } 
+    alert("Acceso denegado: No tienes los permisos necesarios para ver este módulo.")
+    return { name: 'Dashboard' }
   }
 
   return true

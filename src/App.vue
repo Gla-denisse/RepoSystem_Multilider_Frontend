@@ -77,6 +77,32 @@ onUnmounted(() => clearInterval(themeTimer))
     <RouterView />
   </div>
 
+  <!-- Layout Cliente (Portal de cartera) -->
+  <div v-else-if="layout === 'cliente'" class="cliente-layout">
+    <header class="cliente-topbar d-flex align-items-center justify-content-between px-4 border-bottom shadow-sm">
+      <div class="d-flex align-items-center gap-3">
+        <i class="bi bi-house-door-fill fs-4" style="color:var(--primary-color)"></i>
+        <span class="fw-bold" style="color:var(--text-main)">Mi Portal</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <img :src="`https://ui-avatars.com/api/?name=${authStore.user?.nombre}&background=0B2545&color=fff`"
+               class="rounded-circle" width="34" height="34">
+          <span class="d-none d-sm-inline small fw-semibold" style="color:var(--text-main)">
+            {{ authStore.user?.nombre }}
+          </span>
+        </div>
+        <button class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                @click="authStore.logout">
+          <i class="bi bi-box-arrow-right me-1"></i>Salir
+        </button>
+      </div>
+    </header>
+    <main class="p-3 p-md-4">
+      <RouterView />
+    </main>
+  </div>
+
   <!-- Layout Admin (Dashboard) -->
   <div v-else class="app-wrapper">
     <Sidebar :isCompact="isCompact" :isOpenMobile="isOpenMobile" @toggle-compact="toggleCompact" @close-mobile="closeMobile" />
@@ -247,5 +273,18 @@ onUnmounted(() => clearInterval(themeTimer))
 
 @media (max-width: 768px) {
   .main-content { margin-left: 0 !important; }
+}
+
+.cliente-layout {
+  min-height: 100vh;
+  background-color: var(--bg-body);
+}
+
+.cliente-topbar {
+  height: var(--topbar-height);
+  background-color: var(--bg-sidebar);
+  position: sticky;
+  top: 0;
+  z-index: 1020;
 }
 </style>

@@ -1,6 +1,6 @@
 // src/stores/auth.js
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '../api/axios'
 import { useRouter } from 'vue-router'
 
@@ -35,6 +35,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const isCliente = computed(() => {
+    const asignaciones = user.value?.roles_permisos || user.value?.rolesPermisos || []
+    return asignaciones.some(item => {
+      const rol = item.rol_permiso?.rol || item.rolPermiso?.rol
+      return rol?.nombre === 'Cliente'
+    })
+  })
+
   const hasPermission = (nombrePermiso) => {
     if (!user.value) return false;
     
@@ -53,5 +61,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('auth_user', JSON.stringify(updatedUser))
   }
 
-  return { token, user, setAuth, logout, hasPermission, updateUser }
+  return { token, user, isCliente, setAuth, logout, hasPermission, updateUser }
 })
