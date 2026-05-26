@@ -145,7 +145,7 @@ onMounted(() => cargarDatosBase())
         <p class="text-muted mb-0 fs-6">Administra los dueños de los lotes y propiedades.</p>
       </div>
       <div class="col-md-7 d-flex justify-content-md-end gap-2">
-        <div class="input-group" style="max-width:380px">
+        <div class="input-group" style="max-width:480px">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none"
                  v-model="searchQuery" @keyup.enter="buscar" placeholder="Buscar CI, Nombre o Empresa...">

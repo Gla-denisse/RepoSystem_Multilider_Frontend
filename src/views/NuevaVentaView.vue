@@ -54,6 +54,26 @@ const clienteObj = computed(() => clientes.value.find(c => c.id === clienteSelec
 const propiedadObj = computed(() => propiedades.value.find(p => p.id === propiedadSeleccionadaId.value))
 const asesorObj = computed(() => asesores.value.find(a => a.id === formVenta.value.asesor_id))
 
+// Mapeado rico para el selector de propiedades
+const propiedadesParaSelector = computed(() =>
+  propiedades.value.map(p => {
+    const formattedPrecio = p.precio_venta 
+      ? Number(p.precio_venta).toLocaleString('en-US', { minimumFractionDigits: 2 }) 
+      : '0.00';
+    
+    const sectorStr = p.sector_urbano?.nombre || 'Sin Sector';
+    const ciudadStr = p.sector_urbano?.distrito?.ciudad?.nombre || '';
+    const ubicacionStr = ciudadStr ? `${sectorStr}, ${ciudadStr}` : sectorStr;
+    const supStr = p.superficie_m2 ? ` · ${p.superficie_m2}m²` : '';
+
+    return {
+      ...p,
+      display_label: `${p.codigo} · ${p.tipo}${supStr}`,
+      display_sub: `Precio: ${p.moneda} ${formattedPrecio} · Ubicación: ${ubicacionStr}`
+    }
+  })
+)
+
 // ==========================================
 // 1. CARGA INICIAL
 // ==========================================
@@ -343,7 +363,7 @@ const resetAsistente = () => {
                 <label class="form-label small fw-bold text-muted">Seleccionar Propiedad Disponible</label>
                 <LiveSearchSelect
                   v-model="propiedadSeleccionadaId"
-                  :options="propiedades" displayKey="codigo" subKey="tipo" valueKey="id"
+                  :options="propiedadesParaSelector" displayKey="display_label" subKey="display_sub" valueKey="id"
                   placeholder="Busca por Código de Propiedad..."
                   @search="buscarPropiedadesRemoto"
                 />

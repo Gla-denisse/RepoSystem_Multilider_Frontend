@@ -152,14 +152,14 @@ onMounted(() => cargarDatosBase())
 <template>
   <div class="clientes-container pb-5">
     
-    <div class="mb-4">
-      <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Directorio de Clientes</h2>
-      <p class="text-muted mb-0 fs-6">Administra a los compradores y su acceso al portal.</p>
-    </div>
-
-    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div class="d-flex flex-grow-1 gap-2 align-items-center">
-        <div class="input-group" style="max-width: 350px;">
+    <!-- Cabecera -->
+    <div class="row align-items-center mb-4">
+      <div class="col-md-5 mb-3 mb-md-0">
+        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Directorio de Clientes</h2>
+        <p class="text-muted mb-0 fs-6">Administra a los compradores y su acceso al portal.</p>
+      </div>
+      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+        <div class="input-group" style="max-width: 480px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
                  v-model="searchQuery" @keyup.enter="buscar" placeholder="Buscar CI, Nombre o Correo...">
@@ -170,13 +170,14 @@ onMounted(() => cargarDatosBase())
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="buscar" type="button">Buscar</button>
         </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm px-3" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="nuevoCliente">
+          <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
+        </button>
       </div>
-      <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm" style="background-color: var(--primary-color);" data-bs-toggle="modal" data-bs-target="#modalCliente" @click="nuevoCliente">
-        <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
-      </button>
     </div>
 
-    <div class="card card-custom border-0 shadow-sm mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+    <!-- Tarjeta de Listado -->
+    <div class="card card-custom border-0 shadow-sm mb-3">
       <div class="card-body p-0">
         <div class="table-responsive">
           <table class="table table-hover mb-0 align-middle table-clientes">

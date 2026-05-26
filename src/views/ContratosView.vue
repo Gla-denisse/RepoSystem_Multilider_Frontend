@@ -189,8 +189,11 @@ const estadoBadge = (estado) => {
 }
 
 const tipoBadge = (tipo) => {
-  if (tipo === 'Crédito') return 'bg-info text-dark'
-  return 'bg-primary'
+  const t = String(tipo).toUpperCase()
+  if (t === 'CREDITO' || t === 'CRÉDITO') {
+    return 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25'
+  }
+  return 'bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25'
 }
 
 const formatFecha = (fecha) => {
@@ -203,64 +206,59 @@ const formatFecha = (fecha) => {
 <template>
   <div class="container-fluid py-4">
 
-    <!-- ENCABEZADO -->
-    <div class="mb-4">
-      <h4 class="fw-bold mb-0">Contratos</h4>
-      <small class="text-muted">Gestiona los contratos generados por cada venta</small>
+    <!-- Cabecera -->
+    <div class="row align-items-center mb-4">
+      <div class="col-md-5 mb-3 mb-md-0">
+        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Contratos</h2>
+        <p class="text-muted small mb-0">Gestiona los contratos generados por cada venta</p>
+      </div>
     </div>
 
     <!-- FILTROS -->
-    <div class="table-controls mb-0">
+    <div class="table-controls mb-4">
       <div class="row g-3 align-items-end">
+        <div class="col-lg-4 col-md-6">
+          <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar3 me-1"></i>Rango de Fechas</label>
+          <div class="input-group input-group-sm">
+            <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_inicio">
+            <span class="input-group-text bg-white text-muted border-start-0 border-end-0">a</span>
+            <input type="date" class="form-control bg-white shadow-none" v-model="filtros.fecha_fin">
+          </div>
+        </div>
 
-        <div class="col-md-3">
-          <label class="form-label fw-semibold small">Buscar</label>
+        <div class="col-lg-4 col-md-6">
+          <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-search me-1"></i>Buscar</label>
           <input
             v-model="filtros.buscar"
             type="text"
-            class="form-control form-control-sm"
+            class="form-control form-control-sm bg-white shadow-none"
             placeholder="Código o nombre de cliente..."
             @keyup.enter="buscar"
           />
         </div>
 
-        <div class="col-md-2">
-          <label class="form-label fw-semibold small">Estado</label>
-          <select v-model="filtros.estado" class="form-select form-select-sm">
-            <option value="TODOS">Todos</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Firmado">Firmado</option>
-            <option value="Anulado">Anulado</option>
-          </select>
+        <div class="col-lg-4 col-md-12 d-flex gap-2">
+          <div class="flex-grow-1">
+            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-info-circle me-1"></i>Estado</label>
+            <select v-model="filtros.estado" class="form-select form-select-sm bg-white shadow-none">
+              <option value="TODOS">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Firmado">Firmado</option>
+              <option value="Anulado">Anulado</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label small fw-bold text-muted mb-1" style="color: transparent; user-select: none;">&nbsp;</label>
+            <button class="btn justify-content-start px-3 d-flex align-items-center btn-sm btn-primary" @click="buscar">
+              <i class="bi bi-arrow-clockwise me-1"></i> Filtrar
+            </button>
+          </div>
         </div>
-
-        <div class="col-md-2">
-          <label class="form-label fw-semibold small">Fecha Desde</label>
-          <input v-model="filtros.fecha_inicio" type="date" class="form-control form-control-sm" />
-        </div>
-
-        <div class="col-md-2">
-          <label class="form-label fw-semibold small">Fecha Hasta</label>
-          <input v-model="filtros.fecha_fin" type="date" class="form-control form-control-sm" />
-        </div>
-
-        <div class="col-md-3 d-flex gap-2">
-          <button class="btn btn-primary btn-sm flex-fill" @click="buscar">
-            <i class="bi bi-search me-1"></i> Buscar
-          </button>
-          <button
-            class="btn btn-outline-secondary btn-sm"
-            @click="filtros = { buscar: '', estado: 'TODOS', fecha_inicio: '', fecha_fin: '' }; buscar()"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-
       </div>
     </div>
 
     <!-- TABLA -->
-    <div class="card shadow-sm" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3">
       <div class="card-body p-0">
         <div v-if="cargando" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -296,7 +294,7 @@ const formatFecha = (fecha) => {
                   <small class="text-muted">{{ c.nota_venta?.propiedad?.sector_urbano?.nombre || '' }}</small>
                 </td>
                 <td>
-                  <span class="badge" :class="tipoBadge(c.tipo_venta)">{{ c.tipo_venta }}</span>
+                  <span class="badge rounded-pill fw-medium px-3 py-2" :class="tipoBadge(c.tipo_venta)">{{ c.tipo_venta }}</span>
                 </td>
                 <td>{{ formatFecha(c.fecha_emision) }}</td>
                 <td>{{ formatFecha(c.fecha_firma) }}</td>
@@ -379,36 +377,36 @@ const formatFecha = (fecha) => {
   <Teleport to="body">
     <div v-if="mostrarModal" class="modal-overlay-custom" @click.self="cerrarModal">
       <div class="modal-dialog-custom">
-        <div class="modal-content shadow-lg rounded-3">
+        <div class="modal-content card-custom border-0 shadow-lg">
 
           <!-- Header -->
-          <div class="modal-header border-bottom px-4 py-3">
-            <h5 class="modal-title fw-bold mb-0">
+          <div class="modal-header border-bottom-0 pb-0 px-4 pt-4">
+            <h5 class="modal-title fw-bold mb-0" style="color: var(--text-main);">
               <i class="bi bi-file-earmark-text me-2 text-primary"></i>
               Gestionar Contrato
             </h5>
-            <button type="button" class="btn-close" @click="cerrarModal"></button>
+            <button type="button" class="btn-close shadow-none" @click="cerrarModal"></button>
           </div>
 
           <!-- Body -->
-          <div class="modal-body px-4 py-3" v-if="contratoSeleccionado">
+          <div class="modal-body px-4 py-4" v-if="contratoSeleccionado">
 
             <!-- Info resumen -->
-            <div class="alert alert-light border mb-3 py-2">
-              <div class="row g-1 small">
+            <div class="card bg-light border-0 shadow-none mb-3 p-3">
+              <div class="row g-2 small">
                 <div class="col-6">
                   <span class="text-muted">Código:</span>
-                  <strong class="ms-1">{{ contratoSeleccionado.codigo_contrato }}</strong>
+                  <strong class="ms-1 text-dark">{{ contratoSeleccionado.codigo_contrato }}</strong>
                 </div>
-                <div class="col-6">
+                <div class="col-6 text-end">
                   <span class="text-muted">Tipo:</span>
                   <span class="badge ms-1" :class="tipoBadge(contratoSeleccionado.tipo_venta)">{{ contratoSeleccionado.tipo_venta }}</span>
                 </div>
-                <div class="col-12">
+                <div class="col-12 mt-1">
                   <span class="text-muted">Cliente:</span>
-                  <strong class="ms-1">{{ contratoSeleccionado.nota_venta?.cliente?.nombre_completo || '—' }}</strong>
+                  <strong class="ms-1 text-dark">{{ contratoSeleccionado.nota_venta?.cliente?.nombre_completo || '—' }}</strong>
                 </div>
-                <div class="col-6">
+                <div class="col-12 mt-1">
                   <span class="text-muted">Estado actual:</span>
                   <span class="badge ms-1" :class="estadoBadge(contratoSeleccionado.estado)">{{ contratoSeleccionado.estado }}</span>
                 </div>
@@ -416,11 +414,11 @@ const formatFecha = (fecha) => {
             </div>
 
             <!-- Documento actual -->
-            <div v-if="contratoSeleccionado.url_doc" class="mb-3 p-2 bg-light rounded d-flex align-items-center gap-2">
+            <div v-if="contratoSeleccionado.url_doc" class="mb-3 p-3 bg-light rounded-3 d-flex align-items-center gap-2">
               <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
               <div class="small flex-grow-1 text-truncate">
                 <span class="text-muted">Documento actual:</span>
-                <span class="ms-1 fw-semibold">{{ contratoSeleccionado.codigo_contrato }}.pdf</span>
+                <span class="ms-1 fw-semibold text-dark">{{ contratoSeleccionado.codigo_contrato }}.pdf</span>
               </div>
             </div>
 
@@ -432,7 +430,7 @@ const formatFecha = (fecha) => {
               <div class="input-group input-group-sm">
                 <input
                   type="file"
-                  class="form-control"
+                  class="form-control bg-light border-0 shadow-none"
                   accept="application/pdf"
                   @change="onFileChange"
                 />
@@ -452,7 +450,7 @@ const formatFecha = (fecha) => {
                 <div class="form-check form-switch">
                   <input
                     v-model="esFirmado"
-                    class="form-check-input"
+                    class="form-check-input custom-switch shadow-none"
                     type="checkbox"
                     role="switch"
                     style="width: 2.5em; height: 1.3em; cursor: pointer;"
@@ -468,26 +466,27 @@ const formatFecha = (fecha) => {
               <input
                 v-model="fechaFirma"
                 type="date"
-                class="form-control form-control-sm"
+                class="form-control form-control-sm bg-light border-0 shadow-none"
               />
             </div>
 
-          </div>
+            <!-- Botones de Acción -->
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-4">
+              <button class="btn btn-light shadow-none px-4" @click="cerrarModal" :disabled="subiendoDoc">
+                Cancelar
+              </button>
+              <button
+                class="btn btn-primary border-0 shadow-sm px-4"
+                style="background-color: var(--primary-color);"
+                @click="guardarGestion"
+                :disabled="subiendoDoc || (!archivoPdf && contratoSeleccionado?.estado === (esFirmado ? 'Firmado' : 'Pendiente'))"
+              >
+                <span v-if="subiendoDoc" class="spinner-border spinner-border-sm me-2"></span>
+                <i v-else class="bi bi-save me-1"></i>
+                {{ subiendoDoc ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+            </div>
 
-          <!-- Footer -->
-          <div class="modal-footer border-top px-4 py-3 gap-2">
-            <button class="btn btn-secondary btn-sm" @click="cerrarModal" :disabled="subiendoDoc">
-              Cancelar
-            </button>
-            <button
-              class="btn btn-primary btn-sm"
-              @click="guardarGestion"
-              :disabled="subiendoDoc || (!archivoPdf && contratoSeleccionado?.estado === (esFirmado ? 'Firmado' : 'Pendiente'))"
-            >
-              <span v-if="subiendoDoc" class="spinner-border spinner-border-sm me-1"></span>
-              <i v-else class="bi bi-save me-1"></i>
-              Guardar cambios
-            </button>
           </div>
 
         </div>
@@ -510,5 +509,14 @@ const formatFecha = (fecha) => {
 .modal-dialog-custom {
   width: 100%;
   max-width: 560px;
+}
+.custom-switch:checked {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+.form-control:focus, .form-select:focus {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--primary-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(162, 139, 250, 0.25) !important;
 }
 </style>

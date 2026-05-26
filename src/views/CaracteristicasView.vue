@@ -176,7 +176,7 @@ const toggleEstadoCarac = (item) => {
 // Mapper de iconos según tipo
 const getTipoIcon = (tipo) => {
   const icons = {
-    'Servicios': 'bi-lightning-charge-fill text-warning',
+    'Servicios': 'bi-lightning-charge-fill text-info',
     'Interna': 'bi-house-heart-fill text-primary',
     'Entorno': 'bi-tree-fill text-success'
   }
@@ -191,18 +191,17 @@ onMounted(() => {
 <template>
   <div class="container-fluid py-4 pb-5">
     
-    <!-- Encabezado de Pantalla -->
-    <div class="mb-4">
-      <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Características de Propiedades</h2>
-      <p class="text-muted small mb-0">Gestiona amenidades, servicios y atributos del entorno.</p>
-    </div>
-
-    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div class="d-flex flex-grow-1 gap-2 align-items-center">
-        <div class="input-group" style="max-width: 400px;">
+    <!-- Cabecera -->
+    <div class="row align-items-center mb-4">
+      <div class="col-md-5 mb-3 mb-md-0">
+        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Características de Propiedades</h2>
+        <p class="text-muted small mb-0">Gestiona amenidades, servicios y atributos del entorno.</p>
+      </div>
+      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+        <div class="input-group" style="max-width: 540px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
-                 v-model="filtros.buscar" placeholder="Buscar característica...">
+                 v-model="filtros.buscar" @keyup.enter="cargarCaracteristicas(1)" placeholder="Buscar característica...">
           
           <select class="form-select border-start-0 border-end-0 shadow-none bg-white" v-model="filtros.tipo" style="max-width: 130px;">
             <option value="">Todos</option>
@@ -218,16 +217,16 @@ onMounted(() => {
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="cargarCaracteristicas(1)" type="button">Buscar</button>
         </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm px-3" 
+                style="background-color: var(--primary-color);" 
+                data-bs-toggle="modal" data-bs-target="#modalCarac" @click="nuevaCarac">
+          <i class="bi bi-plus-lg"></i> Nueva
+        </button>
       </div>
-      <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm border-0 px-3" 
-              style="background-color: var(--primary-color);" 
-              data-bs-toggle="modal" data-bs-target="#modalCarac" @click="nuevaCarac">
-        <i class="bi bi-plus-lg"></i> Nueva
-      </button>
     </div>
 
     <!-- Tarjeta de Listado -->
-    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3">
       <div class="card-body p-0">
         <div v-if="cargando" class="text-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -259,7 +258,7 @@ onMounted(() => {
                 </td>
                 <td>
                   <span class="badge bg-opacity-10 px-3 py-2 rounded-pill fw-medium" 
-                        :class="carac.tipo === 'Servicios' ? 'bg-warning text-warning' : (carac.tipo === 'Interna' ? 'bg-primary text-primary' : 'bg-success text-success')">
+                        :class="carac.tipo === 'Servicios' ? 'bg-info text-info' : (carac.tipo === 'Interna' ? 'bg-primary text-primary' : 'bg-success text-success')">
                     {{ carac.tipo }}
                   </span>
                 </td>
@@ -325,7 +324,7 @@ onMounted(() => {
         <div class="modal-content border-0 shadow">
           <div class="modal-header border-bottom-0 pb-0">
             <h5 class="modal-title fw-bold" style="color: var(--text-main);">
-              <i class="bi bi-tags-fill me-2 text-primary"></i>
+              <!-- <i class="bi bi-tags-fill me-2 text-primary"></i> -->
               {{ isEditing ? 'Editar Característica' : 'Nueva Característica' }}
             </h5>
             <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" ref="btnCerrarModal"></button>

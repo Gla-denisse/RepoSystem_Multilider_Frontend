@@ -542,7 +542,7 @@ onMounted(() => cargarDatosBase(1));
         </div>
         
         <div class="col-md-7 d-flex justify-content-md-end gap-2">
-          <div class="input-group" style="max-width: 350px;">
+          <div class="input-group" style="max-width: 480px;">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
             <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
                    v-model="searchQuery" @keyup.enter="buscar" placeholder="Buscar por Código o Dueño...">
@@ -593,7 +593,15 @@ onMounted(() => cargarDatosBase(1));
                       <img v-if="prop.imagenes?.find(i => i.es_principal) || prop.imagenes?.[0]" 
                            :src="baseUrl + (prop.imagenes.find(i => i.es_principal)?.url || prop.imagenes[0].url)" 
                            class="w-100 h-100 object-fit-cover">
-                      <i v-else class="bi bi-image text-muted fs-4"></i>
+                      <svg v-else-if="prop.tipo === 'Casa'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-100 h-100 p-2" style="color: #55585d; background-color: #e9ecef;" title="Casa">
+                        <path d="M3 10.182V19.8c0 .663.537 1.2 1.2 1.2h15.6c.663 0 1.2-.537 1.2-1.2V10.182c0-.332-.138-.65-.382-.88l-7.8-7.391a1.2 1.2 0 0 0-1.636 0l-7.8 7.39a1.2 1.2 0 0 0-.382.882z" />
+                        <path d="M9 21v-6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6" />
+                      </svg>
+                      <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-100 h-100 p-2" style="color: #6c757d; background-color: #f1f3f5;" title="Lote">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5" />
+                        <path d="M2 12l10 5 10-5" />
+                      </svg>
                     </div>
                   </td>
                   <td>

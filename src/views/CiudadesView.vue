@@ -181,34 +181,33 @@ onMounted(() => {
 <template>
   <div class="container-fluid py-4">
     
-    <!-- Encabezado de Pantalla -->
-    <div class="mb-4">
-      <h2 class="h4 fw-bold mb-0" style="color: var(--text-main);">Gestión de Ciudades</h2>
-      <p class="text-muted small mb-0">Registra y administra las ciudades disponibles en el sistema.</p>
-    </div>
-
-    <div class="table-controls d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-      <div class="d-flex flex-grow-1 gap-2 align-items-center">
-        <div class="input-group" style="max-width: 350px;">
+    <!-- Cabecera -->
+    <div class="row align-items-center mb-4">
+      <div class="col-md-5 mb-3 mb-md-0">
+        <h2 class="h4 mb-0 fw-bold" style="color: var(--text-main);">Gestión de Ciudades</h2>
+        <p class="text-muted small mb-0">Registra y administra las ciudades disponibles en el sistema.</p>
+      </div>
+      <div class="col-md-7 d-flex justify-content-md-end gap-2">
+        <div class="input-group" style="max-width: 480px;">
           <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
           <input type="text" class="form-control border-start-0 border-end-0 ps-0 shadow-none" 
-                 v-model="filtros.buscar" placeholder="Buscar por nombre o dpto...">
+                 v-model="filtros.buscar" @keyup.enter="cargarCiudades(1)" placeholder="Buscar por nombre o dpto...">
           <span class="input-group-text bg-white border-start-0 cursor-pointer" v-if="filtros.buscar" @click="filtros.buscar = ''" title="Limpiar">
             <i class="bi bi-x-circle-fill text-muted hover-danger transition-all"></i>
           </span>
           <span class="input-group-text bg-white border-start-0" v-else></span>
           <button class="btn btn-secondary shadow-none px-3" @click="cargarCiudades(1)" type="button">Buscar</button>
         </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2 border-0 shadow-sm px-3" 
+                style="background-color: var(--primary-color);" 
+                data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="nuevaCiudad">
+          <i class="bi bi-plus-lg"></i> Nueva
+        </button>
       </div>
-      <button class="btn btn-primary d-flex align-items-center gap-2 shadow-sm border-0 px-3" 
-              style="background-color: var(--primary-color);" 
-              data-bs-toggle="modal" data-bs-target="#modalCiudad" @click="nuevaCiudad">
-        <i class="bi bi-plus-lg"></i> Nueva
-      </button>
     </div>
 
     <!-- Tarjeta de Listado -->
-    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3" style="border-top-left-radius: 0; border-top-right-radius: 0;">
+    <div class="card card-custom border-0 shadow-sm overflow-hidden mb-3">
       <div class="card-body p-0">
         <div v-if="cargando" class="text-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -307,8 +306,19 @@ onMounted(() => {
               </div>
               <div class="mb-4">
                 <label class="form-label small fw-bold text-muted mb-1">Departamento *</label>
-                <input type="text" class="form-control bg-light border-0 shadow-none" 
-                       v-model="ciudadForm.departamento" :class="{ 'is-invalid': erroresValidacion.departamento }" required>
+                <select class="form-select bg-light border-0 shadow-none" 
+                        v-model="ciudadForm.departamento" :class="{ 'is-invalid': erroresValidacion.departamento }" required>
+                  <option value="" disabled>Selecciona un departamento...</option>
+                  <option value="Beni">Beni</option>
+                  <option value="Chuquisaca">Chuquisaca</option>
+                  <option value="Cochabamba">Cochabamba</option>
+                  <option value="La Paz">La Paz</option>
+                  <option value="Oruro">Oruro</option>
+                  <option value="Pando">Pando</option>
+                  <option value="Potosí">Potosí</option>
+                  <option value="Santa Cruz">Santa Cruz</option>
+                  <option value="Tarija">Tarija</option>
+                </select>
                 <div class="invalid-feedback" v-if="erroresValidacion.departamento">{{ erroresValidacion.departamento[0] }}</div>
               </div>
 

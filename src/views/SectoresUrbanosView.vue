@@ -40,6 +40,10 @@ const erroresValidacion = ref({})
 
 const sectorDetalle = ref(null)
 
+// Para el selector en cascada en el formulario
+const formCiudadId = ref('')
+const targetDistritoId = ref(null)
+
 // Selector de ciudad en el filtro (local, no enviado al backend)
 const filtroCiudadId = ref('')
 
@@ -87,14 +91,28 @@ const cargarDistritos = async (ciudadId = null) => {
   }
 }
 
-const cargarDistritosFormulario = async () => {
+const cargarDistritosFormulario = async (ciudadId = null) => {
+  if (!ciudadId) {
+    distritosForm.value = []
+    return
+  }
   try {
-    const res = await api.get('/distritos', { params: { per_page: 1000 } })
+    const res = await api.get('/distritos', { params: { per_page: 1000, ciudad_id: ciudadId } })
     distritosForm.value = res.data.data.filter(d => d.estado)
   } catch (error) {
     console.error('Error al cargar distritos para formulario:', error)
+    distritosForm.value = []
   }
 }
+
+// Watcher para selector en cascada en el formulario (Ciudad -> Distrito)
+watch(formCiudadId, async (newVal) => {
+  const savedId = targetDistritoId.value
+  targetDistritoId.value = null
+  if (!savedId) sectorForm.value.distrito_id = null
+  await cargarDistritosFormulario(newVal)
+  if (savedId) sectorForm.value.distrito_id = savedId
+})
 
 // Filtros en cascada: ciudad → distritos del filtro
 watch(filtroCiudadId, (newVal) => {
@@ -111,13 +129,18 @@ watch(() => filtros.value.distrito_id, () => cargarSectores(1))
 
 const nuevoSector = () => {
   isEditing.value = false
+  formCiudadId.value = ''
+  targetDistritoId.value = null
+  distritosForm.value = []
   sectorForm.value = { id: null, distrito_id: null, nombre: '', tipo: 'Barrio', uv: '', manzano: '', estado: true }
   erroresValidacion.value = {}
-  cargarDistritosFormulario()
 }
 
 const editarSector = (item) => {
   isEditing.value = true
+  targetDistritoId.value = item.distrito_id
+  formCiudadId.value = item.distrito?.ciudad_id || ''
+  
   sectorForm.value = {
     id: item.id,
     distrito_id: item.distrito_id,
@@ -128,7 +151,6 @@ const editarSector = (item) => {
     estado: item.estado == 1 || item.estado === true
   }
   erroresValidacion.value = {}
-  cargarDistritosFormulario()
 }
 
 const verSector = (item) => {
@@ -248,7 +270,6 @@ onMounted(() => {
                 <th class="border-0">Nombre</th>
                 <th class="border-0">Tipo</th>
                 <th class="border-0">Distrito / Ciudad</th>
-                <th class="border-0">UV / Manzano</th>
                 <th class="border-0">Estado</th>
                 <th class="text-end pe-4 border-0">Acciones</th>
               </tr>
@@ -266,12 +287,6 @@ onMounted(() => {
                 <td>
                   <div class="fw-medium">{{ sector.distrito?.nombre }}</div>
                   <div class="smaller text-muted">{{ sector.distrito?.ciudad?.nombre }}</div>
-                </td>
-                <td class="smaller text-muted">
-                  <span v-if="sector.uv">UV {{ sector.uv }}</span>
-                  <span v-if="sector.uv && sector.manzano"> · </span>
-                  <span v-if="sector.manzano">Mza {{ sector.manzano }}</span>
-                  <span v-if="!sector.uv && !sector.manzano">—</span>
                 </td>
                 <td>
                   <span v-if="sector.estado == 1 || sector.estado === true"
@@ -329,7 +344,7 @@ onMounted(() => {
         <div class="modal-content border-0 shadow">
           <div class="modal-header border-bottom-0 pb-0">
             <h5 class="modal-title fw-bold" style="color: var(--text-main);">
-              <i class="bi bi-buildings-fill me-2 text-primary"></i>
+              <!-- <i class="bi bi-buildings-fill me-2 text-primary"></i> -->
               {{ isEditing ? 'Editar Sector Urbano' : 'Registrar Nuevo Sector Urbano' }}
             </h5>
             <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" ref="btnCerrarModal"></button>
@@ -337,6 +352,14 @@ onMounted(() => {
           <div class="modal-body p-4">
             <form @submit.prevent="guardarSector">
               <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold text-muted mb-1">Seleccionar Ciudad *</label>
+                  <select class="form-select bg-light border-0 shadow-none" v-model="formCiudadId" required>
+                    <option value="" disabled>Seleccione una ciudad...</option>
+                    <option v-for="c in ciudades" :key="c.id" :value="c.id">{{ c.nombre }} ({{ c.departamento }})</option>
+                  </select>
+                </div>
+
                 <div class="col-md-6">
                   <label class="form-label small fw-bold text-muted mb-1">Seleccionar Distrito *</label>
                   <LiveSearchSelect
@@ -347,6 +370,7 @@ onMounted(() => {
                     valueKey="id"
                     placeholder="Buscar distrito..."
                     :hasError="!!erroresValidacion.distrito_id"
+                    :disabled="!formCiudadId || !distritosForm.length"
                   />
                   <div class="text-danger smaller mt-1" v-if="erroresValidacion.distrito_id">{{ erroresValidacion.distrito_id[0] }}</div>
                 </div>
@@ -359,24 +383,12 @@ onMounted(() => {
                   <div class="text-danger smaller mt-1" v-if="erroresValidacion.tipo">{{ erroresValidacion.tipo[0] }}</div>
                 </div>
 
-                <div class="col-12">
+                <div class="col-md-6">
                   <label class="form-label small fw-bold text-muted mb-1">Nombre del Sector *</label>
                   <input type="text" class="form-control bg-light border-0 shadow-none"
                          v-model="sectorForm.nombre" :class="{ 'is-invalid': erroresValidacion.nombre }" required
                          placeholder="Ej: Villa Esperanza, Urb. Los Pinos">
                   <div class="invalid-feedback" v-if="erroresValidacion.nombre">{{ erroresValidacion.nombre[0] }}</div>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label small fw-bold text-muted mb-1">Unidad Vecinal (UV)</label>
-                  <input type="text" class="form-control bg-light border-0 shadow-none"
-                         v-model="sectorForm.uv" placeholder="Ej: 154">
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label small fw-bold text-muted mb-1">Manzano</label>
-                  <input type="text" class="form-control bg-light border-0 shadow-none"
-                         v-model="sectorForm.manzano" placeholder="Ej: A">
                 </div>
               </div>
 
@@ -404,9 +416,9 @@ onMounted(() => {
           </div>
           <div class="modal-body p-4" v-if="sectorDetalle">
             <div class="d-flex align-items-center mb-4">
-              <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+              <!-- <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
                 <i class="bi bi-buildings-fill fs-3 text-primary"></i>
-              </div>
+              </div> -->
               <div>
                 <h4 class="mb-0 fw-bold">{{ sectorDetalle.nombre }}</h4>
                 <p class="text-muted mb-0">{{ sectorDetalle.tipo }}</p>
@@ -420,14 +432,6 @@ onMounted(() => {
                   <div class="fw-bold">{{ sectorDetalle.distrito?.nombre }}</div>
                   <div class="small text-muted">{{ sectorDetalle.distrito?.ciudad?.nombre }}, Bolivia</div>
                 </div>
-              </div>
-              <div class="col-6" v-if="sectorDetalle.uv">
-                <label class="smaller text-muted d-block">Unidad Vecinal</label>
-                <span class="fw-semibold">UV {{ sectorDetalle.uv }}</span>
-              </div>
-              <div class="col-6" v-if="sectorDetalle.manzano">
-                <label class="smaller text-muted d-block">Manzano</label>
-                <span class="fw-semibold">{{ sectorDetalle.manzano }}</span>
               </div>
               <div class="col-6">
                 <label class="smaller text-muted d-block">ID Registro</label>
