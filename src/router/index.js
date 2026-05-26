@@ -150,6 +150,12 @@ const router = createRouter({
       meta: { requiresAuth: true, permission: 'acceso_contratos', layout: 'admin' }
     },
     {
+      path: '/entregas',
+      name: 'Entregas',
+      component: () => import('../views/EntregasView.vue'),
+      meta: { requiresAuth: true, permission: 'acceso_entregas', layout: 'admin' }
+    },
+    {
       path: '/ingresos',
       name: 'Ingresos',
       component: () => import('../views/IngresosView.vue'),

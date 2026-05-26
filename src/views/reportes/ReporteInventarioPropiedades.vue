@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import api from '@/api/axios'
+import ModalEnviarInforme from '@/components/ModalEnviarInforme.vue'
 import { Bar, Doughnut } from 'vue-chartjs'
 import {
   Chart as ChartJS, CategoryScale, LinearScale, BarElement,
@@ -29,9 +30,10 @@ const tiposDisponibles = ['Todos', 'Casa', 'Lote', 'Local', 'Departamento', 'Ter
 const estadosDisponibles = ['Todos', 'Disponible', 'Vendido', 'Reservado']
 
 // ─── Estado de carga ────────────────────────────────────────────────────────
-const loading     = ref(false)
-const loadingExcel = ref(false)
-const loadingPdf   = ref(false)
+const loading           = ref(false)
+const loadingExcel      = ref(false)
+const loadingPdf        = ref(false)
+const mostrarModalEnvio = ref(false)
 
 // ─── Datos ──────────────────────────────────────────────────────────────────
 const kpis         = ref(null)
@@ -229,6 +231,9 @@ onMounted(async () => {
         <button class="btn btn-sm btn-outline-danger" @click="descargar('pdf')" :disabled="loadingPdf">
           <i class="bi bi-file-earmark-pdf me-1"></i>
           {{ loadingPdf ? 'Generando…' : 'PDF' }}
+        </button>
+        <button class="btn btn-sm btn-outline-primary" @click="mostrarModalEnvio = true" :disabled="loading">
+          <i class="bi bi-envelope-arrow-up me-1"></i> Enviar
         </button>
       </div>
     </div>
@@ -467,6 +472,13 @@ onMounted(async () => {
     </div>
 
   </div>
+
+  <ModalEnviarInforme
+    v-model="mostrarModalEnvio"
+    reporte="inventario-propiedades"
+    titulo="Inventario de Propiedades"
+    :params="{ tipo: tipo, estado: estado, moneda: moneda, ciudad_id: ciudadId, distrito_id: distritoId, sector_urbano_id: sectorId, precio_min: precioMin, precio_max: precioMax }"
+  />
 </template>
 
 <style scoped>

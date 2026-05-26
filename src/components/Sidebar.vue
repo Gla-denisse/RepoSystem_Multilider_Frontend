@@ -182,7 +182,7 @@ const toggleSubmenu = (menuName) => {
       </li>
 
       <!-- Grupo Contratos y Entregas -->
-      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_contratos')">
+      <li class="nav-item mt-2" v-if="authStore.hasPermission('acceso_contratos') || authStore.hasPermission('acceso_entregas')">
         <a href="#" class="nav-link custom-link d-flex align-items-center justify-content-between"
            @click.prevent="toggleSubmenu('contratos')"
            :aria-expanded="openSubmenu === 'contratos'"
@@ -198,6 +198,11 @@ const toggleSubmenu = (menuName) => {
           <li class="nav-item" v-if="authStore.hasPermission('acceso_contratos')">
             <RouterLink to="/contratos" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
               <i class="bi bi-file-earmark-check me-2 fs-6"></i> Contratos
+            </RouterLink>
+          </li>
+          <li class="nav-item" v-if="authStore.hasPermission('acceso_entregas')">
+            <RouterLink to="/entregas" class="nav-link custom-link sub-link d-flex align-items-center" active-class="active">
+              <i class="bi bi-house-check me-2 fs-6"></i> Entregas
             </RouterLink>
           </li>
         </ul>

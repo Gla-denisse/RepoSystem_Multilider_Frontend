@@ -8,6 +8,7 @@ import {
   ArcElement,
 } from 'chart.js'
 import api from '@/api/axios'
+import ModalEnviarInforme from '@/components/ModalEnviarInforme.vue'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
 
@@ -23,9 +24,10 @@ const moneda   = ref('Todos')
 const perPage  = ref(15)
 const pagina   = ref(1)
 
-const cargando      = ref(false)
-const exportandoPdf = ref(false)
-const exportandoXls = ref(false)
+const cargando          = ref(false)
+const exportandoPdf     = ref(false)
+const exportandoXls     = ref(false)
+const mostrarModalEnvio = ref(false)
 
 const kpis     = ref(null)
 const grafico  = ref([])
@@ -209,6 +211,9 @@ const paginas = computed(() => {
         <button class="btn btn-sm btn-outline-success" @click="exportar('excel')" :disabled="exportandoXls || cargando">
           <span v-if="exportandoXls" class="spinner-border spinner-border-sm me-1"></span>
           <i v-else class="bi bi-file-earmark-excel me-1"></i> Excel
+        </button>
+        <button class="btn btn-sm btn-outline-primary" @click="mostrarModalEnvio = true" :disabled="cargando">
+          <i class="bi bi-envelope-arrow-up me-1"></i> Enviar
         </button>
       </div>
     </div>
@@ -443,6 +448,13 @@ const paginas = computed(() => {
     </template>
 
   </div>
+
+  <ModalEnviarInforme
+    v-model="mostrarModalEnvio"
+    reporte="comisiones"
+    titulo="Comisiones"
+    :params="{ desde: desde, hasta: hasta, estado: estado, moneda: moneda, asesor_id: asesorId }"
+  />
 </template>
 
 <style scoped>

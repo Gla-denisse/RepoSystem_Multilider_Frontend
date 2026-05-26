@@ -19,13 +19,16 @@ const filtros = ref({
 })
 
 // ---- Modal Gestionar ----
-const mostrarModal           = ref(false)
-const contratoSeleccionado   = ref(null)
-const archivoPdf             = ref(null)
-const nombreArchivo          = ref('')
-const esFirmado              = ref(false)
-const fechaFirma             = ref('')
-const subiendoDoc            = ref(false)
+const mostrarModal              = ref(false)
+const contratoSeleccionado      = ref(null)
+const archivoPdf                = ref(null)
+const nombreArchivo             = ref('')
+const esFirmado                 = ref(false)
+const fechaFirma                = ref('')
+const fechaEntregaProgramada    = ref('')
+const subiendoDoc               = ref(false)
+
+const hoy = () => new Date().toISOString().slice(0, 10)
 
 // ==========================================
 // CARGA INICIAL
@@ -64,21 +67,23 @@ const buscar = () => cargarContratos(1)
 // MODAL GESTIONAR
 // ==========================================
 const abrirModal = (contrato) => {
-  contratoSeleccionado.value = { ...contrato }
-  archivoPdf.value    = null
-  nombreArchivo.value = ''
-  esFirmado.value     = contrato.estado === 'Firmado'
-  fechaFirma.value    = contrato.fecha_firma || ''
-  mostrarModal.value  = true
+  contratoSeleccionado.value   = { ...contrato }
+  archivoPdf.value             = null
+  nombreArchivo.value          = ''
+  esFirmado.value              = contrato.estado === 'Firmado'
+  fechaFirma.value             = contrato.fecha_firma || hoy()
+  fechaEntregaProgramada.value = contrato.entrega?.fecha_programada || hoy()
+  mostrarModal.value           = true
 }
 
 const cerrarModal = () => {
-  mostrarModal.value         = false
-  contratoSeleccionado.value = null
-  archivoPdf.value           = null
-  nombreArchivo.value        = ''
-  esFirmado.value            = false
-  fechaFirma.value           = ''
+  mostrarModal.value           = false
+  contratoSeleccionado.value   = null
+  archivoPdf.value             = null
+  nombreArchivo.value          = ''
+  esFirmado.value              = false
+  fechaFirma.value             = ''
+  fechaEntregaProgramada.value = ''
 }
 
 const onFileChange = (e) => {
@@ -107,6 +112,7 @@ const guardarGestion = async () => {
     if (archivoPdf.value) formData.append('archivo', archivoPdf.value)
     formData.append('firmado', esFirmado.value ? '1' : '0')
     if (esFirmado.value && fechaFirma.value) formData.append('fecha_firma', fechaFirma.value)
+    if (esFirmado.value && fechaEntregaProgramada.value) formData.append('fecha_programada_entrega', fechaEntregaProgramada.value)
 
     const res = await api.post(
       `/contratos/${contratoSeleccionado.value.id}/gestionar`,
@@ -305,6 +311,7 @@ const formatFecha = (fecha) => {
                 <th>F. Emisión</th>
                 <th>F. Firma</th>
                 <th>Estado</th>
+                <th>Entrega</th>
                 <th class="text-center pe-3">Acciones</th>
               </tr>
             </thead>
@@ -324,6 +331,21 @@ const formatFecha = (fecha) => {
                 <td>{{ formatFecha(c.fecha_firma) }}</td>
                 <td>
                   <span :class="estadoBadge(c.estado)">{{ c.estado }}</span>
+                </td>
+                <td>
+                  <template v-if="c.entrega">
+                    <span
+                      class="badge fw-medium px-2 py-1"
+                      :class="{
+                        'bg-success bg-opacity-10 text-success border border-success border-opacity-25': c.entrega.estado === 'Entregado',
+                        'bg-danger  bg-opacity-10 text-danger  border border-danger  border-opacity-25': c.entrega.estado === 'Diferido',
+                        'bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25': c.entrega.estado === 'Pendiente',
+                      }"
+                    >
+                      <i class="bi bi-house me-1"></i>{{ c.entrega.estado }}
+                    </span>
+                  </template>
+                  <span v-else class="text-muted small">—</span>
                 </td>
                 <td class="text-center pe-3">
                   <div class="d-flex justify-content-center gap-1">
@@ -495,14 +517,24 @@ const formatFecha = (fecha) => {
               <div class="form-text text-muted">Al activar, el contrato cambia su estado a <strong>Firmado</strong>.</div>
             </div>
 
-            <!-- Fecha firma (solo si firmado) -->
-            <div v-if="esFirmado" class="mb-3">
-              <label class="form-label fw-semibold">Fecha de Firma <span class="text-danger">*</span></label>
-              <input
-                v-model="fechaFirma"
-                type="date"
-                class="form-control form-control-sm bg-light border-0 shadow-none"
-              />
+            <!-- Fecha firma + fecha entrega programada (solo si firmado) -->
+            <div v-if="esFirmado" class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Fecha de Firma <span class="text-danger">*</span></label>
+                <input
+                  v-model="fechaFirma"
+                  type="date"
+                  class="form-control form-control-sm bg-light border-0 shadow-none"
+                />
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">F. Entrega Programada</label>
+                <input
+                  v-model="fechaEntregaProgramada"
+                  type="date"
+                  class="form-control form-control-sm bg-light border-0 shadow-none"
+                />
+              </div>
             </div>
 
             <!-- Botones de Acción -->
