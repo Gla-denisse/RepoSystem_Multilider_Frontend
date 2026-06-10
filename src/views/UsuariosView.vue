@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue'
-import api from '../api/axios'
+import apiSecurity from '../api/axiosSecurity'
 import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 
 // ==========================================
@@ -40,20 +40,20 @@ const cargarDatosBase = async () => {
   try {
     cargando.value = true
     const [resUsuarios, resRolPermisos] = await Promise.all([
-      api.get('/usuarios'),
-      api.get('/asignar-permisos')
+      apiSecurity.get('/usuario'),
+      apiSecurity.get('/rolpermiso')
     ])
 
     usuarios.value = resUsuarios.data
 
     const agrupado = {}
     resRolPermisos.data.forEach(item => {
-      const nombreRol = item.rol.nombre
+      const nombreRol = item.nombreRol
       if (!agrupado[nombreRol]) agrupado[nombreRol] = []
 
       agrupado[nombreRol].push({
         rol_permiso_id: item.id,
-        permiso: item.permiso,
+        permiso: { id: item.permisoId, nombre: item.nombrePermiso, descripcion: '' },
         asignado: false
       })
     })
@@ -99,9 +99,9 @@ const guardarUsuario = async () => {
     }
 
     if (isEditing.value) {
-      await api.put(`/usuarios/${payload.id}`, payload)
+      await apiSecurity.put(`/usuario/${payload.id}`, payload)
     } else {
-      await api.post('/usuarios', payload)
+      await apiSecurity.post('/usuario', payload)
     }
 
     await cargarDatosBase()
@@ -188,7 +188,7 @@ const toggleEstadoUsuario = async (user) => {
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await api.delete(`/usuarios/${user.id}`)
+        await apiSecurity.delete(`/usuario/${user.id}`)
         await cargarDatosBase()
         
         // Si el usuario desactivado es el que teníamos abierto en el panel inferior, lo cerramos
@@ -228,7 +228,7 @@ const abrirPanelAsignacion = async (user) => {
       grupo.forEach(item => item.asignado = false)
     })
 
-    const res = await api.get(`/usuarios/${user.id}/asignaciones`)
+    const res = await apiSecurity.get(`/usuario/${user.id}/asignaciones`)
     const asignacionesIds = res.data
 
     Object.values(rolesPermisosAgrupados.value).forEach(grupo => {
@@ -259,8 +259,8 @@ const guardarAccesosPanel = async () => {
     })
 
     // 1. Guardamos en el backend
-    await api.post(`/usuarios/${usuarioSeleccionado.value.id}/asignaciones/sync`, {
-      rol_permiso_ids: seleccionados
+    await apiSecurity.post(`/usuario/${usuarioSeleccionado.value.id}/asignaciones`, {
+      rolPermisoIds: seleccionados
     })
 
     // 2. ¡EL TRUCO! Guardamos el nombre antes de destruir la variable

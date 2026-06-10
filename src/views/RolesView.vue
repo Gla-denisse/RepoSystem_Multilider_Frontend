@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import api from '../api/axios'
+import apiSecurity from '../api/axiosSecurity'
 import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 
 // Variables Generales
@@ -27,8 +27,8 @@ const cargarDatosBase = async () => {
   try {
     cargando.value = true
     const [resRoles, resPermisos] = await Promise.all([
-      api.get('/roles'),
-      api.get('/permisos')
+      apiSecurity.get('/rol'),
+      apiSecurity.get('/permiso')
     ])
     roles.value = resRoles.data
     permisosBase.value = resPermisos.data.map(p => ({ ...p, asignado: false }))
@@ -60,9 +60,9 @@ const guardarRol = async () => {
 
   try {
     if (isEditing.value) {
-      await api.put(`/roles/${rolForm.value.id}`, rolForm.value)
+      await apiSecurity.put(`/rol/${rolForm.value.id}`, rolForm.value)
     } else {
-      await api.post('/roles', rolForm.value)
+      await apiSecurity.post('/rol', rolForm.value)
     }
     
     await cargarDatosBase()
@@ -136,7 +136,7 @@ const toggleEstadoRol = async (rol) => {
     if (result.isConfirmed) {
       try {
         // Llamamos a la misma ruta DELETE, pero ahora el backend hará un "toggle"
-        await api.delete(`/roles/${rol.id}`)
+        await apiSecurity.delete(`/rol/${rol.id}`)
         await cargarDatosBase()
         
         // Si desactivamos el rol que estábamos configurando en el panel inferior, cerramos el panel
@@ -170,7 +170,7 @@ const abrirPanelAsignacion = async (rol) => {
 
   try {
     permisosBase.value.forEach(p => p.asignado = false)
-    const res = await api.get(`/roles/${rol.id}/permisos`)
+    const res = await apiSecurity.get(`/rol/${rol.id}/permisos`)
     const permisosAsignadosIds = res.data
 
     permisosBase.value.forEach(p => {
@@ -192,7 +192,7 @@ const guardarPermisosPanel = async () => {
   try {
     const permisosSeleccionados = permisosBase.value.filter(p => p.asignado === true).map(p => p.id)
 
-    await api.post(`/roles/${rolSeleccionado.value.id}/permisos/sync`, {
+    await apiSecurity.post(`/rol/${rolSeleccionado.value.id}/permisos/sync`, {
       permisos: permisosSeleccionados
     })
 

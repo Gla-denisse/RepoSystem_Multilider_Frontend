@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import api from '../api/axios'
+import apiSecurity from '../api/axiosSecurity'
 import Swal from 'sweetalert2' // <-- IMPORTAMOS SWEETALERT2
 
 // Variables reactivas
@@ -23,7 +23,7 @@ const guardando = ref(false)
 const cargarPermisos = async () => {
   try {
     cargando.value = true
-    const respuesta = await api.get('/permisos')
+    const respuesta = await apiSecurity.get('/permiso')
     permisos.value = respuesta.data
   } catch (error) {
     console.error("Error al cargar permisos:", error)
@@ -52,9 +52,9 @@ const guardarPermiso = async () => {
   guardando.value = true
   try {
     if (isEditing.value) {
-      await api.put(`/permisos/${permisoForm.value.id}`, permisoForm.value)
+      await apiSecurity.put(`/permiso/${permisoForm.value.id}`, permisoForm.value)
     } else {
-      await api.post('/permisos', permisoForm.value)
+      await apiSecurity.post('/permiso', permisoForm.value)
     }
     
     await cargarPermisos()
@@ -116,7 +116,7 @@ const eliminarPermiso = async (id) => {
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await api.delete(`/permisos/${id}`)
+        await apiSecurity.delete(`/permiso/${id}`)
         await cargarPermisos()
         
         Swal.fire({

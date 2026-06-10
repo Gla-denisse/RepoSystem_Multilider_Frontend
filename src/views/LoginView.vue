@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useCompanyStore } from '../stores/company'
 import api from '../api/axios'
+import apiSecurity from '../api/axiosSecurity'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -56,15 +57,12 @@ const iniciarSesion = async () => {
     cargando.value = true
     errorMensaje.value = ''
 
-    const respuesta = await api.post('/login', formulario.value)
+    const respuesta = await apiSecurity.post('/auth/login', formulario.value)
 
-    authStore.setAuth(respuesta.data.access_token, respuesta.data.user)
+    authStore.setAuth(respuesta.data.accessToken, respuesta.data.user)
 
-    const asignaciones = respuesta.data.user.roles_permisos || respuesta.data.user.rolesPermisos || []
-    const esCliente = asignaciones.some(item => {
-      const rol = item.rol_permiso?.rol || item.rolPermiso?.rol
-      return rol?.nombre === 'Cliente'
-    })
+    const asignaciones = respuesta.data.user.rolesPermisos || []
+    const esCliente = asignaciones.some(item => item.nombreRol === 'Cliente')
     router.push(esCliente ? '/mi-cartera' : '/admin')
 
   } catch (error) {
