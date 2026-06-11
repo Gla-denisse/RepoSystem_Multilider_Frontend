@@ -59,9 +59,19 @@ const iniciarSesion = async () => {
 
     const respuesta = await apiSecurity.post('/auth/login', formulario.value)
 
-    authStore.setAuth(respuesta.data.accessToken, respuesta.data.user)
+    // Compatibilidad: .NET puede serializar como accessToken o access_token
+    const token = respuesta.data.accessToken || respuesta.data.access_token || null
+    const user  = respuesta.data.user || respuesta.data.User || null
 
-    const asignaciones = respuesta.data.user.rolesPermisos || []
+    if (!token) {
+      console.error('Respuesta del servidor (sin token):', respuesta.data)
+      errorMensaje.value = 'El servidor no devolvió un token. Revisa la consola.'
+      return
+    }
+
+    authStore.setAuth(token, user)
+
+    const asignaciones = user?.rolesPermisos || []
     const esCliente = asignaciones.some(item => item.nombreRol === 'Cliente')
     router.push(esCliente ? '/mi-cartera' : '/admin')
 
