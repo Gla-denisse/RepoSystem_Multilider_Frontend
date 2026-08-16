@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import api from '../api/axios'
+import apiPropiedades from '../api/axiosPropiedades'
 import Swal from 'sweetalert2'
 
 const props = defineProps({
@@ -26,8 +26,7 @@ watch(() => props.imagenes, (newVal) => {
 const subiendo = ref(false)
 const inputArchivos = ref(null)
 
-// URL base para las imágenes (ajustar según el backend)
-const baseUrl = import.meta.env.VITE_API_URL
+const baseUrl = import.meta.env.VITE_PROPIEDADES_URL
 
 const handleFileSelect = () => {
   inputArchivos.value.click()
@@ -44,7 +43,7 @@ const onFileChange = async (e) => {
 
   subiendo.value = true
   try {
-    const res = await api.post(`/propiedades/${props.propiedadId}/imagenes`, formData, {
+    const res = await apiPropiedades.post(`/propiedades/${props.propiedadId}/imagenes`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
@@ -87,7 +86,7 @@ const eliminarImagen = async (id) => {
 
   if (result.isConfirmed) {
     try {
-      await api.delete(`/imagenes-propiedades/${id}`)
+      await apiPropiedades.delete(`/propiedades/imagenes/${id}`)
       imagenesLocal.value = imagenesLocal.value.filter(img => img.id !== id)
       emit('updated')
       Swal.fire({
@@ -106,7 +105,7 @@ const eliminarImagen = async (id) => {
 
 const marcarPrincipal = async (id) => {
   try {
-    await api.patch(`/imagenes-propiedades/${id}/principal`)
+    await apiPropiedades.patch(`/propiedades/imagenes/${id}/principal`)
     
     // Actualizar estado local
     imagenesLocal.value = imagenesLocal.value.map(img => ({

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import api from '../api/axios'
+import api from '../api/axiosPropiedades'
 import Swal from 'sweetalert2'
 
 // ==========================================

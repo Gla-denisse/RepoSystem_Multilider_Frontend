@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import api from '../api/axios'
+import api from '../api/axiosPropiedades'
 import Swal from 'sweetalert2'
 import LiveSearchSelect from '../components/LiveSearchSelect.vue'
 

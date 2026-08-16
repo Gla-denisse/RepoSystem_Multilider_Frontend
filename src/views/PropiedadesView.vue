@@ -2,6 +2,7 @@
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { importLibrary, setOptions } from '@googlemaps/js-api-loader'
 import api from '../api/axios'
+import apiPropiedades from '../api/axiosPropiedades'
 import Swal from 'sweetalert2'
 import LiveSearchSelect from '../components/LiveSearchSelect.vue'
 import LiveSearchMultiSelect from '../components/LiveSearchMultiSelect.vue'
@@ -28,7 +29,7 @@ const btnCerrarModal = ref(null) // Mantener referencia para compatibilidad o el
 const erroresValidacion = ref({})
 const propiedadSeleccionada = ref(null)
 
-const baseUrl = import.meta.env.VITE_API_URL
+const baseUrl = import.meta.env.VITE_PROPIEDADES_URL
 
 // Para gestión de características
 const caracSearch = ref('')
@@ -223,7 +224,7 @@ const procesarUrlMaps = async () => {
 const cargarSectoresPorDistrito = async (distritoId) => {
   if (!distritoId) { sectoresUrbanos.value = []; return }
   try {
-    const res = await api.get(`/sectores-urbanos/por-distrito/${distritoId}`)
+    const res = await apiPropiedades.get(`/sectores-urbanos/por-distrito/${distritoId}`)
     sectoresUrbanos.value = res.data
   } catch (error) {
     console.error('Error al cargar sectores:', error)
@@ -244,9 +245,9 @@ const cargarDatosBase = async (page = 1) => {
     cargando.value = true;
 
     const [resProp, resOwn, resDist] = await Promise.all([
-      api.get(`/propiedades?page=${page}&search=${searchQuery.value}`),
-      api.get('/propietarios?per_page=1000'),
-      api.get('/distritos?per_page=1000')
+      apiPropiedades.get(`/propiedades?page=${page}&search=${searchQuery.value}`),
+      apiPropiedades.get('/propietarios?per_page=1000'),
+      apiPropiedades.get('/distritos?per_page=1000')
     ]);
 
     propiedades.value = resProp.data.data;
@@ -354,7 +355,7 @@ const irGestionCaracteristicas = async (prop) => {
   try {
     // 1. Cargar catálogo de características si no está cargado
     if (allCaracteristicas.value.length === 0) {
-      const res = await api.get('/caracteristicas', { params: { per_page: 1000 } });
+      const res = await apiPropiedades.get('/caracteristicas', { params: { per_page: 1000 } });
       allCaracteristicas.value = res.data.data;
     }
 
@@ -380,7 +381,7 @@ const irGestionImagenes = (prop) => {
 const recargarPropiedad = async () => {
   if (!propiedadSeleccionada.value) return
   try {
-    const res = await api.get(`/propiedades/${propiedadSeleccionada.value.id}`)
+    const res = await apiPropiedades.get(`/propiedades/${propiedadSeleccionada.value.id}`)
     // El backend puede devolver el objeto directo o envuelto en 'data'
     const propActualizada = res.data.data || res.data
     
@@ -412,7 +413,7 @@ const guardarCaracteristicas = async () => {
     // Según contexto_api_caracteristicas: Se deben enviar los IDs para sincronizarlos
     // Usamos el endpoint de actualización de propiedad enviando solo los carac_ids si el backend lo soporta, 
     // o el objeto completo. Basado en el estándar de otros módulos, enviaremos al sync.
-    await api.post(`/propiedades/${propiedadSeleccionada.value.id}/caracteristicas/sync`, {
+    await apiPropiedades.post(`/propiedades/${propiedadSeleccionada.value.id}/caracteristicas/sync`, {
       caracteristica_ids: ids
     });
 
@@ -483,14 +484,14 @@ const guardar = async () => {
   erroresValidacion.value = {};
   try {
     let ubiId = propiedadForm.value.ubicacion_id;
-    const resUbi = ubiId 
-      ? await api.put(`/ubicaciones/${ubiId}`, ubicacionForm.value)
-      : await api.post('/ubicaciones', ubicacionForm.value);
-    
+    const resUbi = ubiId
+      ? await apiPropiedades.put(`/ubicaciones/${ubiId}`, ubicacionForm.value)
+      : await apiPropiedades.post('/ubicaciones', ubicacionForm.value);
+
     if (!ubiId) propiedadForm.value.ubicacion_id = resUbi.data.data.id;
 
-    if (isEditing.value) await api.put(`/propiedades/${propiedadForm.value.id}`, propiedadForm.value);
-    else await api.post('/propiedades', propiedadForm.value);
+    if (isEditing.value) await apiPropiedades.put(`/propiedades/${propiedadForm.value.id}`, propiedadForm.value);
+    else await apiPropiedades.post('/propiedades', propiedadForm.value);
 
     await cargarDatosBase(currentPage.value);
     volverListado();
@@ -517,7 +518,7 @@ const toggleActivo = async (prop) => {
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        await api.delete(`/propiedades/${prop.id}`);
+        await apiPropiedades.delete(`/propiedades/${prop.id}`);
         await cargarDatosBase(currentPage.value);
         Swal.fire({ title: `¡Éxito!`, icon: 'success', showConfirmButton: false, timer: 1500 });
       } catch (error) {
